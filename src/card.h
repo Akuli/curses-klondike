@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-enum Suit { SPADE, HEART, DIAMOND, CLUB };
+enum Suit { SUIT_SPADE, SUIT_HEART, SUIT_DIAMOND, SUIT_CLUB };
 
 // an array of all suits
 extern enum Suit suit_all[4];

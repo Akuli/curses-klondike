@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "misc.h"
 
-enum Suit suit_all[4] = { SPADE, HEART, DIAMOND, CLUB };
+enum Suit suit_all[4] = { SUIT_SPADE, SUIT_HEART, SUIT_DIAMOND, SUIT_CLUB };
 
 // handy_random(n) returns a random integer >= 0 and < n
 static unsigned int handy_random(unsigned int n)
