@@ -104,3 +104,18 @@ void card_str(struct Card crd, char *buf)
 		break;
 	}
 }
+
+struct Card *card_top(struct Card *crd)
+{
+	while (crd->next)
+		crd = crd->next;
+	return crd;
+}
+
+void card_movebot2top(struct Card **srcbot, struct Card *dstbot)
+{
+	struct Card *mv = *srcbot;  // c funniness: src and srcbot are different types, but this is correct
+	*srcbot = mv->next;
+	mv->next = NULL;
+	card_top(dstbot)->next = mv;
+}

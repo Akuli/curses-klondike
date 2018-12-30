@@ -27,6 +27,18 @@ void card_free(struct Card *crd);
 // buf must have room for at least CARD_STRMAX bytes (including \0)
 void card_str(struct Card crd, char *buf);
 
+// returns topmost card in a linked list of cards
+// bad things happen if crd is NULL
+// never returns NULL
+// card_top(...)->next is always NULL
+struct Card *card_top(struct Card *crd);
+
+// for handling linked lists of cards
+// moves bottommost card of *srcbot to on top of card_top(dst), handling ->next properly
+// bad things happen if *srcbot is NULL
+// if (*srcbot)->next is NULL, *srcbot is set to NULL
+void card_movebot2top(struct Card **srcbot, struct Card *dst);
+
 // Card.num representations: A,2,3,...,9,10,J,Q,K (longest has 2 chars)
 // suit is 3 bytes of utf8
 // this includes a trailing \0
