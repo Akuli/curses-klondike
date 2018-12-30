@@ -1,6 +1,9 @@
 #include <curses.h>
 #include <locale.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <time.h>
+#include "card.h"
 #include "misc.h"
 
 
@@ -23,6 +26,19 @@ int main(void)
 	if (!setlocale(LC_ALL, ""))
 		fatal_error("setlocale() failed");
 
+	time_t t = time(NULL);
+	if (t == (time_t)(-1))
+		fatal_error("time() failed");
+	srand(t);
+
+	struct Card *botcrd = card_createallshuf();
+
+	for (struct Card *crd = botcrd; crd; crd = crd->next)
+		printf("%d %d\n", (int)crd->suit, crd->num);
+
+	card_free(botcrd);
+
+	/*
 	initscr();
 	initscred = true;
 
@@ -30,6 +46,7 @@ int main(void)
 	refresh();
 	getch();
 	endwin();
+	*/
 
 	return 0;
 }
