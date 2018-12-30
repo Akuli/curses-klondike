@@ -36,8 +36,8 @@ struct Card *card_createallshuf(void)
 	cards[13*4] = NULL;
 	int i = 0;
 
-	for (unsigned int s = 0; s < 4; s++) {
-		for (unsigned int n = 1; n <= 13; n++) {
+	for (int s = 0; s < 4; s++) {
+		for (int n = 1; n <= 13; n++) {
 			struct Card *crd = malloc(sizeof(struct Card));
 			if (!crd)
 				fatal_error("malloc() failed");
@@ -45,14 +45,14 @@ struct Card *card_createallshuf(void)
 			crd->num = n;
 			crd->suit = suit_all[s];
 			crd->visible = false;
-			// crd->next is left uninitialized for valgrinding
+			// crd->next is initialized below
 			cards[i++] = crd;
 		}
 	}
 
 	shuffle(cards, 13*4);
 
-	for (unsigned int j = 0; j < 13*4; j++)
+	for (int j = 0; j < 13*4; j++)
 		cards[j]->next = cards[j+1];
 	return cards[0];
 }
