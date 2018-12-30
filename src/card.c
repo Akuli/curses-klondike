@@ -1,5 +1,8 @@
 #include "card.h"
+#include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "misc.h"
 
 enum Suit suit_all[4] = { SUIT_SPADE, SUIT_HEART, SUIT_DIAMOND, SUIT_CLUB };
@@ -60,5 +63,44 @@ void card_free(struct Card *crd)
 	for (; crd; crd = nxt) {
 		nxt = crd->next;
 		free(crd);
+	}
+}
+
+void card_str(struct Card crd, char *buf)
+{
+	switch(crd.suit) {
+	case SUIT_SPADE:
+		strcpy(buf, "\xe2\x99\xa0");
+		break;
+	case SUIT_HEART:
+		strcpy(buf, "\xe2\x99\xa5");
+		break;
+	case SUIT_DIAMOND:
+		strcpy(buf, "\xe2\x99\xa6");
+		break;
+	case SUIT_CLUB:
+		strcpy(buf, "\xe2\x99\xa3");
+		break;
+	default:
+		assert(0);
+	}
+
+	switch(crd.num) {
+	case 1:
+		strcat(buf, "A");
+		break;
+	case 11:
+		strcat(buf, "J");
+		break;
+	case 12:
+		strcat(buf, "Q");
+		break;
+	case 13:
+		strcat(buf, "K");
+		break;
+	default:
+		assert(2 <= crd.num && crd.num <= 10);
+		sprintf(buf + strlen(buf), "%d", crd.num);
+		break;
 	}
 }

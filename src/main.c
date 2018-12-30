@@ -33,8 +33,11 @@ int main(void)
 
 	struct Card *botcrd = card_createallshuf();
 
-	for (struct Card *crd = botcrd; crd; crd = crd->next)
-		printf("%d %d\n", (int)crd->suit, crd->num);
+	for (struct Card *crd = botcrd; crd; crd = crd->next) {
+		char s[CARD_STRMAX];
+		card_str(*crd, s);
+		printf("%s\n", s);
+	}
 
 	card_free(botcrd);
 
