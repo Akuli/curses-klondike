@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 static void donothing(void) { }
 
@@ -18,6 +20,8 @@ static void run_test(char *nam, void (*f)(void))
 
 int main(void)
 {
+	srand(time(NULL));
+
 	RUN_TEST(card_suit_all);
 	RUN_TEST(card_suit_color);
 	RUN_TEST(card_createallshuf_free);
@@ -32,6 +36,7 @@ int main(void)
 	RUN_TEST(sol_init_free);
 	RUN_TEST(sol_dup);
 	RUN_TEST(sol_canmove);
+	RUN_TEST(sol_move);
 	RUN_TEST(sol_stocktodiscard);
 	return 0;
 }

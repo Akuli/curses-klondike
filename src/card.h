@@ -12,7 +12,7 @@ extern enum Suit suit_all[4];
 #define SUIT_COLOR(s) ((s) == SUIT_HEART || (s) == SUIT_DIAMOND)
 
 struct Card {
-	unsigned int num;
+	unsigned int num;  // 1 for A, 11 for J, 12 for Q, 13 for K, others the obvious way
 	enum Suit suit;
 	bool visible;
 	struct Card *next;   // the card that is on top of this card, or NULL

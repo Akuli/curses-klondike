@@ -99,33 +99,80 @@ void sol_dup(struct Sol src, struct Sol *dst)
 		copy_cards(src.tableau[i], &dst->tableau[i]);
 }
 
-bool sol_canmove(struct Sol sol, struct Card *src, SolCardPlace dst)
+bool sol_canmove(struct Sol sol, struct Card *crd, SolCardPlace dst)
 {
 	// taking cards stock to discard is handled by another function and not allowed here
 	// TODO: create that other function
 	// TODO: allow moving multiple cards around from tableau to tableau
-	if (src->next || dst == SOL_STOCK || dst == SOL_DISCARD || !src->visible)
+	if (crd->next || dst == SOL_STOCK || dst == SOL_DISCARD || !crd->visible)
 		return false;
 
 	if (SOL_IS_FOUNDATION(dst)) {
 		struct Card *fnd = sol.foundations[SOL_FOUNDATION_NUM(dst)];
-		if (!fnd)
-			return (src->num == 1);
+		if (!crd)
+			return (crd->num == 1);
 
 		fnd = card_top(fnd);
-		return (src->suit == fnd->suit && src->num == fnd->num + 1);
+		return (crd->suit == fnd->suit && crd->num == fnd->num + 1);
 	}
 
 	if (SOL_IS_TABLEAU(dst)) {
 		struct Card *tab = sol.tableau[SOL_TABLEAU_NUM(dst)];
 		if (!tab)
-			return (src->num == 13);
+			return (crd->num == 13);
 
 		tab = card_top(tab);
-		return (SUIT_COLOR(src->suit) != SUIT_COLOR(tab->suit) && src->num == tab->num - 1);
+		return (SUIT_COLOR(crd->suit) != SUIT_COLOR(tab->suit) && crd->num == tab->num - 1);
 	}
 
 	assert(0);
+}
+
+// returns a card whose ->next is crd, or NULL if no such card exists
+// a double-linked list would make this easier but many other things harder
+static struct Card *find_previous_card(struct Sol sol, struct Card *crd)
+{
+	struct Card *look4[2+4+7];
+	look4[0] = sol.stock;
+	look4[1] = sol.discard;
+	memcpy(look4+2, sol.foundations, sizeof(struct Card*) * 4);
+	memcpy(look4+2+4, sol.tableau, sizeof(struct Card*) * 7);
+
+	for (unsigned int i=0; i < sizeof(look4)/sizeof(look4[0]); i++)
+		for (struct Card *prv = look4[i]; prv && prv->next; prv = prv->next)
+			if (prv->next == crd)
+				return prv;
+	return NULL;
+}
+
+void sol_move(struct Sol *sol, struct Card *crd, SolCardPlace dst)
+{
+	assert(sol_canmove(*sol, crd, dst));
+
+	struct Card *prv = find_previous_card(*sol, crd);
+
+	// prv is:
+	//  * NULL, if crd was the bottommost card
+	//  * true, if moving only some of many visible cards on top of each other
+	//  * false, if crd was the bottommost VISIBLE card in the tableau list
+	if (prv) {
+		prv->next = NULL;
+		prv->visible = true;
+	}
+
+	struct Card **dstp;
+	if (dst == SOL_STOCK)
+		dstp = &sol->stock;
+	else if (dst == SOL_DISCARD)
+		dstp = &sol->discard;
+	else if (SOL_IS_FOUNDATION(dst))
+		dstp = &sol->foundations[SOL_FOUNDATION_NUM(dst)];
+	else if (SOL_IS_TABLEAU(dst))
+		dstp = &sol->tableau[SOL_TABLEAU_NUM(dst)];
+	else
+		assert(0);
+
+	card_pushtop(dstp, crd);
 }
 
 void sol_stocktodiscard(struct Sol *sol)

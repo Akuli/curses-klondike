@@ -25,8 +25,8 @@ typedef char SolCardPlace;
 #define SOL_IS_TABLEAU(val)    (SOL_TABLEAU(0)    <= (val) && (val) < SOL_TABLEAU(7))
 
 // SOL_FOUNDATION_NUM(SOL_FOUNDATION(n)) == n
-#define SOL_FOUNDATION_NUM(val) (val - SOL_FOUNDATION(0))
-#define SOL_TABLEAU_NUM(val)    (val - SOL_TABLEAU(0))
+#define SOL_FOUNDATION_NUM(fnd) (fnd - SOL_FOUNDATION(0))
+#define SOL_TABLEAU_NUM(tab)    (tab - SOL_TABLEAU(0))
 
 // list is the first card of a linked list from e.g. card_createallshuf()
 void sol_init(struct Sol *sol, struct Card *list);
@@ -42,8 +42,13 @@ void sol_free(struct Sol sol);
 void sol_dup(struct Sol src, struct Sol *dst);
 
 // returns whether a card can be moved to on top of dst
-// src must be a card in sol
-bool sol_canmove(struct Sol sol, struct Card *src, SolCardPlace dst);
+// use sol_stocktodiscard() instead for stock -> discard moves, this returns false for those
+// crd must be a card in sol
+bool sol_canmove(struct Sol sol, struct Card *crd, SolCardPlace dst);
+
+// moves the src card and ->next cards (if any) to dst
+// the move must be valid, see sol_canmove()
+void sol_move(struct Sol *sol, struct Card *crd, SolCardPlace dst);
 
 // takes a card stock -> discard, or if stock is empty, puts all discardeds to stock
 void sol_stocktodiscard(struct Sol *sol);
