@@ -101,8 +101,7 @@ void sol_dup(struct Sol src, struct Sol *dst)
 
 bool sol_canmove(struct Sol sol, struct Card *crd, SolCardPlace dst)
 {
-	// taking cards stock to discard is handled by another function and not allowed here
-	// TODO: create that other function
+	// taking cards stock to discard is handled by sol_stactodiscard() and not allowed here
 	// TODO: allow moving multiple cards around from tableau to tableau
 	if (crd->next || dst == SOL_STOCK || dst == SOL_DISCARD || !crd->visible)
 		return false;

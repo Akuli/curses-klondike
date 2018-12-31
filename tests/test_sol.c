@@ -112,7 +112,7 @@ TEST(sol_canmove)
 	assert(!sol_canmove(sol, &sol.tableau[2][0], SOL_FOUNDATION(3)));
 	assert(!sol_canmove(sol, &sol.tableau[2][0], SOL_TABLEAU(3)));
 
-	// discarding is not implemented with sol_canmove
+	// discarding is implemented with sol_stocktodiscard(), not with sol_canmove()
 	assert(!sol_canmove(sol, sol.stock, SOL_DISCARD));
 
 	// TODO: test rest of the code? problem is, how do i find e.g. ♠A or ♥Q
