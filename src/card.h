@@ -31,6 +31,11 @@ void card_free(struct Card *crd);
 // buf must have room for at least CARD_STRMAX bytes (including \0)
 void card_str(struct Card crd, char *buf);
 
+// Card.num representations: A,2,3,...,9,10,J,Q,K (longest has 2 chars)
+// suit is 3 bytes of utf8
+// this includes a trailing \0
+#define CARD_STRMAX (2+3+1)
+
 // prints card_str to stdout
 void card_debug(struct Card crd);
 
@@ -55,10 +60,5 @@ void card_pushtop(struct Card **list, struct Card *newtop);
 // checks if a card is in a linked list of cards
 // O(n) worst case
 bool card_inlist(struct Card *crd, struct Card *list);
-
-// Card.num representations: A,2,3,...,9,10,J,Q,K (longest has 2 chars)
-// suit is 3 bytes of utf8
-// this includes a trailing \0
-#define CARD_STRMAX (2+3+1)
 
 #endif  // CARD_H
