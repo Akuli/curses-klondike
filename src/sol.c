@@ -1,4 +1,5 @@
 #include "sol.h"
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,4 +97,33 @@ void sol_dup(struct Sol src, struct Sol *dst)
 		copy_cards(src.foundations[i], &dst->foundations[i]);
 	for (int i=0; i < 7; i++)
 		copy_cards(src.tableau[i], &dst->tableau[i]);
+}
+
+bool sol_canmove(struct Sol sol, struct Card *src, SolCardPlace dst)
+{
+	// taking cards stock to discard is handled by another function and not allowed here
+	// TODO: create that other function
+	// TODO: allow moving multiple cards around from tableau to tableau
+	if (src->next || dst == SOL_STOCK || dst == SOL_DISCARD || !src->visible)
+		return false;
+
+	if (SOL_IS_FOUNDATION(dst)) {
+		struct Card *fnd = sol.foundations[SOL_FOUNDATION_NUM(dst)];
+		if (!fnd)
+			return (src->num == 1);
+
+		fnd = card_top(fnd);
+		return (src->suit == fnd->suit && src->num == fnd->num + 1);
+	}
+
+	if (SOL_IS_TABLEAU(dst)) {
+		struct Card *tab = sol.tableau[SOL_TABLEAU_NUM(dst)];
+		if (!tab)
+			return (src->num == 13);
+
+		tab = card_top(tab);
+		return (SUIT_COLOR(src->suit) != SUIT_COLOR(tab->suit) && src->num == tab->num - 1);
+	}
+
+	assert(0);
 }

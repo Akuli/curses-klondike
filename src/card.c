@@ -137,3 +137,11 @@ void card_pushtop(struct Card **list, struct Card *newtop)
 	} else
 		*list = newtop;
 }
+
+bool card_inlist(struct Card *crd, struct Card *list)
+{
+	for ( ; list; list = list->next)
+		if (crd == list)
+			return true;
+	return false;
+}

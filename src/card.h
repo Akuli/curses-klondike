@@ -8,6 +8,9 @@ enum Suit { SUIT_SPADE, SUIT_HEART, SUIT_DIAMOND, SUIT_CLUB };
 // an array of all suits
 extern enum Suit suit_all[4];
 
+// 1 for red, 0 for black
+#define SUIT_COLOR(s) ((s) == SUIT_HEART || (s) == SUIT_DIAMOND)
+
 struct Card {
 	unsigned int num;
 	enum Suit suit;
@@ -35,6 +38,7 @@ void card_debug(struct Card crd);
 // bad things happen if crd is NULL
 // never returns NULL
 // card_top(...)->next is always NULL
+// O(n)
 struct Card *card_top(struct Card *crd);
 
 // gets bottommost card from a linked list of cards
@@ -45,7 +49,12 @@ struct Card *card_popbot(struct Card **bot);
 // adds a card to top of a linked list of cards
 // if *list is NULL, sets *list to newtop
 // if *list is non-NULL, sets card_top(*list)->next to newtop
+// O(n) if list is the bottommost card in a list, O(1) if list is topmost card in the list
 void card_pushtop(struct Card **list, struct Card *newtop);
+
+// checks if a card is in a linked list of cards
+// O(n) worst case
+bool card_inlist(struct Card *crd, struct Card *list);
 
 // Card.num representations: A,2,3,...,9,10,J,Q,K (longest has 2 chars)
 // suit is 3 bytes of utf8
