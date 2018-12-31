@@ -37,6 +37,6 @@ int main(void)
 	RUN_TEST(sol_dup);
 	RUN_TEST(sol_canmove);
 	RUN_TEST(sol_move);
-	RUN_TEST(sol_stocktodiscard);
+	RUN_TEST(sol_stock2discard);
 	return 0;
 }

@@ -174,7 +174,7 @@ static void discard_check(struct Sol sol, int ndiscarded)
 	assert(dvis == ndiscarded);
 }
 
-TEST(sol_stocktodiscard)
+TEST(sol_stock2discard)
 {
 	struct Sol sol;
 	sol_init(&sol, card_createallshuf());
@@ -182,21 +182,21 @@ TEST(sol_stocktodiscard)
 
 	struct Card *savestock = sol.stock;
 
-	sol_stocktodiscard(&sol);
+	sol_stock2discard(&sol);
 	discard_check(sol, 1);
 
-	sol_stocktodiscard(&sol);
+	sol_stock2discard(&sol);
 	discard_check(sol, 2);
 
 	for (int n=3; n <= 13*4 - (1+2+3+4+5+6+7) - 1; n++) {
-		sol_stocktodiscard(&sol);
+		sol_stock2discard(&sol);
 		discard_check(sol, n);
 	}
 
-	sol_stocktodiscard(&sol);
+	sol_stock2discard(&sol);
 	discard_check(sol, 13*4 - (1+2+3+4+5+6+7));
 
-	sol_stocktodiscard(&sol);
+	sol_stock2discard(&sol);
 	discard_check(sol, 0);
 
 	// make sure that the order of the cards doesn't reverse

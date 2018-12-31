@@ -37,7 +37,7 @@ int main(void)
 	struct Sol sol;
 	sol_init(&sol, list);
 	for (int i=0; i < 100; i++) {
-		sol_stocktodiscard(&sol);
+		sol_stock2discard(&sol);
 		sol_debug(sol);
 	}
 	sol_free(sol);

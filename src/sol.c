@@ -174,7 +174,7 @@ void sol_move(struct Sol *sol, struct Card *crd, SolCardPlace dst)
 	card_pushtop(dstp, crd);
 }
 
-void sol_stocktodiscard(struct Sol *sol)
+void sol_stock2discard(struct Sol *sol)
 {
 	if (!sol->stock) {
 		for (struct Card *crd = sol->discard; crd; crd = crd->next) {

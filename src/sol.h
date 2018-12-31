@@ -51,6 +51,6 @@ bool sol_canmove(struct Sol sol, struct Card *crd, SolCardPlace dst);
 void sol_move(struct Sol *sol, struct Card *crd, SolCardPlace dst);
 
 // takes a card stock -> discard, or if stock is empty, puts all discardeds to stock
-void sol_stocktodiscard(struct Sol *sol);
+void sol_stock2discard(struct Sol *sol);
 
 #endif  // SOL_H
