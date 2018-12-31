@@ -21,4 +21,8 @@ void sol_debug(struct Sol sol);
 // frees all cards in the game
 void sol_free(struct Sol sol);
 
+// copies everything from src to dst
+// also creates new cards
+void sol_dup(struct Sol src, struct Sol *dst);
+
 #endif  // SOL_H

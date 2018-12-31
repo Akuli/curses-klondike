@@ -1,7 +1,10 @@
 #include "sol.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "card.h"
+#include "misc.h"
 
 void sol_init(struct Sol *sol, struct Card *list)
 {
@@ -62,4 +65,35 @@ void sol_free(struct Sol sol)
 		card_free(sol.foundations[i]);
 	for (int i=0; i < 7; i++)
 		card_free(sol.tableau[i]);
+}
+
+static void copy_cards(struct Card *src, struct Card **dst)
+{
+	*dst = NULL;
+	struct Card *top = NULL;
+
+	for (; src; src = src->next) {
+		struct Card *dup = malloc(sizeof(struct Card));
+		if (!dup)
+			fatal_error("malloc() failed");
+
+		memcpy(dup, src, sizeof(struct Card));
+		dup->next = NULL;
+
+		if (top)
+			top->next = dup;
+		else
+			*dst = dup;
+		top = dup;
+	}
+}
+
+void sol_dup(struct Sol src, struct Sol *dst)
+{
+	copy_cards(src.stock, &dst->stock);
+	copy_cards(src.discard, &dst->discard);
+	for (int i=0; i < 4; i++)
+		copy_cards(src.foundations[i], &dst->foundations[i]);
+	for (int i=0; i < 7; i++)
+		copy_cards(src.tableau[i], &dst->tableau[i]);
 }

@@ -34,10 +34,12 @@ int main(void)
 
 	struct Card *list = card_createallshuf();
 
-	struct Sol sol;
+	struct Sol sol, sol2;
 	sol_init(&sol, list);
-	sol_debug(sol);
+	sol_dup(sol, &sol2);
+	sol_debug(sol2);
 	sol_free(sol);
+	sol_free(sol2);
 
 	/*
 	initscr();
