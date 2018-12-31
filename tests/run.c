@@ -20,7 +20,9 @@ static void run_test(char *nam, void (*f)(void))
 
 int main(void)
 {
-	srand(time(NULL));
+	unsigned int s = time(NULL);
+	printf("srand seed: %u\n", s);
+	srand(s);
 
 	RUN_TEST(card_suit_all);
 	RUN_TEST(card_suit_color);

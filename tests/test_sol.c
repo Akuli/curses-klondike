@@ -127,18 +127,17 @@ static void init_movable_sol(struct Sol *sol, int *srctab, int *dsttab)
 		sol_init(sol, card_createallshuf());
 
 		for (int i=0; i < 7; i++)
-		for (int j=0; j < 7; j++)
-		{
-			if (i == j)
-				continue;
+			for (int j=0; j < 7; j++) {
+				if (i == j)
+					continue;
 
-			struct Card *itop = card_top(sol->tableau[i]);
-			if (sol_canmove( *sol, itop, SOL_TABLEAU(j) )) {
-				*srctab = i;
-				*dsttab = j;
-				return;
+				struct Card *itop = card_top(sol->tableau[i]);
+				if (sol_canmove( *sol, itop, SOL_TABLEAU(j) )) {
+					*srctab = i;
+					*dsttab = j;
+					return;
+				}
 			}
-		}
 
 		sol_free(*sol);
 	}
@@ -156,8 +155,15 @@ TEST(sol_move)
 		int visible = 0;
 		assert(count_cards(sol.tableau[i], NULL, &visible) == ncrd);
 
-		assert(visible == (i==dsttab ? 2 : 1));
-		assert(card_top(sol.tableau[i])->visible);
+		if (i == dsttab)
+			assert(visible == 2);
+		else if (i == 0 && srctab == 0)
+			assert(visible == 0);
+		else
+			assert(visible == 1);
+
+		if (sol.tableau[i])
+			assert(card_top(sol.tableau[i])->visible);
 	}
 
 	sol_free(sol);

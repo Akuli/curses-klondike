@@ -127,37 +127,49 @@ bool sol_canmove(struct Sol sol, struct Card *crd, SolCardPlace dst)
 	assert(0);
 }
 
-// returns a card whose ->next is crd, or NULL if no such card exists
+// replaces crd with NULL in sol
+// if crd is someothercrd->next, someothercrd is returned
 // a double-linked list would make this easier but many other things harder
-static struct Card *find_previous_card(struct Sol sol, struct Card *crd)
+static struct Card *detach_card_from_sol(struct Sol *sol, struct Card *crd)
 {
-	struct Card *look4[2+4+7];
-	look4[0] = sol.stock;
-	look4[1] = sol.discard;
-	memcpy(look4+2, sol.foundations, sizeof(struct Card*) * 4);
-	memcpy(look4+2+4, sol.tableau, sizeof(struct Card*) * 7);
+	struct Card **look4[2+4+7];
+	struct Card ***look4ptr = look4;
+	*look4ptr++ = &sol->stock;
+	*look4ptr++ = &sol->discard;
+	for (int i=0; i < 4; i++)
+		*look4ptr++ = &sol->foundations[i];
+	for (int i=0; i < 7; i++)
+		*look4ptr++ = &sol->tableau[i];
 
-	for (unsigned int i=0; i < sizeof(look4)/sizeof(look4[0]); i++)
-		for (struct Card *prv = look4[i]; prv && prv->next; prv = prv->next)
-			if (prv->next == crd)
+	for (unsigned int i=0; i < sizeof(look4)/sizeof(look4[0]); i++) {
+		// special case: no card has crd as ->next
+		if (*look4[i] == crd) {
+			*look4[i] = NULL;
+			return NULL;
+		}
+
+		for (struct Card *prv = *look4[i]; prv && prv->next; prv = prv->next)
+			if (prv->next == crd) {
+				prv->next = NULL;
 				return prv;
-	return NULL;
+			}
+	}
+
+	assert(0);
 }
 
 void sol_move(struct Sol *sol, struct Card *crd, SolCardPlace dst)
 {
 	assert(sol_canmove(*sol, crd, dst));
 
-	struct Card *prv = find_previous_card(*sol, crd);
+	struct Card *prv = detach_card_from_sol(sol, crd);
 
-	// prv is:
-	//  * NULL, if crd was the bottommost card
-	//  * true, if moving only some of many visible cards on top of each other
-	//  * false, if crd was the bottommost VISIBLE card in the tableau list
-	if (prv) {
-		prv->next = NULL;
+	// prv:
+	//  * is NULL, if crd was the bottommost card
+	//  * has ->next==true, if moving only some of many visible cards on top of each other
+	//  * has ->next==false, if crd was the bottommost VISIBLE card in the tableau list
+	if (prv)
 		prv->visible = true;
-	}
 
 	struct Card **dstp;
 	if (dst == SOL_STOCK)
