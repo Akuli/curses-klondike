@@ -20,6 +20,7 @@ struct Card {
 struct Card *card_createallshuf(void);
 
 // frees the card, and its ->next and ->next->next etc
+// does nothing if crd is NULL
 void card_free(struct Card *crd);
 
 // writes a \0-terminated utf8 string representiation of the card to buf
@@ -27,17 +28,24 @@ void card_free(struct Card *crd);
 // buf must have room for at least CARD_STRMAX bytes (including \0)
 void card_str(struct Card crd, char *buf);
 
+// prints card_str to stdout
+void card_debug(struct Card crd);
+
 // returns topmost card in a linked list of cards
 // bad things happen if crd is NULL
 // never returns NULL
 // card_top(...)->next is always NULL
 struct Card *card_top(struct Card *crd);
 
-// for handling linked lists of cards
-// moves bottommost card of *srcbot to on top of card_top(dst), handling ->next properly
-// bad things happen if *srcbot is NULL
-// if (*srcbot)->next is NULL, *srcbot is set to NULL
-void card_movebot2top(struct Card **srcbot, struct Card *dst);
+// gets bottommost card from a linked list of cards
+// sets *bot to (*bot)->next (that can be NULL)
+// bad things happen if *bot is NULL
+struct Card *card_popbot(struct Card **bot);
+
+// adds a card to top of a linked list of cards
+// if *list is NULL, sets *list to newtop
+// if *list is non-NULL, sets card_top(*list)->next to newtop
+void card_pushtop(struct Card **list, struct Card *newtop);
 
 // Card.num representations: A,2,3,...,9,10,J,Q,K (longest has 2 chars)
 // suit is 3 bytes of utf8

@@ -105,6 +105,13 @@ void card_str(struct Card crd, char *buf)
 	}
 }
 
+void card_debug(struct Card crd)
+{
+	char buf[CARD_STRMAX];
+	card_str(crd, buf);
+	printf("%s\n", buf);
+}
+
 struct Card *card_top(struct Card *crd)
 {
 	while (crd->next)
@@ -112,10 +119,20 @@ struct Card *card_top(struct Card *crd)
 	return crd;
 }
 
-void card_movebot2top(struct Card **srcbot, struct Card *dstbot)
+struct Card *card_popbot(struct Card **bot)
 {
-	struct Card *mv = *srcbot;  // c funniness: src and srcbot are different types, but this is correct
-	*srcbot = mv->next;
-	mv->next = NULL;
-	card_top(dstbot)->next = mv;
+	struct Card *res = *bot;  // c funniness: res and bot are different types, but this is correct
+	*bot = res->next;
+	res->next = NULL;
+	return res;
+}
+
+void card_pushtop(struct Card **list, struct Card *newtop)
+{
+	if (*list) {
+		struct Card *top = card_top(*list);
+		assert(!top->next);
+		top->next = newtop;
+	} else
+		*list = newtop;
 }
