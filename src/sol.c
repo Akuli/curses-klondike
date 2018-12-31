@@ -1,7 +1,6 @@
 #include "sol.h"
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include "card.h"
 
 void sol_init(struct Sol *sol, struct Card *list)
