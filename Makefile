@@ -31,7 +31,7 @@ iwyu:
 	for file in $(TESTS_SRC); do $(IWYU) -I. $$file; done || true
 
 testrunner: $(TESTS_SRC) $(OBJ)
-	$(CC) -I. $(CFLAGS) $(TESTS_SRC) $(OBJ) -o testrunner
+	$(CC) -I. $(CFLAGS) $(TESTS_SRC) $(OBJ) -o testrunner $(LDFLAGS)
 
 .PHONY: test
 test: testrunner

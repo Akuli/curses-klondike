@@ -6,6 +6,7 @@
 #include "card.h"
 #include "misc.h"
 #include "sol.h"
+#include "ui.h"
 
 
 static bool initscred = false;
@@ -20,7 +21,6 @@ static void exitcb(void)
 }
 void (*onerrorexit)(void) = exitcb;
 
-
 int main(void)
 {
 	// displaying unicodes correctly needs setlocale here AND cursesw instead of curses in makefile
@@ -32,25 +32,32 @@ int main(void)
 		fatal_error("time() failed");
 	srand(t);
 
+	if (!initscr())
+		fatal_error("initscr() failed");
+	initscred = true;
+
 	struct Card *list = card_createallshuf();
 
 	struct Sol sol;
 	sol_init(&sol, list);
 	for (int i=0; i < 100; i++) {
 		sol_stock2discard(&sol);
-		sol_debug(sol);
+		//sol_debug(sol);
 	}
-	sol_free(sol);
 
-	/*
-	initscr();
-	initscred = true;
+	refresh();   // yes, this is needed before drawing the cards
 
-	printw("asd asd \xe2\x99\xa0");
+	ui_drawcard(stdscr, *sol.tableau[0], 0, 0);
+	getch();
+	ui_drawcard(stdscr, *sol.tableau[2], 6, 1);
+	getch();
+	erase();
 	refresh();
 	getch();
+	ui_drawcard(stdscr, *sol.tableau[2], 6, 1);
+	getch();
+	sol_free(sol);
 	endwin();
-	*/
 
 	return 0;
 }
