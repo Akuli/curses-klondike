@@ -5,6 +5,9 @@
 #include "card.h"
 #include "misc.h"
 
+#define XOFFSET 3
+#define YOFFSET 2
+
 static inline int x_cardcount2ui(int xcnt, int w)
 {
 	// evenly spaced 7 columns, centered
@@ -26,11 +29,12 @@ static inline int y_cardcount2ui(int ycnt, int h)
 	return 1 + ycnt*(UI_CARDHEIGHT + 1);
 }
 
-void ui_drawcard(WINDOW *win, struct Card crd, int xcnt, int ycnt)
+void ui_drawcard(WINDOW *win, struct Card crd, int xcnt, int ycnt, int xoff, int yoff)
 {
 	int w, h;
 	getmaxyx(win, h, w);
-	int x = x_cardcount2ui(xcnt, w), y = y_cardcount2ui(ycnt, h);
+	int x = x_cardcount2ui(xcnt, w) + xoff*XOFFSET;
+	int y = y_cardcount2ui(ycnt, h) + yoff*YOFFSET;
 
 	// TODO: don't create a new window for this every time?
 	WINDOW *crdwin = newwin(UI_CARDHEIGHT, UI_CARDWIDTH, y, x);

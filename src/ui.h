@@ -7,6 +7,6 @@
 #define UI_CARDWIDTH 10
 #define UI_CARDHEIGHT 7
 
-void ui_drawcard(WINDOW *win, struct Card crd, int xcnt, int ycnt);
+void ui_drawcard(WINDOW *win, struct Card crd, int xcnt, int ycnt, int xoff, int yoff);
 
 #endif  // UI_H
