@@ -17,8 +17,6 @@ void sol_init(struct Sol *sol, struct Card *list)
 	}
 
 	sol->stock = list;
-	sol->stock->visible = true;  // topmost stock card visible
-
 	sol->discard = NULL;
 	for (int i=0; i < 4; i++)
 		sol->foundations[i] = NULL;
@@ -133,15 +131,9 @@ bool sol_canmove(struct Sol sol, struct Card *src, SolCardPlace dst)
 void sol_stocktodiscard(struct Sol *sol)
 {
 	if (!sol->stock) {
-		// the topmost card should end up visible, others shouldn't
-		bool willBontop = true;
-
 		for (struct Card *crd = sol->discard; crd; crd = crd->next) {
 			assert(crd->visible);
-			if (willBontop)
-				willBontop = false;
-			else
-				crd->visible = false;
+			crd->visible = false;
 		}
 
 		sol->stock = sol->discard;   // may be NULL when all stock cards have been used
@@ -151,8 +143,7 @@ void sol_stocktodiscard(struct Sol *sol)
 
 	// the card on top of the stock must be visible, but other stock cards aren't
 	struct Card *pop = card_popbot(&sol->stock);
-	assert(pop->visible);
+	assert(!pop->visible);
+	pop->visible = true;
 	card_pushtop(&sol->discard, pop);
-	if (sol->stock)
-		sol->stock->visible = true;
 }

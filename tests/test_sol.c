@@ -49,8 +49,7 @@ TEST(sol_init_free)
 
 	int svis = 0;
 	assert(count_cards(sol.stock, &total, &svis) == 13*4 - (1+2+3+4+5+6+7));
-	assert(svis == 1);
-	assert(sol.stock->visible);  // topmost stock card visible
+	assert(svis == 0);
 
 	assert(count_cards(sol.discard, &total, NULL) == 0);
 
@@ -114,7 +113,6 @@ TEST(sol_canmove)
 	assert(!sol_canmove(sol, &sol.tableau[2][0], SOL_TABLEAU(3)));
 
 	// discarding is not implemented with sol_canmove
-	assert(sol.stock->visible);
 	assert(!sol_canmove(sol, sol.stock, SOL_DISCARD));
 
 	// TODO: test rest of the code? problem is, how do i find e.g. ♠A or ♥Q
@@ -126,12 +124,7 @@ static void discard_check(struct Sol sol, int ndiscarded)
 {
 	int svis = 0;
 	assert(count_cards(sol.stock, NULL, &svis) == 13*4 - (1+2+3+4+5+6+7) - ndiscarded);
-
-	if (sol.stock){
-		assert(svis == 1);
-		assert(sol.stock->visible);
-	} else
-		assert(svis == 0);
+	assert(svis == 0);
 
 	int dvis = 0;
 	assert(count_cards(sol.discard, NULL, &dvis) == ndiscarded);
