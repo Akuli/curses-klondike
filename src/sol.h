@@ -1,5 +1,5 @@
-#ifndef LOGIC_H
-#define LOGIC_H
+#ifndef SOL_H
+#define SOL_H
 
 #include "card.h"   // IWYU pragma: keep
 
@@ -21,4 +21,4 @@ void sol_debug(struct Sol sol);
 // frees all cards in the game
 void sol_free(struct Sol sol);
 
-#endif  // LOGIC_H
+#endif  // SOL_H

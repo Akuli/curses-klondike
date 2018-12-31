@@ -1,5 +1,5 @@
-#ifndef CORE_H
-#define CORE_H
+#ifndef CARD_H
+#define CARD_H
 
 #include <stdbool.h>
 
@@ -52,4 +52,4 @@ void card_pushtop(struct Card **list, struct Card *newtop);
 // this includes a trailing \0
 #define CARD_STRMAX (2+3+1)
 
-#endif  // CORE_H
+#endif  // CARD_H
