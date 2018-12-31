@@ -23,7 +23,7 @@ void (*onerrorexit)(void) = exitcb;
 
 int main(void)
 {
-	// displaying unicodes correctly needs setlocale here AND -lncursesw in makefile
+	// displaying unicodes correctly needs setlocale here AND cursesw instead of curses in makefile
 	if (!setlocale(LC_ALL, ""))
 		fatal_error("setlocale() failed");
 
