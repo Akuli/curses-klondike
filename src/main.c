@@ -50,7 +50,7 @@ int main(void)
 	ui_drawcard(stdscr, *sol.tableau[0], 0, 0, 0, 0);
 	ui_drawcard(stdscr, *sol.tableau[1], 0, 0, 1, 0);
 	ui_drawcard(stdscr, *sol.tableau[2], 0, 0, 2, 0);
-	ui_drawcard(stdscr, *sol.tableau[3], 0, 0, 3, 0);
+	ui_drawcard(stdscr, *sol.tableau[0], 0, 0, 3, 0);
 	ui_drawcard(stdscr, *sol.tableau[3]->next, 6, 1, 0, 0);
 	ui_drawcard(stdscr, *sol.tableau[3]->next->next, 6, 1, 0, 1);
 	getch();
