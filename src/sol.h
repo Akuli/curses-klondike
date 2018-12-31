@@ -6,11 +6,11 @@
 
 struct Sol {
 	// https://www.denexa.com/wp-content/uploads/2015/11/klondike.png
-	// these point to first cards, use ->next to access others
-	struct Card *stock;
-	struct Card *discard;
-	struct Card *foundations[4];  // bottommost cards or NULL
-	struct Card *tableau[7];      // bottommost cards or NULL
+	// these point to just one card, use ->next to access others
+	struct Card *stock;           // TOPMOST card or NULL
+	struct Card *discard;         // bottommost card or NULL
+	struct Card *foundations[4];  // bottommost cards or NULLs
+	struct Card *tableau[7];      // bottommost cards or NULLs
 };
 
 // enumy values that represent places where cards can be moved to
@@ -44,5 +44,8 @@ void sol_dup(struct Sol src, struct Sol *dst);
 // returns whether a card can be moved to on top of dst
 // src must be a card in sol
 bool sol_canmove(struct Sol sol, struct Card *src, SolCardPlace dst);
+
+// takes a card stock -> discard, or if stock is empty, puts all discardeds to stock
+void sol_stocktodiscard(struct Sol *sol);
 
 #endif  // SOL_H

@@ -127,3 +127,22 @@ bool sol_canmove(struct Sol sol, struct Card *src, SolCardPlace dst)
 
 	assert(0);
 }
+
+void sol_stocktodiscard(struct Sol *sol)
+{
+	if (!sol->stock) {
+		for (struct Card *crd = sol->discard; crd; crd = crd->next) {
+			assert(crd->visible);
+			crd->visible = false;
+		}
+
+		sol->stock = sol->discard;   // may be NULL
+		sol->discard = NULL;
+		return;
+	}
+
+	struct Card *pop = card_popbot(&sol->stock);
+	assert(!pop->visible);
+	pop->visible = true;
+	card_pushtop(&sol->discard, pop);
+}
