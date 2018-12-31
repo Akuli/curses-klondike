@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdbool.h>
-#include <string.h>
 #include <src/card.h>
+#include <string.h>
 #include "util.h"
 
 TEST(card_suit_all) {

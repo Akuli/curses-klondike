@@ -27,5 +27,11 @@ int main(void)
 	RUN_TEST(card_popbot);
 	RUN_TEST(card_pushtop);
 	RUN_TEST(card_inlist);
+
+	RUN_TEST(sol_cardplace);
+	RUN_TEST(sol_init_free);
+	RUN_TEST(sol_dup);
+	RUN_TEST(sol_canmove);
+	RUN_TEST(sol_stocktodiscard);
 	return 0;
 }
