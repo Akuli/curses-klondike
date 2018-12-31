@@ -67,7 +67,29 @@ void card_free(struct Card *crd)
 	}
 }
 
-void card_str(struct Card crd, char *buf)
+void card_numstr(struct Card crd, char *buf)
+{
+	switch(crd.num) {
+	case 1:
+		strcpy(buf, "A");
+		break;
+	case 11:
+		strcpy(buf, "J");
+		break;
+	case 12:
+		strcpy(buf, "Q");
+		break;
+	case 13:
+		strcpy(buf, "K");
+		break;
+	default:
+		assert(2 <= crd.num && crd.num <= 10);
+		sprintf(buf, "%d", crd.num);
+		break;
+	}
+}
+
+void card_suitstr(struct Card crd, char *buf)
 {
 	switch(crd.suit) {
 	case SUIT_SPADE:
@@ -85,32 +107,16 @@ void card_str(struct Card crd, char *buf)
 	default:
 		assert(0);
 	}
-
-	switch(crd.num) {
-	case 1:
-		strcat(buf, "A");
-		break;
-	case 11:
-		strcat(buf, "J");
-		break;
-	case 12:
-		strcat(buf, "Q");
-		break;
-	case 13:
-		strcat(buf, "K");
-		break;
-	default:
-		assert(2 <= crd.num && crd.num <= 10);
-		sprintf(buf + strlen(buf), "%d", crd.num);
-		break;
-	}
 }
 
 void card_debug(struct Card crd)
 {
-	char buf[CARD_STRMAX];
-	card_str(crd, buf);
-	printf("%s\n", buf);
+	// -1 because both CARD_NUMSTRMAX and CARD_SUITSTRMAX include room for \0, but
+	// we only need one \0, not two
+	char sbuf[CARD_SUITSTRMAX], nbuf[CARD_NUMSTRMAX];
+	card_suitstr(crd, sbuf);
+	card_numstr(crd, nbuf);
+	printf("%s%s\n", sbuf, nbuf);
 }
 
 struct Card *card_top(struct Card *crd)

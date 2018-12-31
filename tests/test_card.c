@@ -56,7 +56,7 @@ TEST(card_createallshuf_gives_all_52_cards)
 			assert(got[i][j] == 1);
 }
 
-struct CardStrTest { int num; char *suffix; };
+struct CardStrTest { int num; char *numstr; };
 
 TEST(card_str)
 {
@@ -82,12 +82,13 @@ TEST(card_str)
 			.visible = visible,
 			.next = NULL
 		};
-		char s[CARD_STRMAX];
-		card_str(crd, s);
+		char sbuf[CARD_SUITSTRMAX], nbuf[CARD_NUMSTRMAX];
+		card_suitstr(crd, sbuf);
+		card_numstr(crd, nbuf);
 
-		// the unicode is 3 bytes
-		assert(strlen(s) > 3);
-		assert(strcmp(s+3, tests[i].suffix) == 0);
+		// the unicode should be 3 bytes
+		assert(strlen(sbuf) == 3);
+		assert(strcmp(nbuf, tests[i].numstr) == 0);
 	}
 }
 

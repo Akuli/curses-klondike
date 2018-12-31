@@ -26,9 +26,10 @@ static int print_cards(struct Card *list)
 {
 	int n = 0;
 	for (; list; list = list->next) {
-		char s[CARD_STRMAX];
-		card_str(*list, s);
-		printf(" %s%s", list->visible ? "v" : "?", s);
+		char sbuf[CARD_SUITSTRMAX], nbuf[CARD_NUMSTRMAX];
+		card_suitstr(*list, sbuf);
+		card_numstr(*list, nbuf);
+		printf(" %c%s%s", list->visible ? 'v' : '?', sbuf, nbuf);
 		n++;
 	}
 	printf(" (%d cards)\n", n);

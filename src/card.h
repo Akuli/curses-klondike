@@ -26,15 +26,16 @@ struct Card *card_createallshuf(void);
 // does nothing if crd is NULL
 void card_free(struct Card *crd);
 
-// writes a \0-terminated utf8 string representiation of the card to buf
-// useful for ui and debugging
-// buf must have room for at least CARD_STRMAX bytes (including \0)
-void card_str(struct Card crd, char *buf);
+// these write \0-terminated utf8 strings to buf
+// buf must have room for at least CARD_{NUM,SUIT}STRMAX bytes
+void card_numstr(struct Card crd, char *buf);
+void card_suitstr(struct Card crd, char *buf);
 
-// Card.num representations: A,2,3,...,9,10,J,Q,K (longest has 2 chars)
-// suit is 3 bytes of utf8
-// this includes a trailing \0
-#define CARD_STRMAX (2+3+1)
+
+// Card.num representations: A,2,3,...,9,10,J,Q,K (biggest is "10")
+// suits are 3 bytes of utf8 + \0
+#define CARD_NUMSTRMAX (sizeof("10"))
+#define CARD_SUITSTRMAX (3+1)
 
 // prints card_str to stdout
 void card_debug(struct Card crd);
