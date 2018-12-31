@@ -5,6 +5,7 @@
 #include <time.h>
 #include "card.h"
 #include "misc.h"
+#include "sol.h"
 
 
 static bool initscred = false;
@@ -31,15 +32,12 @@ int main(void)
 		fatal_error("time() failed");
 	srand(t);
 
-	struct Card *botcrd = card_createallshuf();
+	struct Card *list = card_createallshuf();
 
-	for (struct Card *crd = botcrd; crd; crd = crd->next) {
-		char s[CARD_STRMAX];
-		card_str(*crd, s);
-		printf("%s\n", s);
-	}
-
-	card_free(botcrd);
+	struct Sol sol;
+	sol_init(&sol, list);
+	sol_debug(sol);
+	sol_free(sol);
 
 	/*
 	initscr();
