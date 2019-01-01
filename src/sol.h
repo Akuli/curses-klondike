@@ -46,6 +46,10 @@ void sol_dup(struct Sol src, struct Sol *dst);
 // crd must be a card in sol
 bool sol_canmove(struct Sol sol, struct Card *crd, SolCardPlace dst);
 
+// replaces crd with NULL in sol
+// if crd is someothercrd->next, someothercrd is returned
+struct Card *sol_detachcard(struct Sol *sol, struct Card *crd);
+
 // moves the src card and ->next cards (if any) to dst
 // the move must be valid, see sol_canmove()
 void sol_move(struct Sol *sol, struct Card *crd, SolCardPlace dst);

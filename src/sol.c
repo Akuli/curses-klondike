@@ -144,10 +144,8 @@ bool sol_canmove(struct Sol sol, struct Card *crd, SolCardPlace dst)
 	assert(0);
 }
 
-// replaces crd with NULL in sol
-// if crd is someothercrd->next, someothercrd is returned
 // a double-linked list would make this easier but many other things harder
-static struct Card *detach_card_from_sol(struct Sol *sol, struct Card *crd)
+struct Card *sol_detachcard(struct Sol *sol, struct Card *crd)
 {
 	struct Card **look4[2+4+7];
 	struct Card ***look4ptr = look4;
@@ -179,7 +177,7 @@ void sol_move(struct Sol *sol, struct Card *crd, SolCardPlace dst)
 {
 	assert(sol_canmove(*sol, crd, dst));
 
-	struct Card *prv = detach_card_from_sol(sol, crd);
+	struct Card *prv = sol_detachcard(sol, crd);
 
 	// prv:
 	//  * is NULL, if crd was the bottommost card
