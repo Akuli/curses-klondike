@@ -106,7 +106,6 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xcnt, int ycnt
 		toptxty += Y_OFFSET_SMALL;
 		n--;
 	}
-	printf("(%d,%d)\t", ncardstotal, n);
 
 	// to give some extra room that wouldn't be really necessary, but is nicer
 	n--;
@@ -117,9 +116,7 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xcnt, int ycnt
 			draw_card(win, *crd, xcnt, ycnt, xo, yos, yob++);
 		else
 			draw_card(win, *crd, xcnt, ycnt, xo, yos++, yob);
-		printf("r");
 	}
-	printf("\t");
 }
 
 void ui_drawsol(WINDOW *win, struct Sol sol)
