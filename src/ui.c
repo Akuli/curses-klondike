@@ -123,6 +123,8 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xcnt, int ycnt
 
 void ui_drawsol(WINDOW *win, struct Sol sol)
 {
+	werase(win);
+
 	// all cards in stock are non-visible and perfectly lined up on top of each other
 	// so just draw one of them, if any
 	if (sol.stock)
