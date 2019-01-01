@@ -1,5 +1,7 @@
 #include "ui.h"
+#include <assert.h>
 #include <curses.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include "card.h"
@@ -34,24 +36,37 @@ static inline int ui_y(int ycnt, int h)
 	return ycnt*UI_CARDHEIGHT;
 }
 
+// because i need 2 kind of borders, "normal" and "selected"
+struct Border {
+	// e.g. hrz = horizontal, ul = upper left
+	char *hrz, *vrt, *ul, *ur, *ll, *lr;
+};
+
+// https://en.wikipedia.org/wiki/Box-drawing_character#Unicode
+static struct Border normal_border = { "─", "│", "╭", "╮", "╰", "╯" };
+static struct Border selected_border = { "═", "║", "╔", "╗", "╚", "╝" };
+
 // box() is annoyingly for subwindows only
-static void draw_box(WINDOW *win, int xstart, int ystart, int w, int h, char bg)
+static void draw_box(WINDOW *win, int xstart, int ystart, int w, int h, char bg, bool sel)
 {
-	mvwaddch(win, ystart, xstart, ACS_ULCORNER);
-	mvwhline(win, ystart, xstart+1, 0, UI_CARDWIDTH - 2);
-	mvwaddch(win, ystart, xstart+UI_CARDWIDTH-1, ACS_URCORNER);
+	struct Border b = sel ? selected_border : normal_border;
 
-	mvwvline(win, ystart+1, xstart, 0, UI_CARDHEIGHT - 2);
-	mvwvline(win, ystart+1, xstart+UI_CARDWIDTH-1, 0, UI_CARDHEIGHT - 2);
+	mvwaddstr(win, ystart, xstart, b.ul);
+	for (int x=xstart+1; x < xstart+w-1; x++)
+		mvwaddstr(win, ystart, x, b.hrz);
+	mvwaddstr(win, ystart, xstart+w-1, b.ur);
 
-	mvwaddch(win, ystart+UI_CARDHEIGHT-1, xstart, ACS_LLCORNER);
-	mvwhline(win, ystart+UI_CARDHEIGHT-1, xstart+1, 0, UI_CARDWIDTH - 2);
-	mvwaddch(win, ystart+UI_CARDHEIGHT-1, xstart+UI_CARDWIDTH-1, ACS_LRCORNER);
-
-	// fill the box with bg
-	for (int x = xstart+1; x < xstart+w-1; x++)
-		for (int y = ystart+1; y < ystart+h-1; y++)
+	for (int y=ystart+1; y < ystart+h-1; y++) {
+		mvwaddstr(win, y, xstart, b.vrt);
+		for (int x=xstart+1; x < xstart+w-1; x++)
 			mvwaddch(win, y, x, bg);
+		mvwaddstr(win, y, xstart+w-1, b.vrt);
+	}
+
+	mvwaddstr(win, ystart+h-1, xstart, b.ll);
+	for (int x=xstart+1; x < xstart+w-1; x++)
+		mvwaddstr(win, ystart+h-1, x, b.hrz);
+	mvwaddstr(win, ystart+h-1, xstart+w-1, b.lr);
 }
 
 // draws crd on win
@@ -60,15 +75,17 @@ static void draw_box(WINDOW *win, int xstart, int ystart, int w, int h, char bg)
 // newwin() doesn't work because partially erasing borders is surprisingly tricky
 // partial erasing is needed for cards that are on top of cards
 // since we can't use subwindow borders, they're not very helpful
-static void draw_card(WINDOW *win, struct Card crd, int xstart, int ystart)
+static void draw_card(WINDOW *win, struct Card *crd, int xstart, int ystart, bool sel)
 {
+	if (crd || sel)
+		draw_box(win, xstart, ystart, UI_CARDWIDTH, UI_CARDHEIGHT, (!crd || crd->visible) ? ' ' : '?', sel);
+	if (!crd)
+		return;
 
-	draw_box(win, xstart, ystart, UI_CARDWIDTH, UI_CARDHEIGHT, crd.visible ? ' ' : '?');
-
-	if (crd.visible) {
+	if (crd->visible) {
 		char sbuf[CARD_SUITSTRMAX], nbuf[CARD_NUMSTRMAX];
-		card_suitstr(crd, sbuf);
-		card_numstr(crd, nbuf);
+		card_suitstr(*crd, sbuf);
+		card_numstr(*crd, nbuf);
 
 		mvaddstr(ystart+1, xstart+1, nbuf);
 		mvaddstr(ystart+1, xstart+UI_CARDWIDTH-2, sbuf);
@@ -78,7 +95,7 @@ static void draw_card(WINDOW *win, struct Card crd, int xstart, int ystart)
 }
 
 // unlike a simple for loop, handles overflow
-static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ystart)
+static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ystart, struct Card *firstsel)
 {
 	if (!botcrd)
 		return;
@@ -107,13 +124,16 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ys
 		n--;
 
 	// let's draw the cards
+	bool sel = false;
 	for (struct Card *crd = botcrd; crd; crd = crd->next) {
-		draw_card(win, *crd, xstart, ystart);
+		if (crd == firstsel)
+			sel = true;
+		draw_card(win, crd, xstart, ystart, sel);
 		ystart += (--n > 0) ? Y_OFFSET_BIG : Y_OFFSET_SMALL;
 	}
 }
 
-void ui_drawsol(WINDOW *win, struct Sol sol)
+void ui_drawsol(WINDOW *win, struct Sol sol, struct UiSelection sel)
 {
 	werase(win);
 
@@ -122,28 +142,31 @@ void ui_drawsol(WINDOW *win, struct Sol sol)
 
 	// all cards in stock are non-visible and perfectly lined up on top of each other
 	// so just draw one of them, if any
-	if (sol.stock)
-		draw_card(win, *sol.stock, ui_x(0, w), ui_y(0, h));
+	draw_card(win, sol.stock, ui_x(0, w), ui_y(0, h), sel.place == SOL_STOCK);
 
-	// discard contains lined-up cards, but they're lined up again, so only last one can show
-	if (sol.discard)
-		draw_card(win, *card_top(sol.discard), ui_x(1, w), ui_y(0, h));
+	// discard contains lined-up cards, too
+	draw_card(win, sol.discard ? card_top(sol.discard) : NULL, ui_x(1, w), ui_y(0, h), sel.place == SOL_DISCARD);
 
 	// foundations are similar to discard
 	for (int i=0; i < 4; i++)
-		if (sol.foundations[i])
-			draw_card(win, *card_top(sol.foundations[i]), ui_x(3+i, w), ui_y(0, h));
+		draw_card(win, sol.foundations[i] ? card_top(sol.foundations[i]) : NULL, ui_x(3+i, w), ui_y(0, h), sel.place == SOL_FOUNDATION(i));
 
 	// now the tableau... here we go
 	for (int x=0; x < 7; x++) {
+		if (!sol.tableau[x]) {
+			// draw a border if the tableau item is selected
+			draw_card(win, NULL, ui_x(x, w), ui_y(1, h), sel.place == SOL_TABLEAU(x));
+			continue;
+		}
+
 		int yo = 0;
 		for (struct Card *crd = sol.tableau[x]; crd; crd = crd->next) {
 			if (crd->visible) {
-				draw_card_stack(win, crd, ui_x(x, w), ui_y(1, h) + yo);
+				draw_card_stack(win, crd, ui_x(x, w), ui_y(1, h) + yo, sel.place == SOL_TABLEAU(x) ? sel.card : NULL);
 				break;
 			}
 
-			draw_card(win, *crd, ui_x(x, w), ui_y(1, h) + yo);
+			draw_card(win, crd, ui_x(x, w), ui_y(1, h) + yo, false);
 			yo += Y_OFFSET_SMALL;
 		}
 	}

@@ -114,7 +114,7 @@ int main(void)
 	sol_move(&sol, card_top(sol.discard), SOL_FOUNDATION(0));
 
 	while (true) {
-		ui_drawsol(stdscr, sol);
+		ui_drawsol(stdscr, sol, (struct UiSelection){ .card = sol.tableau[5]->next->next->next, .place = SOL_TABLEAU(5) });
 		refresh();
 
 		int c = getch();
