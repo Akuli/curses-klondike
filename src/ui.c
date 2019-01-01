@@ -108,7 +108,9 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xcnt, int ycnt
 	}
 
 	// to give some extra room that wouldn't be really necessary, but is nicer
-	n--;
+	// without the if, cards get stacked even when there's enough room
+	if (n != ncardstotal)
+		n--;
 
 	// let's draw the cards
 	for (struct Card *crd = botcrd; crd; crd = crd->next) {
