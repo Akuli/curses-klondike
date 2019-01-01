@@ -30,7 +30,7 @@ int main(void)
 	time_t t = time(NULL);
 	if (t == (time_t)(-1))
 		fatal_error("time() failed");
-	srand(t);
+	//srand(t);
 
 	if (!initscr())
 		fatal_error("initscr() failed");
@@ -48,8 +48,11 @@ int main(void)
 	refresh();   // yes, this is needed before drawing the cards
 
 	sol_stock2discard(&sol);
-	sol_stock2discard(&sol);
-	sol_stock2discard(&sol);
+	//sol_stock2discard(&sol);
+	//sol_stock2discard(&sol);
+	sol_move(&sol, card_top(sol.discard), SOL_TABLEAU(0));
+	sol_move(&sol, card_top(sol.tableau[3]), SOL_TABLEAU(0));
+	//sol_move(&sol, sol.tableau[0], SOL_TABLEAU(3));
 	ui_drawsol(stdscr, sol);
 	getch();
 	sol_free(sol);
