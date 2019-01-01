@@ -2,7 +2,7 @@
 #define UI_H
 
 #include <curses.h>
-#include "card.h"
+#include "card.h"   // IWYU pragma: keep
 #include "sol.h"
 
 #define UI_CARDWIDTH 7

@@ -1,11 +1,9 @@
 #include "ui.h"
-#include <assert.h>
 #include <curses.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include "card.h"
-#include "misc.h"
 #include "sol.h"
 
 // offsets for laying out cards so that they overlap

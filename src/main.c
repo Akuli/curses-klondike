@@ -1,7 +1,6 @@
 #include <curses.h>
 #include <locale.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <time.h>
 #include "card.h"
 #include "misc.h"
