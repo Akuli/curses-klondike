@@ -34,23 +34,23 @@ static inline int y_cardcount2ui(int ycnt, int h)
 }
 
 // box() is annoyingly for subwindows only
-static void draw_box(WINDOW *win, int x, int y, int w, int h, char bg)
+static void draw_box(WINDOW *win, int xstart, int ystart, int w, int h, char bg)
 {
-	mvwaddch(win, y, x, ACS_ULCORNER);
-	mvwhline(win, y, x+1, 0, UI_CARDWIDTH - 2);
-	mvwaddch(win, y, x+UI_CARDWIDTH-1, ACS_URCORNER);
+	mvwaddch(win, ystart, xstart, ACS_ULCORNER);
+	mvwhline(win, ystart, xstart+1, 0, UI_CARDWIDTH - 2);
+	mvwaddch(win, ystart, xstart+UI_CARDWIDTH-1, ACS_URCORNER);
 
-	mvwvline(win, y+1, x, 0, UI_CARDHEIGHT - 2);
-	mvwvline(win, y+1, x+UI_CARDWIDTH-1, 0, UI_CARDHEIGHT - 2);
+	mvwvline(win, ystart+1, xstart, 0, UI_CARDHEIGHT - 2);
+	mvwvline(win, ystart+1, xstart+UI_CARDWIDTH-1, 0, UI_CARDHEIGHT - 2);
 
-	mvwaddch(win, y+UI_CARDHEIGHT-1, x, ACS_LLCORNER);
-	mvwhline(win, y+UI_CARDHEIGHT-1, x+1, 0, UI_CARDWIDTH - 2);
-	mvwaddch(win, y+UI_CARDHEIGHT-1, x+UI_CARDWIDTH-1, ACS_LRCORNER);
+	mvwaddch(win, ystart+UI_CARDHEIGHT-1, xstart, ACS_LLCORNER);
+	mvwhline(win, ystart+UI_CARDHEIGHT-1, xstart+1, 0, UI_CARDWIDTH - 2);
+	mvwaddch(win, ystart+UI_CARDHEIGHT-1, xstart+UI_CARDWIDTH-1, ACS_LRCORNER);
 
 	// fill the box with bg
-	for (int i=1; i < w-1; i++)
-		for (int j=1; j < h-1; j++)
-			mvwaddch(win, y+j, x+i, bg);
+	for (int x = xstart+1; x < xstart+w-1; x++)
+		for (int y = ystart+1; y < ystart+h-1; y++)
+			mvwaddch(win, y, x, bg);
 }
 
 // draws crd on win
