@@ -81,6 +81,47 @@ static void draw_card(WINDOW *win, struct Card crd, int xcnt, int ycnt, int xo, 
 	}
 }
 
+// unlike a simple for loop, handles overflow
+static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xcnt, int ycnt, int xo, int yos, int yob)
+{
+	if (!botcrd)
+		return;
+
+	int starty = y_cardcount2ui(ycnt, getmaxy(win)) + yos*Y_OFFSET_SMALL + yob*Y_OFFSET_BIG;
+
+	// the text (num and suit) of botcrd is at starty+1
+	// let's figure out where it is for the topmost card
+	int toptxty = starty+1;
+	int ncardstotal = 1;
+	for (struct Card *crd = botcrd->next /* botcrd is already counted */ ; crd; crd = crd->next) {
+		toptxty += Y_OFFSET_BIG;
+		ncardstotal++;
+	}
+
+	// we can make all cards visible by displaying some cards with a smaller offset
+	// we'll display n cards with the bigger offset
+	int n = ncardstotal;
+	while (toptxty >= getmaxy(win)) {
+		toptxty -= Y_OFFSET_BIG;
+		toptxty += Y_OFFSET_SMALL;
+		n--;
+	}
+	printf("(%d,%d)\t", ncardstotal, n);
+
+	// to give some extra room that wouldn't be really necessary, but is nicer
+	n--;
+
+	// let's draw the cards
+	for (struct Card *crd = botcrd; crd; crd = crd->next) {
+		if (--n > 0)
+			draw_card(win, *crd, xcnt, ycnt, xo, yos, yob++);
+		else
+			draw_card(win, *crd, xcnt, ycnt, xo, yos++, yob);
+		printf("r");
+	}
+	printf("\t");
+}
+
 void ui_drawsol(WINDOW *win, struct Sol sol)
 {
 	// all cards in stock are non-visible and perfectly lined up on top of each other
@@ -99,12 +140,13 @@ void ui_drawsol(WINDOW *win, struct Sol sol)
 
 	// now the tableau... here we go
 	for (int x=0; x < 7; x++) {
-		int yos = 0, yob = 0;
+		int yos = 0;
 		for (struct Card *crd = sol.tableau[x]; crd; crd = crd->next) {
-			if (crd->visible)
-				draw_card(win, *crd, x, 1, 0, yos, yob++);
-			else
-				draw_card(win, *crd, x, 1, 0, yos++, yob);
+			if (crd->visible) {
+				draw_card_stack(win, crd, x, 1, 0, yos, 0);
+				break;
+			}
+			draw_card(win, *crd, x, 1, 0, yos++, 0);
 		}
 	}
 }
