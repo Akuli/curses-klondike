@@ -121,6 +121,9 @@ void card_debug(struct Card crd)
 
 struct Card *card_top(struct Card *crd)
 {
+	if (!crd)
+		return NULL;
+
 	while (crd->next)
 		crd = crd->next;
 	return crd;

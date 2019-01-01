@@ -125,11 +125,12 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ys
 
 	// let's draw the cards
 	bool sel = false;
+	int y = ystart;
 	for (struct Card *crd = botcrd; crd; crd = crd->next) {
 		if (crd == firstsel)
 			sel = true;
-		draw_card(win, crd, xstart, ystart, sel);
-		ystart += (--n > 0) ? Y_OFFSET_BIG : Y_OFFSET_SMALL;
+		draw_card(win, crd, xstart, y, sel);
+		y += (--n > 0) ? Y_OFFSET_BIG : Y_OFFSET_SMALL;
 	}
 }
 
@@ -145,11 +146,11 @@ void ui_drawsol(WINDOW *win, struct Sol sol, struct UiSelection sel)
 	draw_card(win, sol.stock, ui_x(0, w), ui_y(0, h), sel.place == SOL_STOCK);
 
 	// discard contains lined-up cards, too
-	draw_card(win, sol.discard ? card_top(sol.discard) : NULL, ui_x(1, w), ui_y(0, h), sel.place == SOL_DISCARD);
+	draw_card(win, card_top(sol.discard), ui_x(1, w), ui_y(0, h), sel.place == SOL_DISCARD);
 
 	// foundations are similar to discard
 	for (int i=0; i < 4; i++)
-		draw_card(win, sol.foundations[i] ? card_top(sol.foundations[i]) : NULL, ui_x(3+i, w), ui_y(0, h), sel.place == SOL_FOUNDATION(i));
+		draw_card(win, card_top(sol.foundations[i]), ui_x(3+i, w), ui_y(0, h), sel.place == SOL_FOUNDATION(i));
 
 	// now the tableau... here we go
 	for (int x=0; x < 7; x++) {
@@ -162,7 +163,7 @@ void ui_drawsol(WINDOW *win, struct Sol sol, struct UiSelection sel)
 		int yo = 0;
 		for (struct Card *crd = sol.tableau[x]; crd; crd = crd->next) {
 			if (crd->visible) {
-				draw_card_stack(win, crd, ui_x(x, w), ui_y(1, h) + yo, sel.place == SOL_TABLEAU(x) ? sel.card : NULL);
+				draw_card_stack(win, crd, ui_x(x, w), ui_y(1, h) + yo, sel.card);
 				break;
 			}
 

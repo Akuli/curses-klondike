@@ -41,7 +41,7 @@ void card_suitstr(struct Card crd, char *buf);
 void card_debug(struct Card crd);
 
 // returns topmost card in a linked list of cards
-// bad things happen if crd is NULL
+// special case to make some things easier: card_top(NULL) == NULL
 // never returns NULL
 // card_top(...)->next is always NULL
 // O(n)
