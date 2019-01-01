@@ -47,15 +47,10 @@ int main(void)
 
 	refresh();   // yes, this is needed before drawing the cards
 
-	ui_drawcard(stdscr, *sol.tableau[0], 0, 0, 0, 0, 0);
-	ui_drawcard(stdscr, *sol.tableau[1], 0, 0, 1, 0, 0);
-	ui_drawcard(stdscr, *sol.tableau[2], 0, 0, 2, 0, 0);
-	ui_drawcard(stdscr, *sol.tableau[0], 0, 0, 3, 0, 0);
-	ui_drawcard(stdscr, *sol.tableau[2], 2, 0, 0, 0, 0);
-	ui_drawcard(stdscr, *sol.tableau[2]->next->next, 2, 0, 0, 0, 1);
-	ui_drawcard(stdscr, *sol.tableau[3]->next, 6, 1, 0, 0, 0);
-	ui_drawcard(stdscr, *sol.tableau[3]->next->next, 6, 1, 0, 1, 0);
-	ui_drawcard(stdscr, *sol.tableau[3]->next->next->next, 6, 1, 0, 2, 0);
+	sol_stock2discard(&sol);
+	sol_stock2discard(&sol);
+	sol_stock2discard(&sol);
+	ui_drawsol(stdscr, sol);
 	getch();
 	sol_free(sol);
 	endwin();

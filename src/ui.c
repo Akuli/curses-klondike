@@ -4,6 +4,7 @@
 #include <string.h>
 #include "card.h"
 #include "misc.h"
+#include "sol.h"
 
 // offsets for laying out cards so that they overlap
 #define X_OFFSET 3
@@ -51,10 +52,14 @@ static void draw_box(WINDOW *win, int x, int y, int w, int h, char bg)
 			mvwaddch(win, y+j, x+i, bg);
 }
 
+// draws crd on win
+// xo, yob, yos are for drawing cards so that they partially overlap
+// xo = x offset, yos = small y offset, yob = guess what
+//
 // newwin() doesn't work because partially erasing borders is surprisingly tricky
 // partial erasing is needed for cards that are on top of cards
 // since we can't use subwindow borders, they're not very helpful
-void ui_drawcard(WINDOW *win, struct Card crd, int xcnt, int ycnt, int xo, int yos, int yob)
+static void draw_card(WINDOW *win, struct Card crd, int xcnt, int ycnt, int xo, int yos, int yob)
 {
 	int w, h;
 	getmaxyx(win, h, w);
@@ -72,5 +77,33 @@ void ui_drawcard(WINDOW *win, struct Card crd, int xcnt, int ycnt, int xo, int y
 		mvaddstr(y+1, x+UI_CARDWIDTH-2, sbuf);
 		mvaddstr(y+UI_CARDHEIGHT-2, x+1, sbuf);
 		mvaddstr(y+UI_CARDHEIGHT-2, x+UI_CARDWIDTH-1-strlen(nbuf), nbuf);
+	}
+}
+
+void ui_drawsol(WINDOW *win, struct Sol sol)
+{
+	// all cards in stock are non-visible and perfectly lined up on top of each other
+	// so just draw one of them, if any
+	if (sol.stock)
+		draw_card(win, *sol.stock, 0, 0, 0, 0, 0);
+
+	// discard contains lined-up cards, but they're lined up again, so only last one can show
+	if (sol.discard)
+		draw_card(win, *card_top(sol.discard), 1, 0, 0, 0, 0);
+
+	// foundations are similar to discard
+	for (int i=0; i < 4; i++)
+		if (sol.foundations[i])
+			draw_card(win, *card_top(sol.foundations[i]), 3+i, 0, 0, 0, 0);
+
+	// now the tableau... here we go
+	for (int x=0; x < 7; x++) {
+		int yos = 0, yob = 0;
+		for (struct Card *crd = sol.tableau[x]; crd; crd = crd->next) {
+			if (crd->visible)
+				draw_card(win, *crd, x, 1, 0, yos, yob++);
+			else
+				draw_card(win, *crd, x, 1, 0, yos++, yob);
+		}
 	}
 }
