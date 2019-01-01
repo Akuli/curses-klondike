@@ -109,10 +109,21 @@ int main(void)
 	sol_move(&sol, card_top(sol.discard), SOL_TABLEAU(5));
 	sol_move(&sol, card_top(sol.discard), SOL_TABLEAU(5));
 	sol_move(&sol, sol.tableau[3]->next->next, SOL_TABLEAU(5));
+	sol_move(&sol, card_top(sol.tableau[3]), SOL_FOUNDATION(1));
+	sol_move(&sol, card_top(sol.tableau[3]), SOL_FOUNDATION(0));
+	sol_move(&sol, card_top(sol.discard), SOL_FOUNDATION(0));
 
-	ui_drawsol(stdscr, sol);
-	refresh();
-	getch();
+	while (true) {
+		ui_drawsol(stdscr, sol);
+		refresh();
+
+		int c = getch();
+		if (c == 'q')
+			break;
+		if (c == 'd')
+			sol_stock2discard(&sol);
+	}
+
 	sol_free(sol);
 	endwin();
 
