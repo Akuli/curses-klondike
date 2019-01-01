@@ -112,7 +112,6 @@ static bool card_in_some_tableau(struct Sol sol, struct Card *crd)
 bool sol_canmove(struct Sol sol, struct Card *crd, SolCardPlace dst)
 {
 	// taking cards stock to discard is handled by sol_stactodiscard() and not allowed here
-	// TODO: allow moving multiple cards around from tableau to tableau
 	if (crd->next) {
 		// the only way how a stack of multiple cards is allowed to move is tableau -> tableau
 		if (!(card_in_some_tableau(sol, crd) && SOL_IS_TABLEAU(dst)))
