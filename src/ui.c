@@ -5,8 +5,10 @@
 #include "card.h"
 #include "misc.h"
 
-#define XOFFSET 3
-#define YOFFSET 2
+// offsets for laying out cards so that they overlap
+#define X_OFFSET 3
+#define Y_OFFSET_SMALL 1
+#define Y_OFFSET_BIG 2
 
 static inline int x_cardcount2ui(int xcnt, int w)
 {
@@ -52,12 +54,12 @@ static void draw_box(WINDOW *win, int x, int y, int w, int h, char bg)
 // newwin() doesn't work because partially erasing borders is surprisingly tricky
 // partial erasing is needed for cards that are on top of cards
 // since we can't use subwindow borders, they're not very helpful
-void ui_drawcard(WINDOW *win, struct Card crd, int xcnt, int ycnt, int xoff, int yoff)
+void ui_drawcard(WINDOW *win, struct Card crd, int xcnt, int ycnt, int xo, int yos, int yob)
 {
 	int w, h;
 	getmaxyx(win, h, w);
-	int x = x_cardcount2ui(xcnt, w) + xoff*XOFFSET;
-	int y = y_cardcount2ui(ycnt, h) + yoff*YOFFSET;
+	int x = x_cardcount2ui(xcnt, w) + xo*X_OFFSET;
+	int y = y_cardcount2ui(ycnt, h) + yos*Y_OFFSET_SMALL + yob*Y_OFFSET_BIG;
 
 	draw_box(win, x, y, UI_CARDWIDTH, UI_CARDHEIGHT, crd.visible ? ' ' : '?');
 
