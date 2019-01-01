@@ -12,7 +12,7 @@ ready.
 
 If you have apt, you can install all dependencies like this:
 
-    $ sudo apt install git make gcc libncursesw5-dev
+    $ sudo apt install git make gcc libncurses5-dev libncursesw5-dev
 
 Then you can download my code, compile it and run.
 
