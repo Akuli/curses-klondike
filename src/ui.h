@@ -5,9 +5,6 @@
 #include "card.h"   // IWYU pragma: keep
 #include "sol.h"
 
-#define UI_CARDWIDTH 7
-#define UI_CARDHEIGHT 5
-
 // represents the card pile or location that the user has selected
 // a pointer to struct Card is not enough because it's possible to select a
 // place where cards can be put, but that currently contains no cards

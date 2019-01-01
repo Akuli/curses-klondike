@@ -6,6 +6,9 @@
 #include "card.h"
 #include "sol.h"
 
+#define CARD_WIDTH 7
+#define CARD_HEIGHT 5
+
 // offsets for laying out cards so that they overlap
 #define X_OFFSET 3
 #define Y_OFFSET_SMALL 1
@@ -18,12 +21,12 @@ static inline int ui_x(int xcnt, int w)
 	//
 	// space per column = w/7
 	// center of column = space per column * (xcnt + 1/2)
-	// result = center of column - UI_CARDWIDTH/2
+	// result = center of column - CARD_WIDTH/2
 	//
 	// simplifying it gives this, i wrote it with just 1 division to get only 1
 	// floordiv and hopefully less little errors, could have also used floats but
 	// this works fine
-	return (2*xcnt*w + w - 7*UI_CARDWIDTH)/(2*7);
+	return (2*xcnt*w + w - 7*CARD_WIDTH)/(2*7);
 }
 
 static inline int ui_y(int ycnt, int h)
@@ -31,7 +34,7 @@ static inline int ui_y(int ycnt, int h)
 	// start at first row, then no blank rows in between
 	// because the line drawing characters look blanky enough anyway
 	// TODO: add "..." or something if it goes too far
-	return ycnt*UI_CARDHEIGHT;
+	return ycnt*CARD_HEIGHT;
 }
 
 // because i need 2 kind of borders, "normal" and "selected"
@@ -76,7 +79,7 @@ static void draw_box(WINDOW *win, int xstart, int ystart, int w, int h, char bg,
 static void draw_card(WINDOW *win, struct Card *crd, int xstart, int ystart, bool sel)
 {
 	if (crd || sel)
-		draw_box(win, xstart, ystart, UI_CARDWIDTH, UI_CARDHEIGHT, (!crd || crd->visible) ? ' ' : '?', sel);
+		draw_box(win, xstart, ystart, CARD_WIDTH, CARD_HEIGHT, (!crd || crd->visible) ? ' ' : '?', sel);
 	if (!crd)
 		return;
 
@@ -86,9 +89,9 @@ static void draw_card(WINDOW *win, struct Card *crd, int xstart, int ystart, boo
 		card_numstr(*crd, nbuf);
 
 		mvaddstr(ystart+1, xstart+1, nbuf);
-		mvaddstr(ystart+1, xstart+UI_CARDWIDTH-2, sbuf);
-		mvaddstr(ystart+UI_CARDHEIGHT-2, xstart+1, sbuf);
-		mvaddstr(ystart+UI_CARDHEIGHT-2, xstart+UI_CARDWIDTH-1-strlen(nbuf), nbuf);
+		mvaddstr(ystart+1, xstart+CARD_WIDTH-2, sbuf);
+		mvaddstr(ystart+CARD_HEIGHT-2, xstart+1, sbuf);
+		mvaddstr(ystart+CARD_HEIGHT-2, xstart+CARD_WIDTH-1-strlen(nbuf), nbuf);
 	}
 }
 
