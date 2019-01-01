@@ -100,22 +100,39 @@ void sol_dup(struct Sol src, struct Sol *dst)
 		copy_cards(src.tableau[i], &dst->tableau[i]);
 }
 
+static bool card_in_some_tableau(struct Sol sol, struct Card *crd)
+{
+	for (int i=0; i < 7; i++)
+		for (struct Card *tabcrd = sol.tableau[i]; tabcrd; tabcrd = tabcrd->next)
+			if (tabcrd == crd)
+				return true;
+	return false;
+}
+
 bool sol_canmove(struct Sol sol, struct Card *crd, SolCardPlace dst)
 {
 	// taking cards stock to discard is handled by sol_stactodiscard() and not allowed here
 	// TODO: allow moving multiple cards around from tableau to tableau
+	if (crd->next) {
+		// the only way how a stack of multiple cards is allowed to move is tableau -> tableau
+		if (!(card_in_some_tableau(sol, crd) && SOL_IS_TABLEAU(dst)))
+			return false;
+		goto tableau;
+	}
+
 	if (crd->next || dst == SOL_STOCK || dst == SOL_DISCARD || !crd->visible)
 		return false;
 
 	if (SOL_IS_FOUNDATION(dst)) {
 		struct Card *fnd = sol.foundations[SOL_FOUNDATION_NUM(dst)];
-		if (!crd)
+		if (!fnd)
 			return (crd->num == 1);
 
 		fnd = card_top(fnd);
 		return (crd->suit == fnd->suit && crd->num == fnd->num + 1);
 	}
 
+	tableau:
 	if (SOL_IS_TABLEAU(dst)) {
 		struct Card *tab = sol.tableau[SOL_TABLEAU_NUM(dst)];
 		if (!tab)

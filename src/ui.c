@@ -27,9 +27,10 @@ static inline int x_cardcount2ui(int xcnt, int w)
 
 static inline int y_cardcount2ui(int ycnt, int h)
 {
-	// 1 row above first row, then everything spaced with 1 blank row between
-	// TODO: what if it overflows?
-	return 1 + ycnt*(UI_CARDHEIGHT + 1);
+	// start at first row, then no blank rows in between
+	// because the line drawing characters look blanky enough anyway
+	// TODO: add "..." or something if it goes too far
+	return ycnt*UI_CARDHEIGHT;
 }
 
 // box() is annoyingly for subwindows only
