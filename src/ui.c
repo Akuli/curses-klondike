@@ -54,18 +54,17 @@ static void draw_box(WINDOW *win, int xstart, int ystart, int w, int h, char bg)
 }
 
 // draws crd on win
-// xo, yob, yos are for drawing cards so that they partially overlap
-// xo = x offset, yos = small y offset, yob = guess what
+// xo and yo offsets as curses units, for drawing overlapping cards
 //
 // newwin() doesn't work because partially erasing borders is surprisingly tricky
 // partial erasing is needed for cards that are on top of cards
 // since we can't use subwindow borders, they're not very helpful
-static void draw_card(WINDOW *win, struct Card crd, int xcnt, int ycnt, int xo, int yos, int yob)
+static void draw_card(WINDOW *win, struct Card crd, int xcnt, int ycnt, int xo, int yo)
 {
 	int w, h;
 	getmaxyx(win, h, w);
-	int x = x_cardcount2ui(xcnt, w) + xo*X_OFFSET;
-	int y = y_cardcount2ui(ycnt, h) + yos*Y_OFFSET_SMALL + yob*Y_OFFSET_BIG;
+	int x = x_cardcount2ui(xcnt, w) + xo;
+	int y = y_cardcount2ui(ycnt, h) + yo;
 
 	draw_box(win, x, y, UI_CARDWIDTH, UI_CARDHEIGHT, crd.visible ? ' ' : '?');
 
@@ -82,12 +81,12 @@ static void draw_card(WINDOW *win, struct Card crd, int xcnt, int ycnt, int xo, 
 }
 
 // unlike a simple for loop, handles overflow
-static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xcnt, int ycnt, int xo, int yos, int yob)
+static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xcnt, int ycnt, int xo, int yo)
 {
 	if (!botcrd)
 		return;
 
-	int starty = y_cardcount2ui(ycnt, getmaxy(win)) + yos*Y_OFFSET_SMALL + yob*Y_OFFSET_BIG;
+	int starty = y_cardcount2ui(ycnt, getmaxy(win)) + yo;
 
 	// the text (num and suit) of botcrd is at starty+1
 	// let's figure out where it is for the topmost card
@@ -114,10 +113,8 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xcnt, int ycnt
 
 	// let's draw the cards
 	for (struct Card *crd = botcrd; crd; crd = crd->next) {
-		if (--n > 0)
-			draw_card(win, *crd, xcnt, ycnt, xo, yos, yob++);
-		else
-			draw_card(win, *crd, xcnt, ycnt, xo, yos++, yob);
+		draw_card(win, *crd, xcnt, ycnt, xo, yo);
+		yo += (--n > 0) ? Y_OFFSET_BIG : Y_OFFSET_SMALL;
 	}
 }
 
@@ -128,26 +125,28 @@ void ui_drawsol(WINDOW *win, struct Sol sol)
 	// all cards in stock are non-visible and perfectly lined up on top of each other
 	// so just draw one of them, if any
 	if (sol.stock)
-		draw_card(win, *sol.stock, 0, 0, 0, 0, 0);
+		draw_card(win, *sol.stock, 0, 0, 0, 0);
 
 	// discard contains lined-up cards, but they're lined up again, so only last one can show
 	if (sol.discard)
-		draw_card(win, *card_top(sol.discard), 1, 0, 0, 0, 0);
+		draw_card(win, *card_top(sol.discard), 1, 0, 0, 0);
 
 	// foundations are similar to discard
 	for (int i=0; i < 4; i++)
 		if (sol.foundations[i])
-			draw_card(win, *card_top(sol.foundations[i]), 3+i, 0, 0, 0, 0);
+			draw_card(win, *card_top(sol.foundations[i]), 3+i, 0, 0, 0);
 
 	// now the tableau... here we go
 	for (int x=0; x < 7; x++) {
-		int yos = 0;
+		int yo = 0;
 		for (struct Card *crd = sol.tableau[x]; crd; crd = crd->next) {
 			if (crd->visible) {
-				draw_card_stack(win, crd, x, 1, 0, yos, 0);
+				draw_card_stack(win, crd, x, 1, 0, yo);
 				break;
 			}
-			draw_card(win, *crd, x, 1, 0, yos++, 0);
+
+			draw_card(win, *crd, x, 1, 0, yo);
+			yo += Y_OFFSET_SMALL;
 		}
 	}
 }
