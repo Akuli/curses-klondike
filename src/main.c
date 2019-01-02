@@ -29,17 +29,46 @@ struct Game {
 	struct Sol sol;
 };
 
+static int place_2_card_x(SolCardPlace plc)
+{
+	if (SOL_IS_TABLEAU(plc))
+		return SOL_TABLEAU_NUM(plc);
+	if (SOL_IS_FOUNDATION(plc))
+		return 3 + SOL_FOUNDATION_NUM(plc);
+	if (plc == SOL_STOCK)
+		return 0;
+	if (plc == SOL_DISCARD)
+		return 1;
+	assert(0);
+}
+
+static SolCardPlace card_x_2_top_place(int x)
+{
+	if (x == 0)
+		return SOL_STOCK;
+	if (x == 1)
+		return SOL_DISCARD;
+	if (x == 2)
+		return 0;
+
+	assert(SOL_IS_FOUNDATION(SOL_FOUNDATION(x-3)));
+	return SOL_FOUNDATION(x-3);
+}
+
 // returns whether to continue playing
 static bool handle_key(struct Game *gam, int k)
 {
-	SolCardPlace plcs[2+4+7];
-	SolCardPlace *ptr = plcs;
+	SolCardPlace topplcs[7];
+	SolCardPlace *ptr = topplcs;
 	*ptr++ = SOL_STOCK;
 	*ptr++ = SOL_DISCARD;
+	*ptr++ = 0;
 	for (int i=0; i < 4; i++)
 		*ptr++ = SOL_FOUNDATION(i);
 	for (int i=0; i < 7; i++)
 		*ptr++ = SOL_TABLEAU(i);
+	int x = place_2_card_x(gam->sel.place);
+	bool tab = SOL_IS_TABLEAU(gam->sel.place);
 
 	// TODO: h help
 	switch(k) {
@@ -52,23 +81,34 @@ static bool handle_key(struct Game *gam, int k)
 
 	case KEY_LEFT:
 	case KEY_RIGHT:
-		assert(1);   // does nothing, needed here because c syntax
-		int i;
-		for (i=0; ; i++) {
-			assert((unsigned)i < sizeof(plcs)/sizeof(plcs[0]));
-			if (plcs[i] == gam->sel.place)
-				break;
+		do
+			x += (k == KEY_LEFT) ? -1 : 1;
+		while( 0 <= x && x < 7 && !tab && card_x_2_top_place(x) == 0 );
+		if (0 <= x && x < 7) {
+			gam->sel.place = tab ? SOL_TABLEAU(x) : card_x_2_top_place(x);
+			if (tab)
+				gam->sel.card = card_top(gam->sol.tableau[x]);
 		}
 
-		i += (k == KEY_LEFT) ? -1 : 1;
+		break;
 
-		// TODO: use %, careful with signs
-		int n = sizeof(plcs)/sizeof(plcs[0]);
-		if (i < 0)
-			i += n;
-		if (i >= n)
-			i -= n;
-		gam->sel.place = plcs[i];
+	case KEY_UP:
+		if (tab && card_x_2_top_place(x) != 0) {
+			gam->sel.place = card_x_2_top_place(x);
+			gam->sel.card = NULL;
+		}
+		break;
+
+	case KEY_DOWN:
+		if (!tab) {
+			gam->sel.place = SOL_TABLEAU(x);
+			gam->sel.card = card_top(gam->sol.tableau[x]);
+		}
+		break;
+
+	case '\n':
+		if (gam->sel.place == SOL_STOCK)
+			sol_stock2discard(&gam->sol);
 		break;
 
 	default:
