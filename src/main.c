@@ -93,13 +93,28 @@ static bool handle_key(struct Game *gam, int k)
 		break;
 
 	case KEY_UP:
-		if (tab && card_x_2_top_place(x) != 0) {
-			gam->sel.place = card_x_2_top_place(x);
-			gam->sel.card = NULL;
+		if (tab) {
+			// can select more cards?
+			bool selmr = false;
+			for (struct Card *crd = gam->sol.tableau[x]; crd && crd->next; crd = crd->next) {
+				if (gam->sel.card != crd->next || !crd->visible)
+					continue;
+				gam->sel.card = crd;
+				selmr = true;
+				break;
+			}
+
+			// if not, move selection to to top row
+			if (!selmr && card_x_2_top_place(x) != 0) {
+				gam->sel.place = card_x_2_top_place(x);
+				gam->sel.card = NULL;
+			}
 		}
 		break;
 
 	case KEY_DOWN:
+		if (tab && gam->sel.card && gam->sel.card->next)
+			gam->sel.card = gam->sel.card->next;
 		if (!tab) {
 			gam->sel.place = SOL_TABLEAU(x);
 			gam->sel.card = card_top(gam->sol.tableau[x]);
