@@ -69,7 +69,7 @@ void sol_free(struct Sol sol)
 		card_free(sol.tableau[i]);
 }
 
-static void copy_cards(struct Card *src, struct Card **dst)
+static void copy_cards(struct Card *src, struct Card **dst, struct Card *srccrd, struct Card **dstcrd)
 {
 	*dst = NULL;
 	struct Card *top = NULL;
@@ -78,6 +78,8 @@ static void copy_cards(struct Card *src, struct Card **dst)
 		struct Card *dup = malloc(sizeof(struct Card));
 		if (!dup)
 			fatal_error("malloc() failed");
+		if (src == srccrd)
+			*dstcrd = dup;
 
 		memcpy(dup, src, sizeof(struct Card));
 		dup->next = NULL;
@@ -90,14 +92,18 @@ static void copy_cards(struct Card *src, struct Card **dst)
 	}
 }
 
-void sol_dup(struct Sol src, struct Sol *dst)
+struct Card *sol_dup(struct Sol src, struct Sol *dst, struct Card *srccrd)
 {
-	copy_cards(src.stock, &dst->stock);
-	copy_cards(src.discard, &dst->discard);
+	struct Card *dstcrd = NULL;
+
+	copy_cards(src.stock, &dst->stock, srccrd, &dstcrd);
+	copy_cards(src.discard, &dst->discard, srccrd, &dstcrd);
 	for (int i=0; i < 4; i++)
-		copy_cards(src.foundations[i], &dst->foundations[i]);
+		copy_cards(src.foundations[i], &dst->foundations[i], srccrd, &dstcrd);
 	for (int i=0; i < 7; i++)
-		copy_cards(src.tableau[i], &dst->tableau[i]);
+		copy_cards(src.tableau[i], &dst->tableau[i], srccrd, &dstcrd);
+
+	return dstcrd;
 }
 
 static bool card_in_some_tableau(struct Sol sol, struct Card *crd)
@@ -173,9 +179,12 @@ struct Card *sol_detachcard(struct Sol *sol, struct Card *crd)
 	assert(0);
 }
 
-void sol_move(struct Sol *sol, struct Card *crd, SolCardPlace dst)
+#define DEBUG(...) { FILE *f = fopen("f","a"); fprintf(f, __VA_ARGS__); fclose(f); }
+
+static void do_move(struct Sol *sol, struct Card *crd, SolCardPlace dst, bool raw)
 {
-	assert(sol_canmove(*sol, crd, dst));
+	if (!raw)
+		assert(sol_canmove(*sol, crd, dst));
 
 	struct Card *prv = sol_detachcard(sol, crd);
 
@@ -183,7 +192,7 @@ void sol_move(struct Sol *sol, struct Card *crd, SolCardPlace dst)
 	//  * is NULL, if crd was the bottommost card
 	//  * has ->next==true, if moving only some of many visible cards on top of each other
 	//  * has ->next==false, if crd was the bottommost VISIBLE card in the tableau list
-	if (prv)
+	if (prv && !raw)
 		prv->visible = true;
 
 	struct Card **dstp;
@@ -195,11 +204,16 @@ void sol_move(struct Sol *sol, struct Card *crd, SolCardPlace dst)
 		dstp = &sol->foundations[SOL_FOUNDATION_NUM(dst)];
 	else if (SOL_IS_TABLEAU(dst))
 		dstp = &sol->tableau[SOL_TABLEAU_NUM(dst)];
-	else
+	else {
+		DEBUG("wat: %d\n", dst);
 		assert(0);
+	}
 
 	card_pushtop(dstp, crd);
 }
+
+void sol_move(struct Sol *sol, struct Card *crd, SolCardPlace dst) { do_move(sol, crd, dst, false); }
+void sol_rawmove(struct Sol *sol, struct Card *crd, SolCardPlace dst) { do_move(sol, crd, dst, true); }
 
 void sol_stock2discard(struct Sol *sol)
 {

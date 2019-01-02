@@ -24,9 +24,11 @@ static void exitcb(void)
 void (*onerrorexit)(void) = exitcb;
 
 
+// mv2 = move to
 struct Game {
-	struct UiSelection sel;
 	struct Sol sol;
+	struct UiSelection sel;  // the card moving or about to be moved
+	SolCardPlace mv2;        // where to move the card, or 0 if user is not moving
 };
 
 static int place_2_card_x(SolCardPlace plc)
@@ -58,17 +60,8 @@ static SolCardPlace card_x_2_top_place(int x)
 // returns whether to continue playing
 static bool handle_key(struct Game *gam, int k)
 {
-	SolCardPlace topplcs[7];
-	SolCardPlace *ptr = topplcs;
-	*ptr++ = SOL_STOCK;
-	*ptr++ = SOL_DISCARD;
-	*ptr++ = 0;
-	for (int i=0; i < 4; i++)
-		*ptr++ = SOL_FOUNDATION(i);
-	for (int i=0; i < 7; i++)
-		*ptr++ = SOL_TABLEAU(i);
-	int x = place_2_card_x(gam->sel.place);
-	bool tab = SOL_IS_TABLEAU(gam->sel.place);
+	int x = place_2_card_x(gam->mv2 ? gam->mv2 : gam->sel.place);
+	bool tab = SOL_IS_TABLEAU(gam->mv2 ? gam->mv2 : gam->sel.place);
 
 	// TODO: h help
 	switch(k) {
@@ -84,16 +77,28 @@ static bool handle_key(struct Game *gam, int k)
 		do
 			x += (k == KEY_LEFT) ? -1 : 1;
 		while( 0 <= x && x < 7 && !tab && card_x_2_top_place(x) == 0 );
+
 		if (0 <= x && x < 7) {
-			gam->sel.place = tab ? SOL_TABLEAU(x) : card_x_2_top_place(x);
-			if (tab)
-				gam->sel.card = card_top(gam->sol.tableau[x]);
+			if (gam->mv2)
+				gam->mv2 = tab ? SOL_TABLEAU(x) : card_x_2_top_place(x);
+			else {
+				gam->sel.place = tab ? SOL_TABLEAU(x) : card_x_2_top_place(x);
+				if (tab)
+					gam->sel.card = card_top(gam->sol.tableau[x]);
+			}
 		}
 
 		break;
 
 	case KEY_UP:
-		if (tab) {
+		if (gam->mv2) {
+			if (tab) {
+				// can't move multiple cards to foundations
+				if (SOL_IS_FOUNDATION(card_x_2_top_place(x)) && !gam->sel.card->next)
+					gam->mv2 = card_x_2_top_place(x);
+			} else
+				gam->mv2 = SOL_TABLEAU(x);
+		} else if (tab) {
 			// can select more cards?
 			bool selmr = false;
 			for (struct Card *crd = gam->sol.tableau[x]; crd && crd->next; crd = crd->next) {
@@ -113,17 +118,42 @@ static bool handle_key(struct Game *gam, int k)
 		break;
 
 	case KEY_DOWN:
-		if (tab && gam->sel.card && gam->sel.card->next)
-			gam->sel.card = gam->sel.card->next;
-		if (!tab) {
-			gam->sel.place = SOL_TABLEAU(x);
-			gam->sel.card = card_top(gam->sol.tableau[x]);
+		if (gam->mv2)
+			gam->mv2 = SOL_TABLEAU(x);
+		else {
+			if (tab && gam->sel.card && gam->sel.card->next)
+				gam->sel.card = gam->sel.card->next;
+			if (!tab) {
+				gam->sel.place = SOL_TABLEAU(x);
+				gam->sel.card = card_top(gam->sol.tableau[x]);
+			}
 		}
 		break;
 
 	case '\n':
-		if (gam->sel.place == SOL_STOCK)
+		// TODO: allow moving cards out of foundations one by one
+		if (gam->mv2) {
+			if (sol_canmove(gam->sol, gam->sel.card, gam->mv2)) {
+				sol_move(&gam->sol, gam->sel.card, gam->mv2);
+				gam->sel.place = gam->mv2;
+				gam->sel.card = card_top(gam->sel.card);
+			} else {
+				// FIXME: is shit
+				gam->sel.place = gam->mv2;
+				if (SOL_IS_TABLEAU(gam->sel.place))
+					gam->sel.card = card_top(gam->sol.tableau[SOL_TABLEAU_NUM(gam->mv2)]);
+				else
+					gam->sel.card = NULL;
+			}
+			gam->mv2 = 0;
+		}
+		else if (gam->sel.place == SOL_STOCK)
 			sol_stock2discard(&gam->sol);
+		else if (  // FIXME: only the first of the 3 cases works!
+				(gam->sel.card && gam->sel.card->visible && !gam->mv2) ||
+				SOL_IS_FOUNDATION(gam->sel.place) ||
+				gam->sel.place == SOL_DISCARD)
+			gam->mv2 = gam->sel.place;
 		break;
 
 	default:
@@ -161,7 +191,9 @@ int main(void)
 	sol_init(&gam.sol, card_createallshuf());
 	gam.sel.card = NULL;
 	gam.sel.place = SOL_STOCK;
+	gam.mv2 = 0;
 
+	/*
 	sol_move(&gam.sol, card_top(gam.sol.tableau[5]), SOL_FOUNDATION(0));
 	sol_stock2discard(&gam.sol);
 	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_TABLEAU(0));
@@ -229,11 +261,24 @@ int main(void)
 	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_TABLEAU(5));
 	sol_move(&gam.sol, gam.sol.tableau[3]->next->next, SOL_TABLEAU(5));
 	sol_move(&gam.sol, card_top(gam.sol.tableau[3]), SOL_FOUNDATION(1));
-	sol_move(&gam.sol, card_top(gam.sol.tableau[3]), SOL_FOUNDATION(0));
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_FOUNDATION(0));
+	//sol_move(&gam.sol, card_top(gam.sol.tableau[3]), SOL_FOUNDATION(0));
+	//sol_move(&gam.sol, card_top(gam.sol.discard), SOL_FOUNDATION(0));
+	*/
 
 	do {
-		ui_drawsol(stdscr, gam.sol, gam.sel);
+		if (gam.mv2) {
+			// create a temp copy of the sol for rendering
+			struct Sol tmpsol;
+			struct UiSelection tmpsel;
+			tmpsel.card = sol_dup(gam.sol, &tmpsol, gam.sel.card);
+
+			sol_rawmove(&tmpsol, tmpsel.card, gam.mv2);
+			tmpsel.place = gam.mv2;
+
+			ui_drawsol(stdscr, tmpsol, tmpsel);
+			sol_free(tmpsol);
+		} else
+			ui_drawsol(stdscr, gam.sol, gam.sel);
 		refresh();
 	} while( handle_key(&gam, getch()) );
 

@@ -39,7 +39,9 @@ void sol_free(struct Sol sol);
 
 // copies everything from src to dst
 // also creates new cards
-void sol_dup(struct Sol src, struct Sol *dst);
+// if srccrd is non-NULL, returns the corresponding card of dst
+// if srccrd is NULL, returns NULL
+struct Card *sol_dup(struct Sol src, struct Sol *dst, struct Card *srccrd);
 
 // returns whether a card can be moved to on top of dst
 // use sol_stocktodiscard() instead for stock -> discard moves, this returns false for those
@@ -53,6 +55,9 @@ struct Card *sol_detachcard(struct Sol *sol, struct Card *crd);
 // moves the src card and ->next cards (if any) to dst
 // the move must be valid, see sol_canmove()
 void sol_move(struct Sol *sol, struct Card *crd, SolCardPlace dst);
+
+// similar to sol_move, but accepts invalid moves (sol_canmove) and never sets ->visible
+void sol_rawmove(struct Sol *sol, struct Card *crd, SolCardPlace dst);
 
 // takes a card stock -> discard, or if stock is empty, puts all discardeds to stock
 void sol_stock2discard(struct Sol *sol);
