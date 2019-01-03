@@ -57,6 +57,17 @@ static SolCardPlace card_x_2_top_place(int x)
 	return SOL_FOUNDATION(x-3);
 }
 
+static struct Card *get_visible_top_card(struct Sol sol, SolCardPlace plc)
+{
+	if (SOL_IS_FOUNDATION(plc))
+		return card_top(sol.foundations[SOL_FOUNDATION_NUM(plc)]);
+	if (SOL_IS_TABLEAU(plc))
+		return card_top(sol.tableau[SOL_TABLEAU_NUM(plc)]);
+	if (plc == SOL_DISCARD)
+		return card_top(sol.discard);
+	return NULL;
+}
+
 // returns whether to continue playing
 static bool handle_key(struct Game *gam, int k)
 {
@@ -83,8 +94,7 @@ static bool handle_key(struct Game *gam, int k)
 				gam->mv2 = tab ? SOL_TABLEAU(x) : card_x_2_top_place(x);
 			else {
 				gam->sel.place = tab ? SOL_TABLEAU(x) : card_x_2_top_place(x);
-				if (tab)
-					gam->sel.card = card_top(gam->sol.tableau[x]);
+				gam->sel.card = get_visible_top_card(gam->sol, gam->sel.place);
 			}
 		}
 
@@ -112,7 +122,7 @@ static bool handle_key(struct Game *gam, int k)
 			// if not, move selection to to top row
 			if (!selmr && card_x_2_top_place(x) != 0) {
 				gam->sel.place = card_x_2_top_place(x);
-				gam->sel.card = NULL;
+				gam->sel.card = get_visible_top_card(gam->sol, gam->sel.place);
 			}
 		}
 		break;
@@ -125,7 +135,7 @@ static bool handle_key(struct Game *gam, int k)
 				gam->sel.card = gam->sel.card->next;
 			if (!tab) {
 				gam->sel.place = SOL_TABLEAU(x);
-				gam->sel.card = card_top(gam->sol.tableau[x]);
+				gam->sel.card = get_visible_top_card(gam->sol, gam->sel.place);
 			}
 		}
 		break;
@@ -133,27 +143,26 @@ static bool handle_key(struct Game *gam, int k)
 	case '\n':
 		// TODO: allow moving cards out of foundations one by one
 		if (gam->mv2) {
+			assert(gam->sel.card);
 			if (sol_canmove(gam->sol, gam->sel.card, gam->mv2)) {
 				sol_move(&gam->sol, gam->sel.card, gam->mv2);
 				gam->sel.place = gam->mv2;
-				gam->sel.card = card_top(gam->sel.card);
+				gam->sel.card = get_visible_top_card(gam->sol, gam->sel.place);
 			} else {
-				// FIXME: is shit
 				gam->sel.place = gam->mv2;
-				if (SOL_IS_TABLEAU(gam->sel.place))
-					gam->sel.card = card_top(gam->sol.tableau[SOL_TABLEAU_NUM(gam->mv2)]);
-				else
-					gam->sel.card = NULL;
+				gam->sel.card = get_visible_top_card(gam->sol, gam->sel.place);
 			}
 			gam->mv2 = 0;
 		}
 		else if (gam->sel.place == SOL_STOCK)
 			sol_stock2discard(&gam->sol);
-		else if (  // FIXME: only the first of the 3 cases works!
+		else if (  // FIXME: only the first of the 3 cases works! other cases leave gam->sel.card to NULL
 				(gam->sel.card && gam->sel.card->visible && !gam->mv2) ||
 				SOL_IS_FOUNDATION(gam->sel.place) ||
-				gam->sel.place == SOL_DISCARD)
+				gam->sel.place == SOL_DISCARD) {
+			assert(gam->sel.card);
 			gam->mv2 = gam->sel.place;
+		}
 		break;
 
 	default:
@@ -172,7 +181,7 @@ int main(void)
 	time_t t = time(NULL);
 	if (t == (time_t)(-1))
 		fatal_error("time() failed");
-	//srand(t);
+	srand(t);
 
 	if (!initscr())
 		fatal_error("initscr() failed");
@@ -192,78 +201,6 @@ int main(void)
 	gam.sel.card = NULL;
 	gam.sel.place = SOL_STOCK;
 	gam.mv2 = 0;
-
-	/*
-	sol_move(&gam.sol, card_top(gam.sol.tableau[5]), SOL_FOUNDATION(0));
-	sol_stock2discard(&gam.sol);
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_TABLEAU(0));
-	sol_move(&gam.sol, card_top(gam.sol.tableau[3]), SOL_TABLEAU(0));
-	sol_move(&gam.sol, gam.sol.tableau[0], SOL_TABLEAU(3));
-	sol_stock2discard(&gam.sol);
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_TABLEAU(3));
-	sol_move(&gam.sol, card_top(gam.sol.tableau[5]), SOL_TABLEAU(3));
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_TABLEAU(4));
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_FOUNDATION(0));
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_TABLEAU(5));
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_TABLEAU(0));
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_FOUNDATION(1));
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_FOUNDATION(1));
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_FOUNDATION(2));
-	sol_move(&gam.sol, card_top(gam.sol.tableau[4]), SOL_FOUNDATION(2));
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_TABLEAU(0));
-	sol_move(&gam.sol, card_top(gam.sol.tableau[6]), SOL_TABLEAU(0));
-	sol_move(&gam.sol, gam.sol.tableau[5]->next->next->next, SOL_TABLEAU(6));
-	sol_move(&gam.sol, card_top(gam.sol.tableau[5]), SOL_TABLEAU(0));
-	sol_move(&gam.sol, card_top(gam.sol.tableau[5]), SOL_TABLEAU(3));
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_TABLEAU(0));
-	sol_move(&gam.sol, card_top(gam.sol.tableau[1]), SOL_TABLEAU(0));
-	sol_move(&gam.sol, card_top(gam.sol.tableau[5]), SOL_TABLEAU(1));  // makes room for a K
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_TABLEAU(1));
-	sol_move(&gam.sol, card_top(gam.sol.tableau[4]), SOL_TABLEAU(1));
-	sol_stock2discard(&gam.sol);
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_FOUNDATION(2));
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_FOUNDATION(0));
-	sol_stock2discard(&gam.sol);
-	sol_stock2discard(&gam.sol);
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_TABLEAU(5));
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_TABLEAU(5));
-	sol_move(&gam.sol, card_top(gam.sol.discard), SOL_TABLEAU(5));
-	sol_move(&gam.sol, gam.sol.tableau[3]->next->next, SOL_TABLEAU(5));
-	sol_move(&gam.sol, card_top(gam.sol.tableau[3]), SOL_FOUNDATION(1));
-	//sol_move(&gam.sol, card_top(gam.sol.tableau[3]), SOL_FOUNDATION(0));
-	//sol_move(&gam.sol, card_top(gam.sol.discard), SOL_FOUNDATION(0));
-	*/
 
 	do {
 		if (gam.mv2) {
