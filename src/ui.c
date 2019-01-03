@@ -33,7 +33,6 @@ static inline int ui_y(int ycnt, int h)
 {
 	// start at first row, then no blank rows in between
 	// because the line drawing characters look blanky enough anyway
-	// TODO: add "..." or something if it goes too far
 	return ycnt*CARD_HEIGHT;
 }
 
