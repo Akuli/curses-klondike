@@ -1,14 +1,8 @@
 # Curses solitaire
 
-This is my attempt at making a solitaire game. It's challenging because:
+This is a text-based solitaire game written in curses using C.
 
-- I have some experience with programming in C and programming with curses, but
-  this is the second project where I use C *and* curses.
-- I have attempted to make a solitaire game a few times in the past. It has
-  always been too complicated to me.
-
-Windows is not supported, but the game should work on most platforms when it's
-ready.
+![screenshot](screenshot.png)
 
 If you have apt, you can install all dependencies like this:
 
@@ -24,15 +18,15 @@ Then you can download my code, compile it and run.
 
 ## FAQ
 
-### Why are you writing a solitaire game implementation?
+### Why did you write a solitaire game?
 
 Because it's fun.
 
-### Why are you writing a solitaire game implementation in C?
+### Why did you write a solitaire game in C?
 
 Because it's fun.
 
-### Why are you writing a solitaire game implementation using curses?
+### Why did you write a solitaire game using curses?
 
 Because it's fun.
 
