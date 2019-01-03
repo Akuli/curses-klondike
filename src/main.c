@@ -25,13 +25,6 @@ static void exitcb(void)
 void (*onerrorexit)(void) = exitcb;
 
 
-// mv2 = move to
-struct Game {
-	struct Sol sol;
-	struct UiSelection sel;  // the card moving or about to be moved
-	SolCardPlace mv2;        // where to move the card, or 0 if user is not moving
-};
-
 static enum SelDirection curses_key_to_seldirection(int k)
 {
 	switch(k) {
@@ -44,39 +37,39 @@ static enum SelDirection curses_key_to_seldirection(int k)
 }
 
 // returns whether to continue playing
-static bool handle_key(struct Game *gam, int k)
+static bool handle_key(struct Sol *sol, struct UiSelection *sel, SolCardPlace *mv, int k)
 {
 	// TODO: h help
-	// TODO: esc quit, in addition to q
+	// TODO: esc quit, in addition to q OR esc for unselecting
 	// TODO: f foundationing
 	switch(k) {
 	case 'q':
 		return false;
 
 	case 'd':
-		if (!gam->mv2)
-			sol_stock2discard(&gam->sol);
+		if (!*mv)
+			sol_stock2discard(sol);
 		break;
 
 	case KEY_LEFT:
 	case KEY_RIGHT:
 	case KEY_UP:
 	case KEY_DOWN:
-		if (gam->mv2)
-			sel_anothercardmv(gam->sol, gam->sel, curses_key_to_seldirection(k), &gam->mv2);
+		if (*mv)
+			sel_anothercardmv(*sol, *sel, curses_key_to_seldirection(k), mv);
 		else
-			sel_anothercard(gam->sol, &gam->sel, curses_key_to_seldirection(k));
+			sel_anothercard(*sol, sel, curses_key_to_seldirection(k));
 		break;
 
 	case '\n':
-		if (gam->mv2) {
-			sel_endmv(&gam->sol, &gam->sel, gam->mv2);
-			gam->mv2 = 0;
+		if (*mv) {
+			sel_endmv(sol, sel, *mv);
+			*mv = 0;
 		}
-		else if (gam->sel.place == SOL_STOCK)
-			sol_stock2discard(&gam->sol);
-		else if (gam->sel.card && gam->sel.card->visible)
-			gam->mv2 = gam->sel.place;
+		else if (sel->place == SOL_STOCK)
+			sol_stock2discard(sol);
+		else if (sel->card && sel->card->visible)
+			*mv = sel->place;
 		break;
 
 	default:
@@ -123,21 +116,21 @@ int main(void)
 
 	refresh();   // yes, this is needed before drawing the cards for some reason
 
-	struct Game gam;
-	sol_init(&gam.sol, card_createallshuf());
-	gam.sel.card = NULL;
-	gam.sel.place = SOL_STOCK;
-	gam.mv2 = 0;
+	struct Sol sol;
+	sol_init(&sol, card_createallshuf());
+
+	struct UiSelection sel = { .place = SOL_STOCK, .card = NULL };
+	SolCardPlace mv = 0;
 
 	do {
-		if (gam.mv2)
-			draw_sol_with_mv(stdscr, gam.sol, gam.sel, gam.mv2);
+		if (mv)
+			draw_sol_with_mv(stdscr, sol, sel, mv);
 		else
-			ui_drawsol(stdscr, gam.sol, gam.sel);
+			ui_drawsol(stdscr, sol, sel);
 		refresh();
-	} while( handle_key(&gam, getch()) );
+	} while( handle_key(&sol, &sel, &mv, getch()) );
 
-	sol_free(gam.sol);
+	sol_free(sol);
 	endwin();
 
 	return 0;
