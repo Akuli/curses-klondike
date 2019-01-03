@@ -2,7 +2,7 @@
 #define SEL_H
 
 #include "sol.h"
-#include "ui.h"
+#include "ui.h"  // IWYU pragma: keep
 
 enum SelDirection { SEL_LEFT, SEL_RIGHT, SEL_UP, SEL_DOWN };
 

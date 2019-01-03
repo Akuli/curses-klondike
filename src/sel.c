@@ -1,5 +1,8 @@
 #include "sel.h"
 #include <assert.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include "card.h"
 #include "sol.h"
 #include "ui.h"
 
