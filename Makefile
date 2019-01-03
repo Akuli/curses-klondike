@@ -1,4 +1,4 @@
-CFLAGS += -Wall -Wextra -Wpedantic -std=gnu99 -Wno-unused-parameter
+CFLAGS += -Wall -Wextra -Wpedantic -std=c99 -Wno-unused-parameter
 LDFLAGS += -lncursesw     # needs cursesw instead of curses for unicodes
 IWYU ?= iwyu
 
