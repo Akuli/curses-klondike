@@ -8,7 +8,7 @@
 /*
 represents the card pile or location that the user has selected
 a pointer to struct Card is not enough because it's possible to select a
-place where cards can be put, but that currently contains no cards
+place where cards can be put but currently contains no cards
 
 possible values:
 
@@ -18,21 +18,21 @@ possible values:
 	.card = NULL, .place = SOL_STOCK
 		stock selected
 
-	.card = NULL, .place = SOL_DISCARD
+	.card = card_top(sol->discard), .place = SOL_DISCARD
 		discard selected
 
-	.card = NULL, .place = SOL_FOUNDATION(n)
-		n'th foundation selected
+	.card = card_top(sol->foundations[n]), .place = SOL_FOUNDATION(n)
+		nth foundation selected
 
-	.card != NULL, .place = SOL_TABLEAU(n)      where 0 <= n < 4
-		tableau n selected, bottommost selected card is the card
+	.card = sol->tableau[n] or some of its ->nexts, .card is visible, .place = SOL_TABLEAU(n)
+		nth tableau selected, including the specified card and all its ->nexts
 
-	.card = NULL, .place = SOL_TABLEAU(n)       where 0 <= n < 4
-		tableau n selected, there are no cards in that tableau
+	.card = NULL, .place = SOL_TABLEAU(n)
+		tableau n selected, but there are no cards in that tableau
 */
 struct UiSelection {
-	struct Card *card;   // NULL for nothing selected
-	SolCardPlace place;  // 0 for nothing selected
+	struct Card *card;
+	SolCardPlace place;
 };
 
 // draws sol on win
