@@ -87,7 +87,8 @@ TEST(sol_dup)
 {
 	struct Sol sol1, sol2;
 	sol_init(&sol1, card_createallshuf());
-	sol_dup(sol1, &sol2);
+	struct Card *dupres = sol_dup(sol1, &sol2, sol1.tableau[2]->next);
+	assert(dupres == sol2.tableau[2]->next);
 
 	assert(cards_match(sol1.stock, sol2.stock));
 	assert(cards_match(sol1.discard, sol2.discard));
