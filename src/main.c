@@ -1,3 +1,6 @@
+// for setenv(3)
+#define _POSIX_C_SOURCE 200112L
+
 #include <assert.h>
 #include <curses.h>
 #include <locale.h>
@@ -40,28 +43,57 @@ static enum SelDirection curses_key_to_seldirection(int k)
 static bool handle_key(struct Sol *sol, struct UiSelection *sel, SolCardPlace *mv, int k)
 {
 	// TODO: h help
-	// TODO: esc quit, in addition to q OR esc for unselecting
-	// TODO: f foundationing
-	switch(k) {
-	case 'q':
+	if (k == 'q')
 		return false;
 
-	case 'd':
-		if (!*mv)
-			sol_stock2discard(sol);
-		break;
+	if (k == 's' && !*mv) {
+		sol_stock2discard(sol);
 
-	case KEY_LEFT:
-	case KEY_RIGHT:
-	case KEY_UP:
-	case KEY_DOWN:
+		// if you change this, think about what if the discard card was selected?
+		// then the moved card ended up on top of the old discarded card
+		// and we have 2 cards selected, so you need to handle that
+		sel_byplace(*sol, sel, SOL_DISCARD);
+
+		return true;
+	}
+
+	if (k == 'd') {
+		if (*mv)
+			*mv = SOL_DISCARD;
+		else
+			sel_byplace(*sol, sel, SOL_DISCARD);
+	}
+
+	if (k == 'f' && sel->card && !*mv) {
+		for (int i=0; i < 4; i++)
+			if (sol_canmove(*sol, sel->card, SOL_FOUNDATION(i))) {
+				sol_move(sol, sel->card, SOL_FOUNDATION(i));
+				sel_byplace(*sol, sel, sel->place);  // updates sel->card if needed
+				break;
+			}
+		return true;
+	}
+
+	if (k == 27) {   // esc key, didn't find a KEY_ constant for this
+		if (*mv)
+			*mv = 0;
+		return true;
+	}
+
+	if (k == KEY_LEFT || k == KEY_RIGHT || k == KEY_UP || k == KEY_DOWN) {
 		if (*mv)
 			sel_anothercardmv(*sol, *sel, curses_key_to_seldirection(k), mv);
-		else
+		else {
+			if (k == KEY_UP && sel_more(*sol, sel))
+				return true;
+			if (k == KEY_DOWN && sel_less(*sol, sel))
+				return true;
 			sel_anothercard(*sol, sel, curses_key_to_seldirection(k));
-		break;
+		}
+		return true;
+	}
 
-	case '\n':
+	if (k == '\n') {
 		if (*mv) {
 			sel_endmv(sol, sel, *mv);
 			*mv = 0;
@@ -70,10 +102,15 @@ static bool handle_key(struct Sol *sol, struct UiSelection *sel, SolCardPlace *m
 			sol_stock2discard(sol);
 		else if (sel->card && sel->card->visible)
 			*mv = sel->place;
-		break;
+		return true;
+	}
 
-	default:
-		break;
+	if ('1' <= k && k <= '7') {
+		if (*mv)
+			*mv = SOL_TABLEAU(k - '1');
+		else
+			sel_byplace(*sol, sel, SOL_TABLEAU(k - '1'));
+		return true;
 	}
 
 	return true;
@@ -98,6 +135,13 @@ int main(void)
 	if (!setlocale(LC_ALL, ""))
 		fatal_error("setlocale() failed");
 
+	// https://stackoverflow.com/a/28020568
+	// see also ESCDELAY in a man page named "ncurses"
+	// setting to "0" works, but feels like a hack, so i used same as in stackoverflow
+	// TODO: add a configure script to allow compiling without setenv()?
+	if (setenv("ESCDELAY", "25", false) < 0)
+		fatal_error("setenv() failed");
+
 	time_t t = time(NULL);
 	if (t == (time_t)(-1))
 		fatal_error("time() failed");
@@ -118,7 +162,6 @@ int main(void)
 
 	struct Sol sol;
 	sol_init(&sol, card_createallshuf());
-
 	struct UiSelection sel = { .place = SOL_STOCK, .card = NULL };
 	SolCardPlace mv = 0;
 

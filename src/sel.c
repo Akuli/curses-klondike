@@ -43,7 +43,7 @@ static struct Card *get_visible_top_card(struct Sol sol, SolCardPlace plc)
 	return NULL;
 }
 
-static void set_place(struct Sol sol, struct UiSelection *sel, SolCardPlace plc)
+void sel_byplace(struct Sol sol, struct UiSelection *sel, SolCardPlace plc)
 {
 	sel->place = plc;
 	sel->card = get_visible_top_card(sol, plc);
@@ -61,6 +61,28 @@ static bool change_x_left_right(int *x, enum SelDirection dir, bool tab, bool ta
 	return (0 <= *x && *x < 7);
 }
 
+bool sel_more(struct Sol sol, struct UiSelection *sel)
+{
+	if (!SOL_IS_TABLEAU(sel->place))
+		return false;
+
+	for (struct Card *crd = sol.tableau[SOL_TABLEAU_NUM(sel->place)]; crd && crd->next; crd = crd->next)
+		if (sel->card == crd->next && crd->visible) {
+			sel->card = crd;
+			return true;
+		}
+	return false;
+}
+
+bool sel_less(struct Sol sol, struct UiSelection *sel)
+{
+	if (SOL_IS_TABLEAU(sel->place) && sel->card && sel->card->next) {
+		sel->card = sel->card->next;
+		return true;
+	}
+	return false;
+}
+
 void sel_anothercard(struct Sol sol, struct UiSelection *sel, enum SelDirection dir)
 {
 	int x = place_2_card_x(sel->place);
@@ -70,30 +92,20 @@ void sel_anothercard(struct Sol sol, struct UiSelection *sel, enum SelDirection 
 	case SEL_LEFT:
 	case SEL_RIGHT:
 		if (change_x_left_right(&x, dir, tab, false))
-			set_place(sol, sel, tab ? SOL_TABLEAU(x) : card_x_2_top_place(x));
+			sel_byplace(sol, sel, tab ? SOL_TABLEAU(x) : card_x_2_top_place(x));
 		break;
 
 	case SEL_UP:
 		if (!tab)
 			break;
 
-		// can select more cards?
-		for (struct Card *crd = sol.tableau[x]; crd && crd->next; crd = crd->next)
-			if (sel->card == crd->next && crd->visible) {
-				sel->card = crd;
-				return;
-			}
-
-		// if not, move selection to top row if possible
 		if (card_x_2_top_place(x))
-			set_place(sol, sel, card_x_2_top_place(x));
+			sel_byplace(sol, sel, card_x_2_top_place(x));
 		break;
 
 	case SEL_DOWN:
-		if (tab && sel->card && sel->card->next)
-			sel->card = sel->card->next;
 		if (!tab)
-			set_place(sol, sel, SOL_TABLEAU(x));
+			sel_byplace(sol, sel, SOL_TABLEAU(x));
 		break;
 
 	default:
@@ -137,5 +149,5 @@ void sel_endmv(struct Sol *sol, struct UiSelection *sel, SolCardPlace mv)
 	assert(sel->card);
 	if (sol_canmove(*sol, sel->card, mv))
 		sol_move(sol, sel->card, mv);
-	set_place(*sol, sel, mv);
+	sel_byplace(*sol, sel, mv);
 }

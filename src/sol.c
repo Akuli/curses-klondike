@@ -234,3 +234,12 @@ void sol_stock2discard(struct Sol *sol)
 	pop->visible = true;
 	card_pushtop(&sol->discard, pop);
 }
+
+void sel_2foundation(struct Sol *sol, struct Card *crd)
+{
+	for (int i=0; i < 4; i++)
+		if (sol_canmove(*sol, crd, SOL_FOUNDATION(i))) {
+			sol_move(sol, crd, SOL_FOUNDATION(i));
+			break;
+		}
+}
