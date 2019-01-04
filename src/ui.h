@@ -3,7 +3,7 @@
 
 #include <curses.h>
 #include "card.h"   // IWYU pragma: keep
-#include "sol.h"
+#include "klon.h"
 
 /*
 represents the card pile or location that the user has selected
@@ -15,27 +15,27 @@ possible values:
 	.card = NULL, .place = 0
 		nothing selected
 
-	.card = NULL, .place = SOL_STOCK
+	.card = NULL, .place = KLON_STOCK
 		stock selected
 
-	.card = card_top(sol->discard), .place = SOL_DISCARD
+	.card = card_top(kln->discard), .place = KLON_DISCARD
 		discard selected
 
-	.card = card_top(sol->foundations[n]), .place = SOL_FOUNDATION(n)
+	.card = card_top(kln->foundations[n]), .place = KLON_FOUNDATION(n)
 		nth foundation selected
 
-	.card = sol->tableau[n] or some of its ->nexts, .card is visible, .place = SOL_TABLEAU(n)
+	.card = kln->tableau[n] or some of its ->nexts, .card is visible, .place = KLON_TABLEAU(n)
 		nth tableau selected, including the specified card and all its ->nexts
 
-	.card = NULL, .place = SOL_TABLEAU(n)
+	.card = NULL, .place = KLON_TABLEAU(n)
 		tableau n selected, but there are no cards in that tableau
 */
 struct UiSelection {
 	struct Card *card;
-	SolCardPlace place;
+	KlonCardPlace place;
 };
 
-// draws sol on win
-void ui_drawsol(WINDOW *win, struct Sol sol, struct UiSelection sel);
+// draws kln on win
+void ui_drawklon(WINDOW *win, struct Klon kln, struct UiSelection sel);
 
 #endif  // UI_H

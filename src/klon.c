@@ -1,4 +1,4 @@
-#include "sol.h"
+#include "klon.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -7,19 +7,19 @@
 #include "card.h"
 #include "misc.h"
 
-void sol_init(struct Sol *sol, struct Card *list)
+void klon_init(struct Klon *kln, struct Card *list)
 {
 	for (int i=0; i < 7; i++) {
-		sol->tableau[i] = NULL;
+		kln->tableau[i] = NULL;
 		for (int j=0; j < i+1; j++)
-			card_pushtop(&sol->tableau[i], card_popbot(&list));
-		card_top(sol->tableau[i])->visible = true;
+			card_pushtop(&kln->tableau[i], card_popbot(&list));
+		card_top(kln->tableau[i])->visible = true;
 	}
 
-	sol->stock = list;
-	sol->discard = NULL;
+	kln->stock = list;
+	kln->discard = NULL;
 	for (int i=0; i < 4; i++)
-		sol->foundations[i] = NULL;
+		kln->foundations[i] = NULL;
 }
 
 static int print_cards(struct Card *list)
@@ -36,37 +36,37 @@ static int print_cards(struct Card *list)
 	return n;
 }
 
-void sol_debug(struct Sol sol)
+void klon_debug(struct Klon kln)
 {
 	int total = 0;
 
 	printf("stock:");
-	total += print_cards(sol.stock);
+	total += print_cards(kln.stock);
 
 	printf("discard:");
-	total += print_cards(sol.discard);
+	total += print_cards(kln.discard);
 
 	for (int i=0; i < 4; i++) {
 		printf("foundation %d:", i);
-		total += print_cards(sol.foundations[i]);
+		total += print_cards(kln.foundations[i]);
 	}
 
 	for (int i=0; i < 7; i++) {
 		printf("tableau %d:", i);
-		total += print_cards(sol.tableau[i]);
+		total += print_cards(kln.tableau[i]);
 	}
 
 	printf("total: %d cards\n", total);
 }
 
-void sol_free(struct Sol sol)
+void klon_free(struct Klon kln)
 {
-	card_free(sol.stock);
-	card_free(sol.discard);
+	card_free(kln.stock);
+	card_free(kln.discard);
 	for (int i=0; i < 4; i++)
-		card_free(sol.foundations[i]);
+		card_free(kln.foundations[i]);
 	for (int i=0; i < 7; i++)
-		card_free(sol.tableau[i]);
+		card_free(kln.tableau[i]);
 }
 
 static void copy_cards(struct Card *src, struct Card **dst, struct Card *srccrd, struct Card **dstcrd)
@@ -92,7 +92,7 @@ static void copy_cards(struct Card *src, struct Card **dst, struct Card *srccrd,
 	}
 }
 
-struct Card *sol_dup(struct Sol src, struct Sol *dst, struct Card *srccrd)
+struct Card *klon_dup(struct Klon src, struct Klon *dst, struct Card *srccrd)
 {
 	struct Card *dstcrd = NULL;
 
@@ -106,30 +106,30 @@ struct Card *sol_dup(struct Sol src, struct Sol *dst, struct Card *srccrd)
 	return dstcrd;
 }
 
-static bool card_in_some_tableau(struct Sol sol, struct Card *crd)
+static bool card_in_some_tableau(struct Klon kln, struct Card *crd)
 {
 	for (int i=0; i < 7; i++)
-		for (struct Card *tabcrd = sol.tableau[i]; tabcrd; tabcrd = tabcrd->next)
+		for (struct Card *tabcrd = kln.tableau[i]; tabcrd; tabcrd = tabcrd->next)
 			if (tabcrd == crd)
 				return true;
 	return false;
 }
 
-bool sol_canmove(struct Sol sol, struct Card *crd, SolCardPlace dst)
+bool klon_canmove(struct Klon kln, struct Card *crd, KlonCardPlace dst)
 {
-	// taking cards stock to discard is handled by sol_stactodiscard() and not allowed here
+	// taking cards stock to discard is handled by klon_stactodiscard() and not allowed here
 	if (crd->next) {
 		// the only way how a stack of multiple cards is allowed to move is tableau -> tableau
-		if (!(card_in_some_tableau(sol, crd) && SOL_IS_TABLEAU(dst)))
+		if (!(card_in_some_tableau(kln, crd) && KLON_IS_TABLEAU(dst)))
 			return false;
 		goto tableau;
 	}
 
-	if (crd->next || dst == SOL_STOCK || dst == SOL_DISCARD || !crd->visible)
+	if (crd->next || dst == KLON_STOCK || dst == KLON_DISCARD || !crd->visible)
 		return false;
 
-	if (SOL_IS_FOUNDATION(dst)) {
-		struct Card *fnd = sol.foundations[SOL_FOUNDATION_NUM(dst)];
+	if (KLON_IS_FOUNDATION(dst)) {
+		struct Card *fnd = kln.foundations[KLON_FOUNDATION_NUM(dst)];
 		if (!fnd)
 			return (crd->num == 1);
 
@@ -138,8 +138,8 @@ bool sol_canmove(struct Sol sol, struct Card *crd, SolCardPlace dst)
 	}
 
 	tableau:
-	if (SOL_IS_TABLEAU(dst)) {
-		struct Card *tab = sol.tableau[SOL_TABLEAU_NUM(dst)];
+	if (KLON_IS_TABLEAU(dst)) {
+		struct Card *tab = kln.tableau[KLON_TABLEAU_NUM(dst)];
 		if (!tab)
 			return (crd->num == 13);
 
@@ -151,16 +151,16 @@ bool sol_canmove(struct Sol sol, struct Card *crd, SolCardPlace dst)
 }
 
 // a double-linked list would make this easier but many other things harder
-struct Card *sol_detachcard(struct Sol *sol, struct Card *crd)
+struct Card *klon_detachcard(struct Klon *kln, struct Card *crd)
 {
 	struct Card **look4[2+4+7];
 	struct Card ***look4ptr = look4;
-	*look4ptr++ = &sol->stock;
-	*look4ptr++ = &sol->discard;
+	*look4ptr++ = &kln->stock;
+	*look4ptr++ = &kln->discard;
 	for (int i=0; i < 4; i++)
-		*look4ptr++ = &sol->foundations[i];
+		*look4ptr++ = &kln->foundations[i];
 	for (int i=0; i < 7; i++)
-		*look4ptr++ = &sol->tableau[i];
+		*look4ptr++ = &kln->tableau[i];
 
 	for (unsigned int i=0; i < sizeof(look4)/sizeof(look4[0]); i++) {
 		// special case: no card has crd as ->next
@@ -179,12 +179,12 @@ struct Card *sol_detachcard(struct Sol *sol, struct Card *crd)
 	assert(0);
 }
 
-static void do_move(struct Sol *sol, struct Card *crd, SolCardPlace dst, bool raw)
+static void do_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst, bool raw)
 {
 	if (!raw)
-		assert(sol_canmove(*sol, crd, dst));
+		assert(klon_canmove(*kln, crd, dst));
 
-	struct Card *prv = sol_detachcard(sol, crd);
+	struct Card *prv = klon_detachcard(kln, crd);
 
 	// prv:
 	//  * is NULL, if crd was the bottommost card
@@ -194,57 +194,57 @@ static void do_move(struct Sol *sol, struct Card *crd, SolCardPlace dst, bool ra
 		prv->visible = true;
 
 	struct Card **dstp;
-	if (dst == SOL_STOCK)
-		dstp = &sol->stock;
-	else if (dst == SOL_DISCARD)
-		dstp = &sol->discard;
-	else if (SOL_IS_FOUNDATION(dst))
-		dstp = &sol->foundations[SOL_FOUNDATION_NUM(dst)];
-	else if (SOL_IS_TABLEAU(dst))
-		dstp = &sol->tableau[SOL_TABLEAU_NUM(dst)];
+	if (dst == KLON_STOCK)
+		dstp = &kln->stock;
+	else if (dst == KLON_DISCARD)
+		dstp = &kln->discard;
+	else if (KLON_IS_FOUNDATION(dst))
+		dstp = &kln->foundations[KLON_FOUNDATION_NUM(dst)];
+	else if (KLON_IS_TABLEAU(dst))
+		dstp = &kln->tableau[KLON_TABLEAU_NUM(dst)];
 	else
 		assert(0);
 
 	card_pushtop(dstp, crd);
 }
 
-void sol_move(struct Sol *sol, struct Card *crd, SolCardPlace dst) { do_move(sol, crd, dst, false); }
-void sol_rawmove(struct Sol *sol, struct Card *crd, SolCardPlace dst) { do_move(sol, crd, dst, true); }
+void klon_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst) { do_move(kln, crd, dst, false); }
+void klon_rawmove(struct Klon *kln, struct Card *crd, KlonCardPlace dst) { do_move(kln, crd, dst, true); }
 
-void sol_stock2discard(struct Sol *sol)
+void klon_stock2discard(struct Klon *kln)
 {
-	if (!sol->stock) {
-		for (struct Card *crd = sol->discard; crd; crd = crd->next) {
+	if (!kln->stock) {
+		for (struct Card *crd = kln->discard; crd; crd = crd->next) {
 			assert(crd->visible);
 			crd->visible = false;
 		}
 
-		sol->stock = sol->discard;   // may be NULL when all stock cards have been used
-		sol->discard = NULL;
+		kln->stock = kln->discard;   // may be NULL when all stock cards have been used
+		kln->discard = NULL;
 		return;
 	}
 
 	// the card on top of the stock must be visible, but other stock cards aren't
-	struct Card *pop = card_popbot(&sol->stock);
+	struct Card *pop = card_popbot(&kln->stock);
 	assert(!pop->visible);
 	pop->visible = true;
-	card_pushtop(&sol->discard, pop);
+	card_pushtop(&kln->discard, pop);
 }
 
-void sel_2foundation(struct Sol *sol, struct Card *crd)
+void sel_2foundation(struct Klon *kln, struct Card *crd)
 {
 	for (int i=0; i < 4; i++)
-		if (sol_canmove(*sol, crd, SOL_FOUNDATION(i))) {
-			sol_move(sol, crd, SOL_FOUNDATION(i));
+		if (klon_canmove(*kln, crd, KLON_FOUNDATION(i))) {
+			klon_move(kln, crd, KLON_FOUNDATION(i));
 			break;
 		}
 }
 
-bool sol_win(struct Sol sol)
+bool klon_win(struct Klon kln)
 {
 	for (int i=0; i < 4; i++) {
 		int n = 0;
-		for (struct Card *crd = sol.foundations[i]; crd; crd = crd->next)
+		for (struct Card *crd = kln.foundations[i]; crd; crd = crd->next)
 			n++;
 
 		assert(n <= 13);

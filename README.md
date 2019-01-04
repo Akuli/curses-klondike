@@ -1,6 +1,8 @@
-# Curses solitaire
+# Curses klondike
 
-This is a text-based solitaire game written in curses using C.
+This is a text-based [klondike] game written in curses using C.
+
+[klondike]: https://en.wikipedia.org/wiki/Klondike_(solitaire)
 
 ![screenshot](screenshot.png)
 
@@ -10,28 +12,28 @@ If you have apt, you can install all dependencies like this:
 
 Then you can download my code, compile it and run.
 
-    $ git clone https://github.com/Akuli/curses-solitaire
-    $ cd curses-solitaire
+    $ git clone https://github.com/Akuli/curses-klondike
+    $ cd curses-klondike
     $ make
-    $ ./cursessol
+    $ ./curseskln
 
 
 ## FAQ
 
-### Why did you write a solitaire game?
+### Why did you write a klondike game?
 
 Because it's fun.
 
-### Why did you write a solitaire game in C?
+### Why did you write a klondike game in C?
 
 Because it's fun.
 
-### Why did you write a solitaire game using curses?
+### Why did you write a klondike game using curses?
 
 Because it's fun.
 
 ### Does it work on Windows?
 
-No, but Windows comes with a solitaire. Windows command prompt and powershell
+No, but Windows comes with a klondike. Windows command prompt and powershell
 are kind of awful anyway, and you probably want to use GUI applications instead
 of them whenever possible.

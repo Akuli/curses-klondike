@@ -3,50 +3,50 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "card.h"
-#include "sol.h"
+#include "klon.h"
 #include "ui.h"
 
-static int place_2_card_x(SolCardPlace plc)
+static int place_2_card_x(KlonCardPlace plc)
 {
-	if (SOL_IS_TABLEAU(plc))
-		return SOL_TABLEAU_NUM(plc);
-	if (SOL_IS_FOUNDATION(plc))
-		return 3 + SOL_FOUNDATION_NUM(plc);
-	if (plc == SOL_STOCK)
+	if (KLON_IS_TABLEAU(plc))
+		return KLON_TABLEAU_NUM(plc);
+	if (KLON_IS_FOUNDATION(plc))
+		return 3 + KLON_FOUNDATION_NUM(plc);
+	if (plc == KLON_STOCK)
 		return 0;
-	if (plc == SOL_DISCARD)
+	if (plc == KLON_DISCARD)
 		return 1;
 	assert(0);
 }
 
-static SolCardPlace card_x_2_top_place(int x)
+static KlonCardPlace card_x_2_top_place(int x)
 {
 	if (x == 0)
-		return SOL_STOCK;
+		return KLON_STOCK;
 	if (x == 1)
-		return SOL_DISCARD;
+		return KLON_DISCARD;
 	if (x == 2)
 		return 0;
 
-	assert(SOL_IS_FOUNDATION(SOL_FOUNDATION(x-3)));
-	return SOL_FOUNDATION(x-3);
+	assert(KLON_IS_FOUNDATION(KLON_FOUNDATION(x-3)));
+	return KLON_FOUNDATION(x-3);
 }
 
-static struct Card *get_visible_top_card(struct Sol sol, SolCardPlace plc)
+static struct Card *get_visible_top_card(struct Klon kln, KlonCardPlace plc)
 {
-	if (SOL_IS_FOUNDATION(plc))
-		return card_top(sol.foundations[SOL_FOUNDATION_NUM(plc)]);
-	if (SOL_IS_TABLEAU(plc))
-		return card_top(sol.tableau[SOL_TABLEAU_NUM(plc)]);
-	if (plc == SOL_DISCARD)
-		return card_top(sol.discard);
+	if (KLON_IS_FOUNDATION(plc))
+		return card_top(kln.foundations[KLON_FOUNDATION_NUM(plc)]);
+	if (KLON_IS_TABLEAU(plc))
+		return card_top(kln.tableau[KLON_TABLEAU_NUM(plc)]);
+	if (plc == KLON_DISCARD)
+		return card_top(kln.discard);
 	return NULL;
 }
 
-void sel_byplace(struct Sol sol, struct UiSelection *sel, SolCardPlace plc)
+void sel_byplace(struct Klon kln, struct UiSelection *sel, KlonCardPlace plc)
 {
 	sel->place = plc;
-	sel->card = get_visible_top_card(sol, plc);
+	sel->card = get_visible_top_card(kln, plc);
 }
 
 // if tabfndonly, only allows moving to tableau or foundations
@@ -56,17 +56,17 @@ static bool change_x_left_right(int *x, enum SelDirection dir, bool tab, bool ta
 		*x += (dir == SEL_LEFT) ? -1 : 1;
 	while (0 <= *x && *x < 7 && !tab && !card_x_2_top_place(*x));
 
-	if (tabfndonly && !tab && !SOL_IS_FOUNDATION(card_x_2_top_place(*x)))
+	if (tabfndonly && !tab && !KLON_IS_FOUNDATION(card_x_2_top_place(*x)))
 		return false;
 	return (0 <= *x && *x < 7);
 }
 
-bool sel_more(struct Sol sol, struct UiSelection *sel)
+bool sel_more(struct Klon kln, struct UiSelection *sel)
 {
-	if (!SOL_IS_TABLEAU(sel->place))
+	if (!KLON_IS_TABLEAU(sel->place))
 		return false;
 
-	for (struct Card *crd = sol.tableau[SOL_TABLEAU_NUM(sel->place)]; crd && crd->next; crd = crd->next)
+	for (struct Card *crd = kln.tableau[KLON_TABLEAU_NUM(sel->place)]; crd && crd->next; crd = crd->next)
 		if (sel->card == crd->next && crd->visible) {
 			sel->card = crd;
 			return true;
@@ -74,25 +74,25 @@ bool sel_more(struct Sol sol, struct UiSelection *sel)
 	return false;
 }
 
-bool sel_less(struct Sol sol, struct UiSelection *sel)
+bool sel_less(struct Klon kln, struct UiSelection *sel)
 {
-	if (SOL_IS_TABLEAU(sel->place) && sel->card && sel->card->next) {
+	if (KLON_IS_TABLEAU(sel->place) && sel->card && sel->card->next) {
 		sel->card = sel->card->next;
 		return true;
 	}
 	return false;
 }
 
-void sel_anothercard(struct Sol sol, struct UiSelection *sel, enum SelDirection dir)
+void sel_anothercard(struct Klon kln, struct UiSelection *sel, enum SelDirection dir)
 {
 	int x = place_2_card_x(sel->place);
-	bool tab = SOL_IS_TABLEAU(sel->place);
+	bool tab = KLON_IS_TABLEAU(sel->place);
 
 	switch(dir) {
 	case SEL_LEFT:
 	case SEL_RIGHT:
 		if (change_x_left_right(&x, dir, tab, false))
-			sel_byplace(sol, sel, tab ? SOL_TABLEAU(x) : card_x_2_top_place(x));
+			sel_byplace(kln, sel, tab ? KLON_TABLEAU(x) : card_x_2_top_place(x));
 		break;
 
 	case SEL_UP:
@@ -100,12 +100,12 @@ void sel_anothercard(struct Sol sol, struct UiSelection *sel, enum SelDirection 
 			break;
 
 		if (card_x_2_top_place(x))
-			sel_byplace(sol, sel, card_x_2_top_place(x));
+			sel_byplace(kln, sel, card_x_2_top_place(x));
 		break;
 
 	case SEL_DOWN:
 		if (!tab)
-			sel_byplace(sol, sel, SOL_TABLEAU(x));
+			sel_byplace(kln, sel, KLON_TABLEAU(x));
 		break;
 
 	default:
@@ -113,30 +113,30 @@ void sel_anothercard(struct Sol sol, struct UiSelection *sel, enum SelDirection 
 	}
 }
 
-void sel_anothercardmv(struct Sol sol, struct UiSelection sel, enum SelDirection dir, SolCardPlace *mv)
+void sel_anothercardmv(struct Klon kln, struct UiSelection sel, enum SelDirection dir, KlonCardPlace *mv)
 {
 	assert(sel.card);
 	int x = place_2_card_x(*mv);
-	bool tab = SOL_IS_TABLEAU(*mv);
+	bool tab = KLON_IS_TABLEAU(*mv);
 
 	switch(dir) {
 	case SEL_LEFT:
 	case SEL_RIGHT:
 		if (change_x_left_right(&x, dir, tab, true))
-			*mv = tab ? SOL_TABLEAU(x) : card_x_2_top_place(x);
+			*mv = tab ? KLON_TABLEAU(x) : card_x_2_top_place(x);
 		break;
 
 	case SEL_UP:
 		if (tab) {
 			// can only move to foundations, but multiple cards not even there
-			if (SOL_IS_FOUNDATION(card_x_2_top_place(x)) && !sel.card->next)
+			if (KLON_IS_FOUNDATION(card_x_2_top_place(x)) && !sel.card->next)
 				*mv = card_x_2_top_place(x);
 		} else
-			*mv = SOL_TABLEAU(x);
+			*mv = KLON_TABLEAU(x);
 		break;
 
 	case SEL_DOWN:
-		*mv = SOL_TABLEAU(x);
+		*mv = KLON_TABLEAU(x);
 		break;
 
 	default:
@@ -144,10 +144,10 @@ void sel_anothercardmv(struct Sol sol, struct UiSelection sel, enum SelDirection
 	}
 }
 
-void sel_endmv(struct Sol *sol, struct UiSelection *sel, SolCardPlace mv)
+void sel_endmv(struct Klon *kln, struct UiSelection *sel, KlonCardPlace mv)
 {
 	assert(sel->card);
-	if (sol_canmove(*sol, sel->card, mv))
-		sol_move(sol, sel->card, mv);
-	sel_byplace(*sol, sel, mv);
+	if (klon_canmove(*kln, sel->card, mv))
+		klon_move(kln, sel->card, mv);
+	sel_byplace(*kln, sel, mv);
 }

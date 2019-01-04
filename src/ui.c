@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "card.h"
-#include "sol.h"
+#include "klon.h"
 
 #define CARD_WIDTH 7
 #define CARD_HEIGHT 5
@@ -134,7 +134,7 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ys
 	}
 }
 
-void ui_drawsol(WINDOW *win, struct Sol sol, struct UiSelection sel)
+void ui_drawklon(WINDOW *win, struct Klon kln, struct UiSelection sel)
 {
 	werase(win);
 
@@ -143,25 +143,25 @@ void ui_drawsol(WINDOW *win, struct Sol sol, struct UiSelection sel)
 
 	// all cards in stock are non-visible and perfectly lined up on top of each other
 	// so just draw one of them, if any
-	draw_card(win, sol.stock, ui_x(0, w), ui_y(0, h), sel.place == SOL_STOCK);
+	draw_card(win, kln.stock, ui_x(0, w), ui_y(0, h), sel.place == KLON_STOCK);
 
 	// discard contains lined-up cards, too
-	draw_card(win, card_top(sol.discard), ui_x(1, w), ui_y(0, h), sel.place == SOL_DISCARD);
+	draw_card(win, card_top(kln.discard), ui_x(1, w), ui_y(0, h), sel.place == KLON_DISCARD);
 
 	// foundations are similar to discard
 	for (int i=0; i < 4; i++)
-		draw_card(win, card_top(sol.foundations[i]), ui_x(3+i, w), ui_y(0, h), sel.place == SOL_FOUNDATION(i));
+		draw_card(win, card_top(kln.foundations[i]), ui_x(3+i, w), ui_y(0, h), sel.place == KLON_FOUNDATION(i));
 
 	// now the tableau... here we go
 	for (int x=0; x < 7; x++) {
-		if (!sol.tableau[x]) {
+		if (!kln.tableau[x]) {
 			// draw a border if the tableau item is selected
-			draw_card(win, NULL, ui_x(x, w), ui_y(1, h), sel.place == SOL_TABLEAU(x));
+			draw_card(win, NULL, ui_x(x, w), ui_y(1, h), sel.place == KLON_TABLEAU(x));
 			continue;
 		}
 
 		int yo = 0;
-		for (struct Card *crd = sol.tableau[x]; crd; crd = crd->next) {
+		for (struct Card *crd = kln.tableau[x]; crd; crd = crd->next) {
 			if (crd->visible) {
 				draw_card_stack(win, crd, ui_x(x, w), ui_y(1, h) + yo, sel.card);
 				break;
@@ -172,7 +172,7 @@ void ui_drawsol(WINDOW *win, struct Sol sol, struct UiSelection sel)
 		}
 	}
 
-	if (sol_win(sol)) {
+	if (klon_win(kln)) {
 		char *msg = "you win :)";
 		mvwaddstr(win, h/2, (w - strlen(msg))/2, msg);
 	}

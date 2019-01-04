@@ -13,14 +13,14 @@ VALGRINDOPTS ?= -q --leak-check=full --error-exitcode=1 --errors-for-leak-kinds=
 endif
 
 
-all: test cursessol
+all: test cursesklon
 
-cursessol: src/main.c $(OBJ) $(HEADERS)
+cursesklon: src/main.c $(OBJ) $(HEADERS)
 	$(CC) -I. $(CFLAGS) $< $(OBJ) -o $@ $(LDFLAGS)
 
 .PHONY: clean
 clean:
-	rm -vrf obj cursessol testrunner
+	rm -vrf obj cursesklon testrunner
 
 obj/%.o: src/%.c $(HEADERS)
 	mkdir -p $(@D) && $(CC) -c -o $@ $< $(CFLAGS)

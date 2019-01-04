@@ -38,11 +38,11 @@ int main(void)
 	RUN_TEST(card_pushtop);
 	RUN_TEST(card_inlist);
 
-	RUN_TEST(sol_cardplace);
-	RUN_TEST(sol_init_free);
-	RUN_TEST(sol_dup);
-	RUN_TEST(sol_canmove);
-	RUN_TEST(sol_move);
-	RUN_TEST(sol_stock2discard);
+	RUN_TEST(klon_cardplace);
+	RUN_TEST(klon_init_free);
+	RUN_TEST(klon_dup);
+	RUN_TEST(klon_canmove);
+	RUN_TEST(klon_move);
+	RUN_TEST(klon_stock2discard);
 	return 0;
 }

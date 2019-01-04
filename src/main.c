@@ -11,7 +11,7 @@
 #include "help.h"
 #include "misc.h"
 #include "sel.h"
-#include "sol.h"
+#include "klon.h"
 #include "ui.h"
 
 
@@ -56,16 +56,16 @@ struct Help help[] = {
 	{ NULL, NULL }
 };
 
-static void new_game(struct Sol *sol, struct UiSelection *sel, SolCardPlace *mv)
+static void new_game(struct Klon *kln, struct UiSelection *sel, KlonCardPlace *mv)
 {
-	sol_init(sol, card_createallshuf());
-	sel->place = SOL_STOCK;
+	klon_init(kln, card_createallshuf());
+	sel->place = KLON_STOCK;
 	sel->card = NULL;
 	*mv = 0;
 }
 
 // returns whether to continue playing
-static bool handle_key(struct Sol *sol, struct UiSelection *sel, SolCardPlace *mv, int k)
+static bool handle_key(struct Klon *kln, struct UiSelection *sel, KlonCardPlace *mv, int k)
 {
 	if (k == 'h') {
 		help_show(stdscr);
@@ -76,33 +76,33 @@ static bool handle_key(struct Sol *sol, struct UiSelection *sel, SolCardPlace *m
 		return false;
 
 	if (k == 'n') {
-		sol_free(*sol);
-		new_game(sol, sel, mv);
+		klon_free(*kln);
+		new_game(kln, sel, mv);
 	}
 
 	if (k == 's' && !*mv) {
-		sol_stock2discard(sol);
+		klon_stock2discard(kln);
 
 		// if you change this, think about what if the discard card was selected?
 		// then the moved card ended up on top of the old discarded card
 		// and we have 2 cards selected, so you need to handle that
-		sel_byplace(*sol, sel, SOL_DISCARD);
+		sel_byplace(*kln, sel, KLON_DISCARD);
 
 		return true;
 	}
 
 	if (k == 'd') {
 		if (*mv)
-			*mv = SOL_DISCARD;
+			*mv = KLON_DISCARD;
 		else
-			sel_byplace(*sol, sel, SOL_DISCARD);
+			sel_byplace(*kln, sel, KLON_DISCARD);
 	}
 
 	if (k == 'f' && sel->card && !*mv) {
 		for (int i=0; i < 4; i++)
-			if (sol_canmove(*sol, sel->card, SOL_FOUNDATION(i))) {
-				sol_move(sol, sel->card, SOL_FOUNDATION(i));
-				sel_byplace(*sol, sel, sel->place);  // updates sel->card if needed
+			if (klon_canmove(*kln, sel->card, KLON_FOUNDATION(i))) {
+				klon_move(kln, sel->card, KLON_FOUNDATION(i));
+				sel_byplace(*kln, sel, sel->place);  // updates sel->card if needed
 				break;
 			}
 		return true;
@@ -116,24 +116,24 @@ static bool handle_key(struct Sol *sol, struct UiSelection *sel, SolCardPlace *m
 
 	if (k == KEY_LEFT || k == KEY_RIGHT || k == KEY_UP || k == KEY_DOWN) {
 		if (*mv)
-			sel_anothercardmv(*sol, *sel, curses_key_to_seldirection(k), mv);
+			sel_anothercardmv(*kln, *sel, curses_key_to_seldirection(k), mv);
 		else {
-			if (k == KEY_UP && sel_more(*sol, sel))
+			if (k == KEY_UP && sel_more(*kln, sel))
 				return true;
-			if (k == KEY_DOWN && sel_less(*sol, sel))
+			if (k == KEY_DOWN && sel_less(*kln, sel))
 				return true;
-			sel_anothercard(*sol, sel, curses_key_to_seldirection(k));
+			sel_anothercard(*kln, sel, curses_key_to_seldirection(k));
 		}
 		return true;
 	}
 
 	if (k == '\n') {
 		if (*mv) {
-			sel_endmv(sol, sel, *mv);
+			sel_endmv(kln, sel, *mv);
 			*mv = 0;
 		}
-		else if (sel->place == SOL_STOCK)
-			sol_stock2discard(sol);
+		else if (sel->place == KLON_STOCK)
+			klon_stock2discard(kln);
 		else if (sel->card && sel->card->visible)
 			*mv = sel->place;
 		return true;
@@ -141,26 +141,26 @@ static bool handle_key(struct Sol *sol, struct UiSelection *sel, SolCardPlace *m
 
 	if ('1' <= k && k <= '7') {
 		if (*mv)
-			*mv = SOL_TABLEAU(k - '1');
+			*mv = KLON_TABLEAU(k - '1');
 		else
-			sel_byplace(*sol, sel, SOL_TABLEAU(k - '1'));
+			sel_byplace(*kln, sel, KLON_TABLEAU(k - '1'));
 		return true;
 	}
 
 	return true;
 }
 
-// creates a temp copy of the sol, modifies it nicely and calls ui_drawsol
-static void draw_sol_with_mv(WINDOW *win, struct Sol sol, struct UiSelection sel, SolCardPlace mv)
+// creates a temp copy of the kln, modifies it nicely and calls ui_drawkln
+static void draw_klon_with_mv(WINDOW *win, struct Klon kln, struct UiSelection sel, KlonCardPlace mv)
 {
-	struct Sol tmpsol;
+	struct Klon tmpkln;
 	struct UiSelection tmpsel = { .place = mv };
 
-	tmpsel.card = sol_dup(sol, &tmpsol, sel.card);
-	sol_rawmove(&tmpsol, tmpsel.card, tmpsel.place);
+	tmpsel.card = klon_dup(kln, &tmpkln, sel.card);
+	klon_rawmove(&tmpkln, tmpsel.card, tmpsel.place);
 
-	ui_drawsol(win, tmpsol, tmpsel);
-	sol_free(tmpsol);
+	ui_drawklon(win, tmpkln, tmpsel);
+	klon_free(tmpkln);
 }
 
 int main(void)
@@ -194,17 +194,17 @@ int main(void)
 
 	refresh();   // yes, this is needed before drawing the cards for some reason
 
-	struct Sol sol;
+	struct Klon kln;
 	struct UiSelection sel;
-	SolCardPlace mv;
-	new_game(&sol, &sel, &mv);
+	KlonCardPlace mv;
+	new_game(&kln, &sel, &mv);
 
 	bool first = true;
 	do {
 		if (mv)
-			draw_sol_with_mv(stdscr, sol, sel, mv);
+			draw_klon_with_mv(stdscr, kln, sel, mv);
 		else
-			ui_drawsol(stdscr, sol, sel);
+			ui_drawklon(stdscr, kln, sel);
 
 		if (first) {
 			mvwaddstr(stdscr, getmaxy(stdscr) - 1, 0, "Press h for help.");
@@ -212,9 +212,9 @@ int main(void)
 		}
 
 		refresh();
-	} while( handle_key(&sol, &sel, &mv, getch()) );
+	} while( handle_key(&kln, &sel, &mv, getch()) );
 
-	sol_free(sol);
+	klon_free(kln);
 	endwin();
 
 	return 0;
