@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "card.h"
+#include "help.h"
 #include "misc.h"
 #include "sel.h"
 #include "sol.h"
@@ -39,12 +40,45 @@ static enum SelDirection curses_key_to_seldirection(int k)
 	}
 }
 
+
+// help is externed in help.h
+struct Help help[] = {
+	{ "h", "show this help" },
+	{ "q", "quit" },
+	{ "n", "new game" },
+	{ "s", "move a card from stock to discard and select discard" },
+	{ "d", "select discard" },
+	{ "f", "move selected card to a foundation, if possible" },
+	{ "Enter", "start moving the selected card(s)" },
+	{ "↑,↓", "select more/less tableau cards or move selection up/down" },
+	{ "←,→", "move selection left/right" },
+	{ "1,2,…,7", "select tableau by number" },
+	{ NULL, NULL }
+};
+
+static void new_game(struct Sol *sol, struct UiSelection *sel, SolCardPlace *mv)
+{
+	sol_init(sol, card_createallshuf());
+	sel->place = SOL_STOCK;
+	sel->card = NULL;
+	*mv = 0;
+}
+
 // returns whether to continue playing
 static bool handle_key(struct Sol *sol, struct UiSelection *sel, SolCardPlace *mv, int k)
 {
-	// TODO: h help
+	if (k == 'h') {
+		help_show(stdscr);
+		return true;
+	}
+
 	if (k == 'q')
 		return false;
+
+	if (k == 'n') {
+		sol_free(*sol);
+		new_game(sol, sel, mv);
+	}
 
 	if (k == 's' && !*mv) {
 		sol_stock2discard(sol);
@@ -161,15 +195,22 @@ int main(void)
 	refresh();   // yes, this is needed before drawing the cards for some reason
 
 	struct Sol sol;
-	sol_init(&sol, card_createallshuf());
-	struct UiSelection sel = { .place = SOL_STOCK, .card = NULL };
-	SolCardPlace mv = 0;
+	struct UiSelection sel;
+	SolCardPlace mv;
+	new_game(&sol, &sel, &mv);
 
+	bool first = true;
 	do {
 		if (mv)
 			draw_sol_with_mv(stdscr, sol, sel, mv);
 		else
 			ui_drawsol(stdscr, sol, sel);
+
+		if (first) {
+			mvwaddstr(stdscr, getmaxy(stdscr) - 1, 0, "Press h for help.");
+			first = false;
+		}
+
 		refresh();
 	} while( handle_key(&sol, &sel, &mv, getch()) );
 

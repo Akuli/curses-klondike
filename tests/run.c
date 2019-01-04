@@ -1,11 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <src/help.h>
 
 static void donothing(void) { }
 
 // externed in src/misc.h
 void (*onerrorexit)(void) = donothing;
+
+// externed in help.h
+struct Help help[] = { {NULL, NULL} };
 
 
 static void run_test(char *nam, void (*f)(void))
