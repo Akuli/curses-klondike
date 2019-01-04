@@ -239,3 +239,18 @@ void sel_2foundation(struct Sol *sol, struct Card *crd)
 			break;
 		}
 }
+
+bool sol_win(struct Sol sol)
+{
+	for (int i=0; i < 4; i++) {
+		int n = 0;
+		for (struct Card *crd = sol.foundations[i]; crd; crd = crd->next)
+			n++;
+
+		assert(n <= 13);
+		if (n < 13)
+			return false;
+	}
+
+	return true;
+}

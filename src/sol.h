@@ -59,10 +59,13 @@ void sol_move(struct Sol *sol, struct Card *crd, SolCardPlace dst);
 // similar to sol_move, but accepts invalid moves (sol_canmove) and never sets ->visible
 void sol_rawmove(struct Sol *sol, struct Card *crd, SolCardPlace dst);
 
+// moves crd to a foundation, if possible
+void sol_2foundation(struct Sol *sol, struct Card *crd);
+
 // takes a card stock --> discard, or if stock is empty, puts all discardeds to stock
 void sol_stock2discard(struct Sol *sol);
 
-// moves crd to a foundation, if possible
-void sol_2foundation(struct Sol *sol, struct Card *crd);
+// check if the player has won
+bool sol_win(struct Sol sol);
 
 #endif  // SOL_H

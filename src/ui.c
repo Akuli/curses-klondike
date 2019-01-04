@@ -171,4 +171,9 @@ void ui_drawsol(WINDOW *win, struct Sol sol, struct UiSelection sel)
 			yo += Y_OFFSET_SMALL;
 		}
 	}
+
+	if (sol_win(sol)) {
+		char *msg = "you win :)";
+		mvwaddstr(win, h/2, (w - strlen(msg))/2, msg);
+	}
 }
