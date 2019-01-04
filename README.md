@@ -15,7 +15,7 @@ Then you can download my code, compile it and run.
     $ git clone https://github.com/Akuli/curses-klondike
     $ cd curses-klondike
     $ make
-    $ ./curseskln
+    $ ./cursesklon
 
 
 ## FAQ
