@@ -2,12 +2,6 @@
 #include <curses.h>
 #include <stdlib.h>
 #include <string.h>
-#include "misc.h"
-
-// PICTURE_WIDTH isn't as simple as you think it is because the unicodes are more than 1 byte
-#define PICTURE_HEIGHT (sizeof(picture)/sizeof(picture[0]))
-#define PICTURE_WIDTH (sizeof( \
-	"                            ") - 1 /* for \0 */)
 
 static char *picture[] = {
 	"╭──╮╭──╮    ╭──╮╭──╮╭──╮╭──╮",
@@ -19,6 +13,9 @@ static char *picture[] = {
 	"│         tableau          │",
 	"╰──╯╰──╯╰──╯╰──╯╰──╯╰──╯╰──╯"
 };
+
+#define PICTURE_WIDTH (mbstowcs(NULL, picture[0], 0))
+#define PICTURE_HEIGHT (sizeof(picture)/sizeof(picture[0]))
 
 
 static int get_max_width(WINDOW *win, int xoff, int yoff)
