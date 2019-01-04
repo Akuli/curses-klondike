@@ -5,6 +5,7 @@
 #include <string.h>
 #include "card.h"
 #include "klon.h"
+#include "misc.h"
 
 #define CARD_WIDTH 7
 #define CARD_HEIGHT 5
@@ -13,6 +14,15 @@
 #define X_OFFSET 3
 #define Y_OFFSET_SMALL 1
 #define Y_OFFSET_BIG 2
+
+#define RED_SUIT_PAIR 1
+#define BLACK_SUIT_PAIR 2
+
+void ui_initcolors(void)
+{
+	if (init_pair(RED_SUIT_PAIR, COLOR_RED, COLOR_BLACK) == ERR) fatal_error("init_color() failed");
+	if (init_pair(BLACK_SUIT_PAIR, COLOR_WHITE, COLOR_BLACK) == ERR) fatal_error("init_color() failed");
+}
 
 // ui_x() and ui_y() convert coordinates from card counts to curses coordinates
 static inline int ui_x(int xcnt, int w)
@@ -75,7 +85,7 @@ static void draw_box(WINDOW *win, int xstart, int ystart, int w, int h, char bg,
 // newwin() doesn't work because partially erasing borders is surprisingly tricky
 // partial erasing is needed for cards that are on top of cards
 // since we can't use subwindow borders, they're not very helpful
-static void draw_card(WINDOW *win, struct Card *crd, int xstart, int ystart, bool sel)
+static void draw_card(WINDOW *win, struct Card *crd, int xstart, int ystart, bool sel, bool color)
 {
 	if (crd || sel)
 		draw_box(win, xstart, ystart, CARD_WIDTH, CARD_HEIGHT, (!crd || crd->visible) ? ' ' : '?', sel);
@@ -87,15 +97,20 @@ static void draw_card(WINDOW *win, struct Card *crd, int xstart, int ystart, boo
 		card_suitstr(*crd, sbuf);
 		card_numstr(*crd, nbuf);
 
+		int attr = COLOR_PAIR(SUIT_COLOR(crd->suit) ? RED_SUIT_PAIR : BLACK_SUIT_PAIR);
+		if (color)
+			wattron(win, attr);
 		mvaddstr(ystart+1, xstart+1, nbuf);
 		mvaddstr(ystart+1, xstart+CARD_WIDTH-2, sbuf);
 		mvaddstr(ystart+CARD_HEIGHT-2, xstart+1, sbuf);
 		mvaddstr(ystart+CARD_HEIGHT-2, xstart+CARD_WIDTH-1-strlen(nbuf), nbuf);
+		if (color)
+			wattroff(win, attr);
 	}
 }
 
 // unlike a simple for loop, handles overflow
-static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ystart, struct Card *firstsel)
+static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ystart, struct Card *firstsel, bool color)
 {
 	if (!botcrd)
 		return;
@@ -129,12 +144,12 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ys
 	for (struct Card *crd = botcrd; crd; crd = crd->next) {
 		if (crd == firstsel)
 			sel = true;
-		draw_card(win, crd, xstart, y, sel);
+		draw_card(win, crd, xstart, y, sel, color);
 		y += (--n > 0) ? Y_OFFSET_BIG : Y_OFFSET_SMALL;
 	}
 }
 
-void ui_drawklon(WINDOW *win, struct Klon kln, struct UiSelection sel)
+void ui_drawklon(WINDOW *win, struct Klon kln, struct UiSelection sel, bool color)
 {
 	werase(win);
 
@@ -143,31 +158,31 @@ void ui_drawklon(WINDOW *win, struct Klon kln, struct UiSelection sel)
 
 	// all cards in stock are non-visible and perfectly lined up on top of each other
 	// so just draw one of them, if any
-	draw_card(win, kln.stock, ui_x(0, w), ui_y(0, h), sel.place == KLON_STOCK);
+	draw_card(win, kln.stock, ui_x(0, w), ui_y(0, h), sel.place == KLON_STOCK, color);
 
 	// discard contains lined-up cards, too
-	draw_card(win, card_top(kln.discard), ui_x(1, w), ui_y(0, h), sel.place == KLON_DISCARD);
+	draw_card(win, card_top(kln.discard), ui_x(1, w), ui_y(0, h), sel.place == KLON_DISCARD, color);
 
 	// foundations are similar to discard
 	for (int i=0; i < 4; i++)
-		draw_card(win, card_top(kln.foundations[i]), ui_x(3+i, w), ui_y(0, h), sel.place == KLON_FOUNDATION(i));
+		draw_card(win, card_top(kln.foundations[i]), ui_x(3+i, w), ui_y(0, h), sel.place == KLON_FOUNDATION(i), color);
 
 	// now the tableau... here we go
 	for (int x=0; x < 7; x++) {
 		if (!kln.tableau[x]) {
 			// draw a border if the tableau item is selected
-			draw_card(win, NULL, ui_x(x, w), ui_y(1, h), sel.place == KLON_TABLEAU(x));
+			draw_card(win, NULL, ui_x(x, w), ui_y(1, h), sel.place == KLON_TABLEAU(x), color);
 			continue;
 		}
 
 		int yo = 0;
 		for (struct Card *crd = kln.tableau[x]; crd; crd = crd->next) {
 			if (crd->visible) {
-				draw_card_stack(win, crd, ui_x(x, w), ui_y(1, h) + yo, sel.card);
+				draw_card_stack(win, crd, ui_x(x, w), ui_y(1, h) + yo, sel.card, color);
 				break;
 			}
 
-			draw_card(win, crd, ui_x(x, w), ui_y(1, h) + yo, false);
+			draw_card(win, crd, ui_x(x, w), ui_y(1, h) + yo, false, color);
 			yo += Y_OFFSET_SMALL;
 		}
 	}

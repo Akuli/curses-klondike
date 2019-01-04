@@ -35,7 +35,10 @@ struct UiSelection {
 	KlonCardPlace place;
 };
 
+// sets up curses color pairs
+void ui_initcolors(void);
+
 // draws kln on win
-void ui_drawklon(WINDOW *win, struct Klon kln, struct UiSelection sel);
+void ui_drawklon(WINDOW *win, struct Klon kln, struct UiSelection sel, bool color);
 
 #endif  // UI_H

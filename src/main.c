@@ -151,7 +151,7 @@ static bool handle_key(struct Klon *kln, struct UiSelection *sel, KlonCardPlace 
 }
 
 // creates a temp copy of the kln, modifies it nicely and calls ui_drawkln
-static void draw_klon_with_mv(WINDOW *win, struct Klon kln, struct UiSelection sel, KlonCardPlace mv)
+static void draw_klon_with_mv(WINDOW *win, struct Klon kln, struct UiSelection sel, KlonCardPlace mv, bool color)
 {
 	struct Klon tmpkln;
 	struct UiSelection tmpsel = { .place = mv };
@@ -159,7 +159,7 @@ static void draw_klon_with_mv(WINDOW *win, struct Klon kln, struct UiSelection s
 	tmpsel.card = klon_dup(kln, &tmpkln, sel.card);
 	klon_rawmove(&tmpkln, tmpsel.card, tmpsel.place);
 
-	ui_drawklon(win, tmpkln, tmpsel);
+	ui_drawklon(win, tmpkln, tmpsel, color);
 	klon_free(tmpkln);
 }
 
@@ -185,12 +185,13 @@ int main(void)
 		fatal_error("initscr() failed");
 	initscred = true;
 
-	if (cbreak() == ERR)
-		fatal_error("cbreak() failed");
-	if (curs_set(0) == ERR)
-		fatal_error("curs_set() failed");
-	if (keypad(stdscr, true) == ERR)
-		fatal_error("keypad() failed");
+	bool color = (has_colors() && start_color() != ERR);
+	if (color)
+		ui_initcolors();
+
+	if (cbreak() == ERR) fatal_error("cbreak() failed");
+	if (curs_set(0) == ERR) fatal_error("curs_set() failed");
+	if (keypad(stdscr, true) == ERR) fatal_error("keypad() failed");
 
 	refresh();   // yes, this is needed before drawing the cards for some reason
 
@@ -202,12 +203,14 @@ int main(void)
 	bool first = true;
 	do {
 		if (mv)
-			draw_klon_with_mv(stdscr, kln, sel, mv);
+			draw_klon_with_mv(stdscr, kln, sel, mv, color);
 		else
-			ui_drawklon(stdscr, kln, sel);
+			ui_drawklon(stdscr, kln, sel, color);
 
 		if (first) {
+			wattron(stdscr, COLOR_PAIR(2));
 			mvwaddstr(stdscr, getmaxy(stdscr) - 1, 0, "Press h for help.");
+			wattroff(stdscr, COLOR_PAIR(2));
 			first = false;
 		}
 
