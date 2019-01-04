@@ -179,8 +179,6 @@ struct Card *sol_detachcard(struct Sol *sol, struct Card *crd)
 	assert(0);
 }
 
-#define DEBUG(...) { FILE *f = fopen("f","a"); fprintf(f, __VA_ARGS__); fclose(f); }
-
 static void do_move(struct Sol *sol, struct Card *crd, SolCardPlace dst, bool raw)
 {
 	if (!raw)
@@ -204,10 +202,8 @@ static void do_move(struct Sol *sol, struct Card *crd, SolCardPlace dst, bool ra
 		dstp = &sol->foundations[SOL_FOUNDATION_NUM(dst)];
 	else if (SOL_IS_TABLEAU(dst))
 		dstp = &sol->tableau[SOL_TABLEAU_NUM(dst)];
-	else {
-		DEBUG("wat: %d\n", dst);
+	else
 		assert(0);
-	}
 
 	card_pushtop(dstp, crd);
 }
