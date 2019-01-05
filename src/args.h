@@ -6,6 +6,7 @@
 
 struct Args {
 	bool color;
+	unsigned int pick;
 };
 
 // main.c sets these to stdout and stderr, tests/test_args.c sets these to temporary files

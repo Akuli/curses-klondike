@@ -22,6 +22,9 @@ static void run_test(char *nam, void (*f)(void))
 
 #define RUN_TEST(f) do { void test_##f(void); run_test("test_" #f, test_##f); } while(0)
 
+void init_args_tests(void);
+void deinit_args_tests(void);
+
 int main(void)
 {
 	unsigned int s = time(NULL);
@@ -45,12 +48,12 @@ int main(void)
 	RUN_TEST(klon_move);
 	RUN_TEST(klon_stock2discard);
 
-	void init_args_tests(void);
 	init_args_tests();
-
 	RUN_TEST(args_help);
 	RUN_TEST(args_defaults);
 	RUN_TEST(args_no_defaults);
 	RUN_TEST(args_errors);
+	deinit_args_tests();
+
 	return 0;
 }

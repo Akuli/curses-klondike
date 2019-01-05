@@ -6,32 +6,67 @@ doesn't support --, but nobody needs it for this program imo
 
 #include "args.h"
 #include <assert.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "misc.h"
 
-enum OptType { TYPE_YESNO };
+enum OptType { TYPE_YESNO, TYPE_INT };
 
 struct OptSpec {
 	char *name;
+	char *metavar;
 	enum OptType type;
+	int min;
+	int max;
 	char *desc;
 };
 
 // TODO: "--pick" option for picking n cards from stock to discard at a time
 static struct OptSpec option_specs[] = {
-	{ "--help", TYPE_YESNO, "show this help message and exit" },
-	{ "--no-colors", TYPE_YESNO, "don't use colors, even if the terminal supports colors" }
+	{ "--help", NULL, TYPE_YESNO, 0, 0, "show this help message and exit" },
+	{ "--no-colors", NULL, TYPE_YESNO, 0, 0, "don't use colors, even if the terminal supports colors" },
+	{ "--pick", "n", TYPE_INT, 1, 13*4 - (1+2+3+4+5+6+7), "pick n cards from stock at a time, default is 3" }
 };
 
-static void print_help_message(char *argv0) {
+static void print_help_option(struct OptSpec opt)
+{
+	char *pre;
+	bool freepre = false;
+
+	switch(opt.type) {
+	case TYPE_YESNO:
+		pre = opt.name;
+		break;
+	default:
+		if (!( pre = malloc(strlen(opt.name) + 1 + strlen(opt.metavar) + 1) ))
+			fatal_error("malloc() failed");
+		freepre = true;
+
+		strcpy(pre, opt.name);
+		strcat(pre, " ");
+		strcat(pre, opt.metavar);
+		break;
+	}
+
+	fprintf(args_outfile, "  %-12s  %s\n", pre, opt.desc);
+	if (freepre)
+		free(pre);
+}
+
+static void print_help(char *argv0)
+{
 	fprintf(args_outfile, "Usage: %s", argv0);
 	for (unsigned int i = 0; i < sizeof(option_specs)/sizeof(option_specs[0]); i++) {
 		switch(option_specs[i].type) {
 		case TYPE_YESNO:
 			fprintf(args_outfile, " [%s]", option_specs[i].name);
+			break;
+		case TYPE_INT:
+			fprintf(args_outfile, " [%s %s]", option_specs[i].name, option_specs[i].metavar);
 			break;
 		default:
 			assert(0);
@@ -40,7 +75,7 @@ static void print_help_message(char *argv0) {
 
 	fprintf(args_outfile, "\n\nOptions:\n");
 	for (unsigned int i = 0; i < sizeof(option_specs)/sizeof(option_specs[0]); i++)
-		fprintf(args_outfile, "  %-12s  %s\n", option_specs[i].name, option_specs[i].desc);
+		print_help_option(option_specs[i]);
 }
 
 static bool startswith(char *s, char *pre)
@@ -101,7 +136,7 @@ static int tokenize(char *argv0, struct Token *tok, int argc, char **argv)
 		val = eq+1;
 	} else {
 		nam = argv[0];
-		if (argc >= 2 && argv[1][0] != '-') {
+		if (argc >= 2 && argv[1][0] != '-') {  // TODO: handle negative numbers as arguments?
 			nused = 2;
 			val = argv[1];
 		} else {
@@ -127,6 +162,29 @@ out:
 	return nused;
 }
 
+// returns true on success, false on failure
+static int is_valid_integer(char *str, int min, int max)
+{
+	// see the example in linux man-pages strtol(3)
+	errno = 0;
+	char *endptr;
+	long val = strtol(str, &endptr, 10);
+
+	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN))
+			|| (errno != 0 && val == 0)) {
+		errno = 0;
+		return false;
+	}
+
+	if (endptr == str)   // no digits found
+		return false;
+
+	if (*endptr)   // further characters after number
+		return false;
+
+	return( (long)min <= val && val <= (long)max );
+}
+
 // returns 0 on success, negative on failure
 static int check_token_by_type(char *argv0, struct Token tok)
 {
@@ -138,6 +196,20 @@ static int check_token_by_type(char *argv0, struct Token tok)
 			return -1;
 		}
 		break;
+
+	case TYPE_INT:
+		if (!tok.value) {
+			fprintf(args_errfile, "%s: use '%s %s' or '%s=%s', not just '%s'\n",
+					argv0, tok.spec->name, tok.spec->metavar, tok.spec->name, tok.spec->metavar, tok.spec->name);
+			return -1;
+		}
+		if (!is_valid_integer(tok.value, tok.spec->min, tok.spec->max)) {
+			fprintf(args_errfile, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
+					argv0, tok.spec->name, tok.spec->min, tok.spec->max, tok.value);
+			return -1;
+		}
+		break;
+
 	default:
 		assert(0);
 	}
@@ -167,7 +239,8 @@ static int check_tokens(char *argv0, struct Token *toks, int ntoks)
 }
 
 static struct Args default_args = {
-	.color = true
+	.color = true,
+	.pick = 3
 };
 
 // returns true to keep running, or false to exit with status 0
@@ -178,12 +251,14 @@ static bool tokens_to_struct_args(char *argv0, struct Token *toks, int ntoks, st
 #define OPTION_IS(opt) (strcmp(toks[i].spec->name, #opt) == 0)
 
 		if OPTION_IS(--help) {
-			print_help_message(argv0);
+			print_help(argv0);
 			return false;
 		}
 
 		if OPTION_IS(--no-colors)
 			ar->color = false;
+		else if OPTION_IS(--pick)
+			ar->pick = atoi(toks[i].value);  // atoi won't fail, the value is already validated
 		else
 			assert(0);
 

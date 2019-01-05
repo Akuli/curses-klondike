@@ -17,6 +17,12 @@ void init_args_tests(void)
 	assert(args_outfile && args_errfile);
 }
 
+void deinit_args_tests(void)
+{
+	fclose(args_outfile);
+	fclose(args_errfile);
+}
+
 static void escape_print(char *s)
 {
 	putchar('"');
@@ -68,10 +74,11 @@ TEST(args_help)
 	struct Args ar;
 	assert(args_parse(&ar, ARGS("asdasd", "--help")) == 0);
 	read_args_file(args_outfile,
-		"Usage: asdasd [--help] [--no-colors]\n\n"
+		"Usage: asdasd [--help] [--no-colors] [--pick n]\n\n"
 		"Options:\n"
 		"  --help        show this help message and exit\n"
 		"  --no-colors   don't use colors, even if the terminal supports colors\n"
+		"  --pick n      pick n cards from stock at a time, default is 3\n"
 	);
 }
 
@@ -80,13 +87,15 @@ TEST(args_defaults)
 	struct Args ar;
 	assert(args_parse(&ar, ARGS("asdasd")) == -1);
 	assert(ar.color);
+	assert(ar.pick == 3);
 }
 
 TEST(args_no_defaults)
 {
 	struct Args ar;
-	assert(args_parse(&ar, ARGS("asdasd", "--no-color")) == -1);
+	assert(args_parse(&ar, ARGS("asdasd", "--no-color", "--pick=2")) == -1);
 	assert(!ar.color);
+	assert(ar.pick == 2);
 }
 
 #define HELP_STUFF "\nRun 'asdasd --help' for help.\n"
@@ -96,10 +105,12 @@ TEST(args_errors)
 	struct Args ar;
 
 	// TODO: test ambiguous option if there will ever be an ambiguous option
-	// TODO: test missing value arg to option when there will be options that need a value arg
 
 	assert(args_parse(&ar, ARGS("asdasd", "--wut")) == 2);
 	read_args_file(args_errfile, "asdasd: unknown option '--wut'" HELP_STUFF);
+
+	assert(args_parse(&ar, ARGS("asdasd", "wut")) == 2);
+	read_args_file(args_errfile, "asdasd: unexpected argument: 'wut'" HELP_STUFF);
 
 	assert(args_parse(&ar, ARGS("asdasd", "--no-colors", "lel")) == 2);
 	read_args_file(args_errfile,
@@ -110,4 +121,22 @@ TEST(args_errors)
 
 	assert(args_parse(&ar, ARGS("asdasd", "--no-colors", "--no-colors", "--no-colors", "--no-colors")) == 2);
 	read_args_file(args_errfile, "asdasd: repeated option '--no-colors'" HELP_STUFF);
+
+	assert(args_parse(&ar, ARGS("asdasd", "--pick")) == 2);
+	read_args_file(args_errfile, "asdasd: use '--pick n' or '--pick=n', not just '--pick'" HELP_STUFF);
+
+	assert(args_parse(&ar, ARGS("asdasd", "--pick", "a")) == 2);
+	read_args_file(args_errfile, "asdasd: '--pick' wants an integer between 1 and 24, not 'a'" HELP_STUFF);
+
+	assert(args_parse(&ar, ARGS("asdasd", "--pick", "1", "2")) == 2);
+	read_args_file(args_errfile, "asdasd: unexpected argument: '2'" HELP_STUFF);
+
+	assert(args_parse(&ar, ARGS("asdasd", "--pick=a")) == 2);
+	read_args_file(args_errfile, "asdasd: '--pick' wants an integer between 1 and 24, not 'a'" HELP_STUFF);
+
+	assert(args_parse(&ar, ARGS("asdasd", "--pick=0")) == 2);
+	read_args_file(args_errfile, "asdasd: '--pick' wants an integer between 1 and 24, not '0'" HELP_STUFF);
+
+	assert(args_parse(&ar, ARGS("asdasd", "--pick=1")) == -1);
+	assert(ar.pick == 1);
 }

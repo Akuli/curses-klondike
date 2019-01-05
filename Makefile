@@ -9,7 +9,7 @@ TESTS_SRC := $(wildcard tests/*.c)
 
 # valgrind is used in tests
 ifdef VALGRIND
-VALGRINDOPTS ?= -q --leak-check=full --error-exitcode=1 --errors-for-leak-kinds=all
+VALGRINDOPTS ?= --leak-check=full --show-leak-kinds=all --error-exitcode=1 --errors-for-leak-kinds=all
 endif
 
 
