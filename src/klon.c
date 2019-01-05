@@ -120,9 +120,10 @@ bool klon_canmove(struct Klon kln, struct Card *crd, KlonCardPlace dst)
 	// taking cards stock to discard is handled by klon_stactodiscard() and not allowed here
 	if (crd->next) {
 		// the only way how a stack of multiple cards is allowed to move is tableau -> tableau
-		if (!(card_in_some_tableau(kln, crd) && KLON_IS_TABLEAU(dst)))
-			return false;
-		goto tableau;
+		// but for that, the bottommost moving card (crd) must be visible
+		if (card_in_some_tableau(kln, crd) && KLON_IS_TABLEAU(dst) && crd->visible)
+			goto tableau;
+		return false;
 	}
 
 	if (crd->next || dst == KLON_STOCK || dst == KLON_DISCARD || !crd->visible)
