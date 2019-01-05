@@ -107,11 +107,11 @@ TEST(klon_canmove)
 	klon_init(&kln, card_createallshuf());
 
 	// non-visible cards can never be moved
-	assert(!kln.tableau[2][0].visible);
-	assert(!klon_canmove(kln, &kln.tableau[2][0], KLON_STOCK));
-	assert(!klon_canmove(kln, &kln.tableau[2][0], KLON_DISCARD));
-	assert(!klon_canmove(kln, &kln.tableau[2][0], KLON_FOUNDATION(3)));
-	assert(!klon_canmove(kln, &kln.tableau[2][0], KLON_TABLEAU(3)));
+	assert(!kln.tableau[2]->visible);
+	assert(!klon_canmove(kln, kln.tableau[2], KLON_STOCK));
+	assert(!klon_canmove(kln, kln.tableau[2], KLON_DISCARD));
+	assert(!klon_canmove(kln, kln.tableau[2], KLON_FOUNDATION(3)));
+	assert(!klon_canmove(kln, kln.tableau[2], KLON_TABLEAU(3)));
 
 	// discarding is implemented with klon_stocktodiscard(), not with klon_canmove()
 	assert(!klon_canmove(kln, kln.stock, KLON_DISCARD));
