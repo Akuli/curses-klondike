@@ -88,7 +88,7 @@ static struct OptSpec *find_from_option_specs(char *argv0, char *nam)
 static int tokenize(char *argv0, struct Token *tok, int argc, char **argv)
 {
 	assert(argc >= 1);
-	if (argv[0][0] != '-' || argv[0][1] != '-' || !argv[0][2] || !isalpha(argv[0][2])) {
+	if (argv[0][0] != '-' || argv[0][1] != '-' || !( 'a' <= argv[0][2] && argv[0][2] <= 'z' )) {
 		fprintf(stderr, "%s: unexpected argument: '%s'\n", argv0, argv[0]);
 		return -1;
 	}
