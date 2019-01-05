@@ -20,7 +20,7 @@ void init_args_tests(void)
 static void escape_print(char *s)
 {
 	putchar('"');
-	int ch;
+	char ch;
 	while( (ch = *s++) ) {
 		switch(ch) {
 		case '\n':
@@ -29,6 +29,7 @@ static void escape_print(char *s)
 			break;
 		default:
 			putchar(ch);
+			break;
 		}
 	}
 	putchar('"');
