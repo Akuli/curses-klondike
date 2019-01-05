@@ -12,7 +12,7 @@ doesn't support --, but nobody needs it for this program imo
 #include <string.h>
 #include "misc.h"
 
-enum OptType { YESNO };
+enum OptType { TYPE_YESNO };
 
 struct OptSpec {
 	char *name;
@@ -22,25 +22,25 @@ struct OptSpec {
 
 // TODO: "--pick" option for picking n cards from stock to discard at a time
 static struct OptSpec option_specs[] = {
-	{ "--help", YESNO, "show this help message and exit" },
-	{ "--no-colors", YESNO, "don't use colors, even if the terminal supports colors" }
+	{ "--help", TYPE_YESNO, "show this help message and exit" },
+	{ "--no-colors", TYPE_YESNO, "don't use colors, even if the terminal supports colors" }
 };
 
 static void print_help_message(char *argv0) {
-	printf("Usage: %s", argv0);
+	fprintf(args_outfile, "Usage: %s", argv0);
 	for (unsigned int i = 0; i < sizeof(option_specs)/sizeof(option_specs[0]); i++) {
 		switch(option_specs[i].type) {
-		case YESNO:
-			printf(" [%s]", option_specs[i].name);
+		case TYPE_YESNO:
+			fprintf(args_outfile, " [%s]", option_specs[i].name);
 			break;
 		default:
 			assert(0);
 		}
 	}
 
-	puts("\n\nOptions:");
+	fprintf(args_outfile, "\n\nOptions:\n");
 	for (unsigned int i = 0; i < sizeof(option_specs)/sizeof(option_specs[0]); i++)
-		printf("  %-12s  %s\n", option_specs[i].name, option_specs[i].desc);
+		fprintf(args_outfile, "  %-12s  %s\n", option_specs[i].name, option_specs[i].desc);
 }
 
 static bool startswith(char *s, char *pre)
@@ -64,7 +64,7 @@ static struct OptSpec *find_from_option_specs(char *argv0, char *nam)
 			continue;
 
 		if (res) {
-			fprintf(stderr, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
+			fprintf(args_errfile, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
 					argv0, nam, res->name, option_specs[i].name);
 			return NULL;
 		}
@@ -72,7 +72,7 @@ static struct OptSpec *find_from_option_specs(char *argv0, char *nam)
 	}
 
 	if (!res)
-		fprintf(stderr, "%s: unknown option '%s'\n", argv0, nam);
+		fprintf(args_errfile, "%s: unknown option '%s'\n", argv0, nam);
 	return res;
 }
 
@@ -82,13 +82,13 @@ static int tokenize(char *argv0, struct Token *tok, int argc, char **argv)
 {
 	assert(argc >= 1);
 	if (argv[0][0] != '-' || argv[0][1] != '-' || !( 'a' <= argv[0][2] && argv[0][2] <= 'z' )) {
-		fprintf(stderr, "%s: unexpected argument: '%s'\n", argv0, argv[0]);
+		fprintf(args_errfile, "%s: unexpected argument: '%s'\n", argv0, argv[0]);
 		return -1;
 	}
 
 	int nused;
 	char *nam, *val, *eq;
-	bool freenam;
+	bool freenam = false;
 	if ( (eq = strchr(argv[0], '=')) ) {
 		nused = 2;
 		freenam = true;
@@ -101,7 +101,6 @@ static int tokenize(char *argv0, struct Token *tok, int argc, char **argv)
 		val = eq+1;
 	} else {
 		nam = argv[0];
-		freenam = false;
 		if (argc >= 2 && argv[1][0] != '-') {
 			nused = 2;
 			val = argv[1];
@@ -129,7 +128,25 @@ out:
 }
 
 // returns 0 on success, negative on failure
-static int check_for_duplicates(char *argv0, struct Token *toks, int ntoks)
+static int check_token_by_type(char *argv0, struct Token tok)
+{
+	switch(tok.spec->type) {
+	case TYPE_YESNO:
+		if (tok.value) {
+			fprintf(args_errfile, "%s: use just '%s', not '%s=something' or '%s something'\n",
+					argv0, tok.spec->name, tok.spec->name, tok.spec->name);
+			return -1;
+		}
+		break;
+	default:
+		assert(0);
+	}
+
+	return 0;
+}
+
+// returns 0 on success, negative on failure
+static int check_tokens(char *argv0, struct Token *toks, int ntoks)
 {
 	// to detect duplicates
 	bool seen[sizeof(option_specs)/sizeof(option_specs[0])] = {0};
@@ -137,10 +154,13 @@ static int check_for_duplicates(char *argv0, struct Token *toks, int ntoks)
 	for (int i = 0; i < ntoks; i++) {
 		int j = toks[i].spec - &option_specs[0];
 		if (seen[j]) {
-			fprintf(stderr, "%s: repeated option '%s'\n", argv0, toks[i].spec->name);
+			fprintf(args_errfile, "%s: repeated option '%s'\n", argv0, toks[i].spec->name);
 			return -1;
 		}
 		seen[j] = true;
+
+		if (check_token_by_type(argv0, toks[i]) < 0)
+			return -1;
 	}
 
 	return 0;
@@ -192,7 +212,7 @@ int args_parse(struct Args *ar, int argc, char **argv)
 		argv += n;
 	}
 
-	if (check_for_duplicates(argv0, toks, ntoks) < 0)
+	if (check_tokens(argv0, toks, ntoks) < 0)
 		goto err;
 
 	bool run = tokens_to_struct_args(argv0, toks, ntoks, ar);
@@ -202,6 +222,6 @@ int args_parse(struct Args *ar, int argc, char **argv)
 
 err:
 	free(toks);
-	fprintf(stderr, "Run '%s --help' for help.\n", argv0);
+	fprintf(args_errfile, "Run '%s --help' for help.\n", argv0);
 	return 2;
 }

@@ -5,6 +5,7 @@
 #include <curses.h>
 #include <locale.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include "args.h"
@@ -28,6 +29,10 @@ static void exitcb(void)
 	}
 }
 void (*onerrorexit)(void) = exitcb;
+
+// these are externed in args.h
+FILE *args_outfile;
+FILE *args_errfile;
 
 
 static enum SelDirection curses_key_to_seldirection(int k)
@@ -170,6 +175,8 @@ int main(int argc, char **argv)
 	if (!setlocale(LC_ALL, ""))
 		fatal_error("setlocale() failed");
 
+	args_outfile = stdout;
+	args_errfile = stderr;
 	struct Args args;
 	int sts = args_parse(&args, argc, argv);
 	if (sts >= 0)

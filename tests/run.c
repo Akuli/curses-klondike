@@ -44,5 +44,13 @@ int main(void)
 	RUN_TEST(klon_canmove);
 	RUN_TEST(klon_move);
 	RUN_TEST(klon_stock2discard);
+
+	void init_args_tests(void);
+	init_args_tests();
+
+	RUN_TEST(args_help);
+	RUN_TEST(args_defaults);
+	RUN_TEST(args_no_defaults);
+	RUN_TEST(args_errors);
 	return 0;
 }
