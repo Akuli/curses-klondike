@@ -6,7 +6,6 @@ doesn't support --, but nobody needs it for this program imo
 
 #include "args.h"
 #include <assert.h>
-#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,19 +14,13 @@ doesn't support --, but nobody needs it for this program imo
 
 enum OptType { YESNO };
 
-// TODO: "--pick" option for picking n cards from stock to discard at a time
-static char help_message[] =
-	"Options:\n"
-	"  --help       show this message and exit\n"
-	"  --no-colors  don't use colors, even if the terminal supports colors\n"
-	;
-
 struct OptSpec {
 	char *name;
 	enum OptType type;
 	char *desc;
 };
 
+// TODO: "--pick" option for picking n cards from stock to discard at a time
 static struct OptSpec option_specs[] = {
 	{ "--help", YESNO, "show this help message and exit" },
 	{ "--no-colors", YESNO, "don't use colors, even if the terminal supports colors" }
