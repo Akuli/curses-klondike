@@ -25,11 +25,9 @@ static KlonCardPlace card_x_2_top_place(int x)
 		return KLON_STOCK;
 	if (x == 1)
 		return KLON_DISCARD;
-	if (x == 2)
-		return 0;
-
-	assert(KLON_IS_FOUNDATION(KLON_FOUNDATION(x-3)));
-	return KLON_FOUNDATION(x-3);
+	if (KLON_IS_FOUNDATION(KLON_FOUNDATION(x-3)))
+		return KLON_FOUNDATION(x-3);
+	return 0;
 }
 
 static struct Card *get_visible_top_card(struct Klon kln, KlonCardPlace plc)
