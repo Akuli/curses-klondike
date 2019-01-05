@@ -119,14 +119,24 @@ void card_debug(struct Card crd)
 	printf("%s%s\n", sbuf, nbuf);
 }
 
-struct Card *card_top(struct Card *crd)
+// crd can be NULL
+static struct Card *next_n_times(struct Card *crd, unsigned int n)
 {
-	if (!crd)
-		return NULL;
-
-	while (crd->next)
+	for (unsigned int i=0; i<n && crd; i++)
 		crd = crd->next;
 	return crd;
+}
+
+struct Card *card_tops(struct Card *crd, unsigned int n)
+{
+	while (next_n_times(crd, n))
+		crd = crd->next;
+	return crd;
+}
+
+struct Card *card_top(struct Card *crd)
+{
+	return card_tops(crd, 1);
 }
 
 struct Card *card_popbot(struct Card **bot)

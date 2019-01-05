@@ -45,6 +45,7 @@ TEST(klon_init_free)
 {
 	struct Klon kln;
 	klon_init(&kln, card_createallshuf());
+	assert(kln.discardshow == 0);
 	int total = 0;
 
 	int svis = 0;
@@ -170,8 +171,10 @@ TEST(klon_move)
 	klon_free(kln);
 }
 
-static void discard_check(struct Klon kln, int ndiscarded)
+static void discard_check(struct Klon kln, int ndiscarded, unsigned int ds)
 {
+	assert(kln.discardshow == ds);
+
 	int svis = 0;
 	assert(count_cards(kln.stock, NULL, &svis) == 13*4 - (1+2+3+4+5+6+7) - ndiscarded);
 	assert(svis == 0);
@@ -185,26 +188,26 @@ TEST(klon_stock2discard)
 {
 	struct Klon kln;
 	klon_init(&kln, card_createallshuf());
-	discard_check(kln, 0);
+	discard_check(kln, 0, 0);
 
 	struct Card *savestock = kln.stock;
 
-	klon_stock2discard(&kln);
-	discard_check(kln, 1);
+	klon_stock2discard(&kln, 1);
+	discard_check(kln, 1, 1);
 
-	klon_stock2discard(&kln);
-	discard_check(kln, 2);
+	klon_stock2discard(&kln, 2);
+	discard_check(kln, 3, 2);
 
-	for (int n=3; n <= 13*4 - (1+2+3+4+5+6+7) - 1; n++) {
-		klon_stock2discard(&kln);
-		discard_check(kln, n);
+	for (int n=4; n <= 13*4 - (1+2+3+4+5+6+7) - 1; n++) {
+		klon_stock2discard(&kln, 1);
+		discard_check(kln, n, 1);
 	}
 
-	klon_stock2discard(&kln);
-	discard_check(kln, 13*4 - (1+2+3+4+5+6+7));
+	klon_stock2discard(&kln, 1);
+	discard_check(kln, 13*4 - (1+2+3+4+5+6+7), 1);
 
-	klon_stock2discard(&kln);
-	discard_check(kln, 0);
+	klon_stock2discard(&kln, 13*4 - (1+2+3+4+5+6+7));  // 11 is an arbitrary number i picked
+	discard_check(kln, 0, 0);
 
 	// make sure that the order of the cards doesn't reverse
 	assert(kln.stock == savestock);

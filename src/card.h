@@ -42,10 +42,12 @@ void card_debug(struct Card crd);
 
 // returns topmost card in a linked list of cards
 // special case to make some things easier: card_top(NULL) == NULL
-// never returns NULL
-// card_top(...)->next is always NULL
-// O(n)
+// card_top(nonnull)->next is always NULL
 struct Card *card_top(struct Card *crd);
+
+// returns at most n topmost cards from a linked list of cards as another linked list
+// card_tops(NULL, n) == NULL
+struct Card *card_tops(struct Card *crd, unsigned int n);
 
 // gets bottommost card from a linked list of cards
 // sets *bot to (*bot)->next (that can be NULL)
@@ -55,11 +57,9 @@ struct Card *card_popbot(struct Card **bot);
 // adds a card to top of a linked list of cards
 // if *list is NULL, sets *list to newtop
 // if *list is non-NULL, sets card_top(*list)->next to newtop
-// O(n) if list is the bottommost card in a list, O(1) if list is topmost card in the list
 void card_pushtop(struct Card **list, struct Card *newtop);
 
 // checks if a card is in a linked list of cards
-// O(n) worst case
 bool card_inlist(struct Card *crd, struct Card *list);
 
 #endif  // CARD_H

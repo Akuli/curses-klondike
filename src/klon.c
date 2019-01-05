@@ -18,6 +18,7 @@ void klon_init(struct Klon *kln, struct Card *list)
 
 	kln->stock = list;
 	kln->discard = NULL;
+	kln->discardshow = 0;
 	for (int i=0; i < 4; i++)
 		kln->foundations[i] = NULL;
 }
@@ -98,6 +99,7 @@ struct Card *klon_dup(struct Klon src, struct Klon *dst, struct Card *srccrd)
 
 	copy_cards(src.stock, &dst->stock, srccrd, &dstcrd);
 	copy_cards(src.discard, &dst->discard, srccrd, &dstcrd);
+	dst->discardshow = src.discardshow;
 	for (int i=0; i < 4; i++)
 		copy_cards(src.foundations[i], &dst->foundations[i], srccrd, &dstcrd);
 	for (int i=0; i < 7; i++)
@@ -156,8 +158,8 @@ struct Card *klon_detachcard(struct Klon *kln, struct Card *crd)
 {
 	struct Card **look4[2+4+7];
 	struct Card ***look4ptr = look4;
+	*look4ptr++ = &kln->discard;   // discard goes first, recall that when you see (*)
 	*look4ptr++ = &kln->stock;
-	*look4ptr++ = &kln->discard;
 	for (int i=0; i < 4; i++)
 		*look4ptr++ = &kln->foundations[i];
 	for (int i=0; i < 7; i++)
@@ -166,12 +168,16 @@ struct Card *klon_detachcard(struct Klon *kln, struct Card *crd)
 	for (unsigned int i=0; i < sizeof(look4)/sizeof(look4[0]); i++) {
 		// special case: no card has crd as ->next
 		if (*look4[i] == crd) {
+			if (i == 0)  // (*)
+				kln->discardshow = 0;
 			*look4[i] = NULL;
 			return NULL;
 		}
 
 		for (struct Card *prv = *look4[i]; prv && prv->next; prv = prv->next)
 			if (prv->next == crd) {
+				if (i == 0 && kln->discardshow > 1)  // (*)
+					kln->discardshow--;
 				prv->next = NULL;
 				return prv;
 			}
@@ -212,8 +218,9 @@ static void do_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst, bool 
 void klon_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst) { do_move(kln, crd, dst, false); }
 void klon_rawmove(struct Klon *kln, struct Card *crd, KlonCardPlace dst) { do_move(kln, crd, dst, true); }
 
-void klon_stock2discard(struct Klon *kln)
+void klon_stock2discard(struct Klon *kln, unsigned int pick)
 {
+	assert(1 <= pick && pick <= 13*4 - (1+2+3+4+5+6+7));
 	if (!kln->stock) {
 		for (struct Card *crd = kln->discard; crd; crd = crd->next) {
 			assert(crd->visible);
@@ -222,14 +229,21 @@ void klon_stock2discard(struct Klon *kln)
 
 		kln->stock = kln->discard;   // may be NULL when all stock cards have been used
 		kln->discard = NULL;
+		kln->discardshow = 0;
 		return;
 	}
 
-	// the card on top of the stock must be visible, but other stock cards aren't
-	struct Card *pop = card_popbot(&kln->stock);
-	assert(!pop->visible);
-	pop->visible = true;
-	card_pushtop(&kln->discard, pop);
+	unsigned int i;
+	for (i = 0; i < pick && kln->stock; i++) {
+		// the moved cards must be visible, but other stock cards aren't
+		struct Card *pop = card_popbot(&kln->stock);
+		assert(!pop->visible);
+		pop->visible = true;
+		card_pushtop(&kln->discard, pop);
+	}
+
+	// now there are i cards moved, and 0 <= i <= pick
+	kln->discardshow = i;
 }
 
 void sel_2foundation(struct Klon *kln, struct Card *crd)

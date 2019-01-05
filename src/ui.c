@@ -149,19 +149,25 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ys
 	}
 }
 
-void ui_drawklon(WINDOW *win, struct Klon kln, struct UiSelection sel, bool color)
+void ui_drawklon(WINDOW *win, struct Klon kln, struct UiSelection sel, bool moving, bool color)
 {
 	werase(win);
 
 	int w, h;
 	getmaxyx(win, h, w);
 
-	// all cards in stock are non-visible and perfectly lined up on top of each other
-	// so just draw one of them, if any
+	// drawing just one card is enough for this
 	draw_card(win, kln.stock, ui_x(0, w), ui_y(0, h), sel.place == KLON_STOCK, color);
 
-	// discard contains lined-up cards, too
-	draw_card(win, card_top(kln.discard), ui_x(1, w), ui_y(0, h), sel.place == KLON_DISCARD, color);
+	unsigned int nshowdis = kln.discardshow;
+	if (sel.place == KLON_DISCARD && moving)  // user is moving a detached card, and it's in the discard
+		nshowdis++;
+
+	int x = ui_x(1, w);
+	for (struct Card *crd = card_tops(kln.discard, nshowdis); crd; (crd = crd->next), (x += X_OFFSET))
+		draw_card(win, crd, x, ui_y(0, h), sel.place == KLON_DISCARD && !crd->next, color);
+	if (!kln.discard)   // nothing was drawn, but if the discard is selected, at least draw that
+		draw_card(win, NULL, ui_x(1, w), ui_y(0, h), sel.place == KLON_DISCARD, color);
 
 	// foundations are similar to discard
 	for (int i=0; i < 4; i++)

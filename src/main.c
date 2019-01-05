@@ -71,7 +71,7 @@ static void new_game(struct Klon *kln, struct UiSelection *sel, KlonCardPlace *m
 }
 
 // returns whether to continue playing
-static bool handle_key(struct Klon *kln, struct UiSelection *sel, KlonCardPlace *mv, int k)
+static bool handle_key(struct Klon *kln, struct UiSelection *sel, KlonCardPlace *mv, int k, struct Args ar)
 {
 	if (k == 'h') {
 		help_show(stdscr);
@@ -87,7 +87,7 @@ static bool handle_key(struct Klon *kln, struct UiSelection *sel, KlonCardPlace 
 	}
 
 	if (k == 's' && !*mv) {
-		klon_stock2discard(kln);
+		klon_stock2discard(kln, ar.pick);
 
 		// if you change this, think about what if the discard card was selected?
 		// then the moved card ended up on top of the old discarded card
@@ -139,7 +139,7 @@ static bool handle_key(struct Klon *kln, struct UiSelection *sel, KlonCardPlace 
 			*mv = 0;
 		}
 		else if (sel->place == KLON_STOCK)
-			klon_stock2discard(kln);
+			klon_stock2discard(kln, ar.pick);
 		else if (sel->card && sel->card->visible)
 			*mv = sel->place;
 		return true;
@@ -165,7 +165,7 @@ static void draw_klon_with_mv(WINDOW *win, struct Klon kln, struct UiSelection s
 	tmpsel.card = klon_dup(kln, &tmpkln, sel.card);
 	klon_rawmove(&tmpkln, tmpsel.card, tmpsel.place);
 
-	ui_drawklon(win, tmpkln, tmpsel, color);
+	ui_drawklon(win, tmpkln, tmpsel, !!mv, color);
 	klon_free(tmpkln);
 }
 
@@ -177,8 +177,8 @@ int main(int argc, char **argv)
 
 	args_outfile = stdout;
 	args_errfile = stderr;
-	struct Args args;
-	int sts = args_parse(&args, argc, argv);
+	struct Args ar;
+	int sts = args_parse(&ar, argc, argv);
 	if (sts >= 0)
 		return sts;
 
@@ -198,7 +198,7 @@ int main(int argc, char **argv)
 		fatal_error("initscr() failed");
 	initscred = true;
 
-	bool color = (args.color && has_colors() && start_color() != ERR);
+	bool color = (ar.color && has_colors() && start_color() != ERR);
 	if (color)
 		ui_initcolors();
 
@@ -218,7 +218,7 @@ int main(int argc, char **argv)
 		if (mv)
 			draw_klon_with_mv(stdscr, kln, sel, mv, color);
 		else
-			ui_drawklon(stdscr, kln, sel, color);
+			ui_drawklon(stdscr, kln, sel, !!mv, color);
 
 		if (first) {
 			wattron(stdscr, COLOR_PAIR(2));
@@ -228,7 +228,7 @@ int main(int argc, char **argv)
 		}
 
 		refresh();
-	} while( handle_key(&kln, &sel, &mv, getch()) );
+	} while( handle_key(&kln, &sel, &mv, getch(), ar) );
 
 	klon_free(kln);
 	endwin();

@@ -40,6 +40,8 @@ struct UiSelection {
 void ui_initcolors(void);
 
 // draws kln on win
-void ui_drawklon(WINDOW *win, struct Klon kln, struct UiSelection sel, bool color);
+// color and pick correspond to similarly named command-line arguments
+// moving should be true if user is currently moving a card, otherwise false
+void ui_drawklon(WINDOW *win, struct Klon kln, struct UiSelection sel, bool moving, bool color);
 
 #endif  // UI_H

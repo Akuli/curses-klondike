@@ -11,6 +11,7 @@ struct Klon {
 	// these point to just one card, use ->next to access others
 	struct Card *stock;           // TOPMOST card or NULL
 	struct Card *discard;         // bottommost card or NULL
+	unsigned int discardshow;     // number of cards shown in discard, or 0 if discard is NULL
 	struct Card *foundations[4];  // bottommost cards or NULLs
 	struct Card *tableau[7];      // bottommost cards or NULLs
 };
@@ -52,6 +53,7 @@ bool klon_canmove(struct Klon kln, struct Card *crd, KlonCardPlace dst);
 
 // replaces crd with NULL in kln
 // if crd is someothercrd->next, someothercrd is returned
+// if kln->discard != NULL and crd == card_top(kln->discard), updates kln->discardshow
 struct Card *klon_detachcard(struct Klon *kln, struct Card *crd);
 
 // moves the src card and ->next cards (if any) to dst
@@ -64,8 +66,9 @@ void klon_rawmove(struct Klon *kln, struct Card *crd, KlonCardPlace dst);
 // moves crd to a foundation, if possible
 void klon_2foundation(struct Klon *kln, struct Card *crd);
 
-// takes a card stock --> discard, or if stock is empty, puts all discardeds to stock
-void klon_stock2discard(struct Klon *kln);
+// takes cards stock --> discard, or if stock is empty, puts all discardeds to stock
+// pick is the value of the --pick option
+void klon_stock2discard(struct Klon *kln, unsigned int pick);
 
 // check if the player has won
 bool klon_win(struct Klon kln);
