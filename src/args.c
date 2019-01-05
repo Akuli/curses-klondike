@@ -25,7 +25,7 @@ struct OptSpec {
 	char *desc;
 };
 
-// TODO: "--pick" option for picking n cards from stock to discard at a time
+// TODO: document env vars in --help
 static struct OptSpec option_specs[] = {
 	{ "--help", NULL, TYPE_YESNO, 0, 0, "show this help message and exit" },
 	{ "--no-colors", NULL, TYPE_YESNO, 0, 0, "don't use colors, even if the terminal supports colors" },

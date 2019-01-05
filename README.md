@@ -6,6 +6,10 @@ This is a text-based [klondike] game written in curses using C.
 
 ![screenshot](screenshot.png)
 
+If you don't like colors, use the `--no-colors` option:
+
+![screenshot](screenshot-nocolors.png)
+
 If you have apt, you can install all dependencies like this:
 
     $ sudo apt install git make gcc libncurses5-dev libncursesw5-dev
