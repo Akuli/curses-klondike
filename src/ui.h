@@ -2,6 +2,7 @@
 #define UI_H
 
 #include <curses.h>
+#include <stdbool.h>
 #include "card.h"   // IWYU pragma: keep
 #include "klon.h"
 
