@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
+#include "args.h"
 #include "card.h"
 #include "help.h"
 #include "misc.h"
@@ -163,11 +164,16 @@ static void draw_klon_with_mv(WINDOW *win, struct Klon kln, struct UiSelection s
 	klon_free(tmpkln);
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
 	// displaying unicodes correctly needs setlocale here AND cursesw instead of curses in makefile
 	if (!setlocale(LC_ALL, ""))
 		fatal_error("setlocale() failed");
+
+	struct Args args;
+	int sts = args_parse(&args, argc, argv);
+	if (sts >= 0)
+		return sts;
 
 	// https://stackoverflow.com/a/28020568
 	// see also ESCDELAY in a man page named "ncurses"
@@ -185,7 +191,7 @@ int main(void)
 		fatal_error("initscr() failed");
 	initscred = true;
 
-	bool color = (has_colors() && start_color() != ERR);
+	bool color = (args.color && has_colors() && start_color() != ERR);
 	if (color)
 		ui_initcolors();
 
