@@ -140,3 +140,11 @@ TEST(args_errors)
 	assert(args_parse(&ar, ARGS("asdasd", "--pick=1")) == -1);
 	assert(ar.pick == 1);
 }
+
+TEST(args_nused_bug)
+{
+	struct Args ar;
+	assert(args_parse(&ar, ARGS("asdasd", "--pick=1", "--no-color")) == -1);
+	assert(ar.pick == 1);
+	assert(!ar.color);  // the bug was that --no-color got ignored
+}

@@ -51,6 +51,7 @@ int main(void)
 	RUN_TEST(args_defaults);
 	RUN_TEST(args_no_defaults);
 	RUN_TEST(args_errors);
+	RUN_TEST(args_nused_bug);
 	deinit_args_tests();
 
 	return 0;

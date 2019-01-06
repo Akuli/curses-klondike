@@ -125,7 +125,7 @@ static int tokenize(char *argv0, struct Token *tok, int argc, char **argv)
 	char *nam, *val, *eq;
 	bool freenam = false;
 	if ( (eq = strchr(argv[0], '=')) ) {
-		nused = 2;
+		nused = 1;
 		freenam = true;
 		nam = malloc(eq - argv[0] + 1);
 		if (!nam)
