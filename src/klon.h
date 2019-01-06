@@ -58,13 +58,8 @@ struct Card *klon_detachcard(struct Klon *kln, struct Card *crd);
 
 // moves the src card and ->next cards (if any) to dst
 // the move must be valid, see klon_canmove()
-void klon_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst);
-
-// similar to klon_move, but accepts invalid moves (klon_canmove) and never sets ->visible
-void klon_rawmove(struct Klon *kln, struct Card *crd, KlonCardPlace dst);
-
-// moves crd to a foundation, if possible
-void klon_2foundation(struct Klon *kln, struct Card *crd);
+// if raw, accepts invalid moves (klon_canmove) and never sets ->visible
+void klon_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst, bool raw);
 
 // takes cards stock --> discard, or if stock is empty, puts all discardeds to stock
 // pick is the value of the --pick option

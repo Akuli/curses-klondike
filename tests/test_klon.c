@@ -151,7 +151,7 @@ TEST(klon_move)
 	int srctab, dsttab;
 	init_movable_kln(&kln, &srctab, &dsttab);
 
-	klon_move(&kln, card_top(kln.tableau[srctab]), KLON_TABLEAU(dsttab));
+	klon_move(&kln, card_top(kln.tableau[srctab]), KLON_TABLEAU(dsttab), false);
 	for (int i=0; i < 7; i++) {
 		int ncrd = i+1 - (i == srctab) + (i == dsttab);
 		int visible = 0;

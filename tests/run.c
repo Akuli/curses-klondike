@@ -31,7 +31,6 @@ int main(void)
 	printf("srand seed: %u\n", s);
 	srand(s);
 
-	RUN_TEST(card_suit_all);
 	RUN_TEST(card_suit_color);
 	RUN_TEST(card_createallshuf_free);
 	RUN_TEST(card_createallshuf_gives_all_52_cards);
@@ -39,7 +38,6 @@ int main(void)
 	RUN_TEST(card_top);
 	RUN_TEST(card_popbot);
 	RUN_TEST(card_pushtop);
-	RUN_TEST(card_inlist);
 
 	RUN_TEST(klon_cardplace);
 	RUN_TEST(klon_init_free);

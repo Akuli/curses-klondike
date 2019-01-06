@@ -108,7 +108,7 @@ static bool handle_key(struct Klon *kln, struct UiSelection *sel, KlonCardPlace 
 	if (k == 'f' && sel->card && !*mv) {
 		for (int i=0; i < 4; i++)
 			if (klon_canmove(*kln, sel->card, KLON_FOUNDATION(i))) {
-				klon_move(kln, sel->card, KLON_FOUNDATION(i));
+				klon_move(kln, sel->card, KLON_FOUNDATION(i), false);
 				sel_byplace(*kln, sel, sel->place);  // updates sel->card if needed
 				break;
 			}
@@ -164,7 +164,7 @@ static void draw_klon_with_mv(WINDOW *win, struct Klon kln, struct UiSelection s
 	struct UiSelection tmpsel = { .place = mv };
 
 	tmpsel.card = klon_dup(kln, &tmpkln, sel.card);
-	klon_rawmove(&tmpkln, tmpsel.card, tmpsel.place);
+	klon_move(&tmpkln, tmpsel.card, tmpsel.place, true);
 
 	ui_drawklon(win, tmpkln, tmpsel, !!mv, color);
 	klon_free(tmpkln);

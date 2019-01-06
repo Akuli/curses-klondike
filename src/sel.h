@@ -26,7 +26,4 @@ bool sel_less(struct Klon kln, struct UiSelection *sel);
 // called when the user is done with dragging a card, moves the card if possible and resets sel
 void sel_endmv(struct Klon *kln, struct UiSelection *sel, KlonCardPlace mv);
 
-// moves selected card to a foundation, if possible
-void sel_2foundation(struct Klon *kln, struct UiSelection *sel);
-
 #endif  // SEL_H

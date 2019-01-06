@@ -6,8 +6,6 @@
 #include <string.h>
 #include "misc.h"
 
-enum Suit suit_all[4] = { SUIT_SPADE, SUIT_HEART, SUIT_DIAMOND, SUIT_CLUB };
-
 // handy_random(n) returns a random integer >= 0 and < n
 static unsigned int handy_random(unsigned int n)
 {
@@ -35,8 +33,9 @@ struct Card *card_createallshuf(void)
 {
 	struct Card *cards[13*4 + 1];
 	cards[13*4] = NULL;
-	int i = 0;
+	enum Suit suits[] = { SUIT_SPADE, SUIT_HEART, SUIT_DIAMOND, SUIT_CLUB };
 
+	int i = 0;
 	for (int s = 0; s < 4; s++) {
 		for (int n = 1; n <= 13; n++) {
 			struct Card *crd = malloc(sizeof(struct Card));
@@ -44,7 +43,7 @@ struct Card *card_createallshuf(void)
 				fatal_error("malloc() failed");
 
 			crd->num = n;
-			crd->suit = suit_all[s];
+			crd->suit = suits[s];
 			crd->visible = false;
 			// crd->next is initialized below
 			cards[i++] = crd;
@@ -153,12 +152,4 @@ void card_pushtop(struct Card **list, struct Card *newtop)
 		top->next = newtop;
 	} else
 		*list = newtop;
-}
-
-bool card_inlist(struct Card *crd, struct Card *list)
-{
-	for ( ; list; list = list->next)
-		if (crd == list)
-			return true;
-	return false;
 }

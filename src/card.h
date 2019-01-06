@@ -5,9 +5,6 @@
 
 enum Suit { SUIT_SPADE, SUIT_HEART, SUIT_DIAMOND, SUIT_CLUB };
 
-// an array of all suits
-extern enum Suit suit_all[4];
-
 // 1 for red, 0 for black
 #define SUIT_COLOR(s) ((s) == SUIT_HEART || (s) == SUIT_DIAMOND)
 
@@ -58,8 +55,5 @@ struct Card *card_popbot(struct Card **bot);
 // if *list is NULL, sets *list to newtop
 // if *list is non-NULL, sets card_top(*list)->next to newtop
 void card_pushtop(struct Card **list, struct Card *newtop);
-
-// checks if a card is in a linked list of cards
-bool card_inlist(struct Card *crd, struct Card *list);
 
 #endif  // CARD_H

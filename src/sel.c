@@ -146,6 +146,6 @@ void sel_endmv(struct Klon *kln, struct UiSelection *sel, KlonCardPlace mv)
 {
 	assert(sel->card);
 	if (klon_canmove(*kln, sel->card, mv))
-		klon_move(kln, sel->card, mv);
+		klon_move(kln, sel->card, mv, false);
 	sel_byplace(*kln, sel, mv);
 }

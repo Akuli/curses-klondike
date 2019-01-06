@@ -186,7 +186,7 @@ struct Card *klon_detachcard(struct Klon *kln, struct Card *crd)
 	assert(0);
 }
 
-static void do_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst, bool raw)
+void klon_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst, bool raw)
 {
 	if (!raw)
 		assert(klon_canmove(*kln, crd, dst));
@@ -214,9 +214,6 @@ static void do_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst, bool 
 
 	card_pushtop(dstp, crd);
 }
-
-void klon_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst) { do_move(kln, crd, dst, false); }
-void klon_rawmove(struct Klon *kln, struct Card *crd, KlonCardPlace dst) { do_move(kln, crd, dst, true); }
 
 void klon_stock2discard(struct Klon *kln, unsigned int pick)
 {
@@ -250,7 +247,7 @@ void sel_2foundation(struct Klon *kln, struct Card *crd)
 {
 	for (int i=0; i < 4; i++)
 		if (klon_canmove(*kln, crd, KLON_FOUNDATION(i))) {
-			klon_move(kln, crd, KLON_FOUNDATION(i));
+			klon_move(kln, crd, KLON_FOUNDATION(i), false);
 			break;
 		}
 }

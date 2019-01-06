@@ -4,14 +4,6 @@
 #include <string.h>
 #include "util.h"
 
-TEST(card_suit_all) {
-	assert(suit_all[0] == SUIT_SPADE);
-	assert(suit_all[1] == SUIT_HEART);
-	assert(suit_all[2] == SUIT_DIAMOND);
-	assert(suit_all[3] == SUIT_CLUB);
-	assert(sizeof(suit_all) == 4*sizeof(enum Suit));
-}
-
 TEST(card_suit_color)
 {
 	assert(SUIT_COLOR(SUIT_SPADE) == 0);
@@ -70,6 +62,7 @@ TEST(card_str)
 		{12, "Q"},
 		{13, "K"}
 	};
+	enum Suit suits[] = { SUIT_SPADE, SUIT_HEART, SUIT_DIAMOND, SUIT_CLUB };
 
 	// nested for loops without nested indentations or braces
 	for (unsigned int i=0; i < sizeof(tests)/sizeof(tests[0]); i++)
@@ -78,7 +71,7 @@ TEST(card_str)
 	{
 		struct Card crd = {
 			.num = tests[i].num,
-			.suit = suit_all[j],
+			.suit = suits[j],
 			.visible = visible,
 			.next = NULL
 		};
@@ -143,15 +136,4 @@ TEST(card_pushtop)
 	assert(p == &a);
 	assert(p->next == &b);
 	assert(!p->next->next);
-}
-
-TEST(card_inlist)
-{
-	struct Card a, b, c;
-	abccards(&a, &b, &c, true);
-
-	assert(card_inlist(&c, &a));
-	assert(card_inlist(&b, &a));
-	assert(card_inlist(&a, &a));
-	assert(!card_inlist(&a, &b));
 }
