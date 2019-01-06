@@ -16,7 +16,7 @@ endif
 all: test cursesklon
 
 cursesklon: src/main.c $(OBJ) $(HEADERS)
-	$(CC) -I. $(CFLAGS) $< $(OBJ) -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) $< $(OBJ) -o $@ $(LDFLAGS)
 
 .PHONY: clean
 clean:

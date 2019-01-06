@@ -111,8 +111,6 @@ void card_suitstr(struct Card crd, char *buf)
 
 void card_debug(struct Card crd)
 {
-	// -1 because both CARD_NUMSTRMAX and CARD_SUITSTRMAX include room for \0, but
-	// we only need one \0, not two
 	char sbuf[CARD_SUITSTRMAX], nbuf[CARD_NUMSTRMAX];
 	card_suitstr(crd, sbuf);
 	card_numstr(crd, nbuf);
