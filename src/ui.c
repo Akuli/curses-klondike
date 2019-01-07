@@ -149,7 +149,7 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ys
 	}
 }
 
-void ui_drawklon(WINDOW *win, struct Klon kln, struct UiSelection sel, bool moving, bool color)
+void ui_drawklon(WINDOW *win, struct Klon kln, struct Sel sel, bool moving, bool color)
 {
 	werase(win);
 

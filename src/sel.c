@@ -41,7 +41,7 @@ static struct Card *get_visible_top_card(struct Klon kln, KlonCardPlace plc)
 	return NULL;
 }
 
-void sel_byplace(struct Klon kln, struct UiSelection *sel, KlonCardPlace plc)
+void sel_byplace(struct Klon kln, struct Sel *sel, KlonCardPlace plc)
 {
 	sel->place = plc;
 	sel->card = get_visible_top_card(kln, plc);
@@ -59,7 +59,7 @@ static bool change_x_left_right(int *x, enum SelDirection dir, bool tab, bool ta
 	return (0 <= *x && *x < 7);
 }
 
-bool sel_more(struct Klon kln, struct UiSelection *sel)
+bool sel_more(struct Klon kln, struct Sel *sel)
 {
 	if (!KLON_IS_TABLEAU(sel->place))
 		return false;
@@ -72,7 +72,7 @@ bool sel_more(struct Klon kln, struct UiSelection *sel)
 	return false;
 }
 
-bool sel_less(struct Klon kln, struct UiSelection *sel)
+bool sel_less(struct Klon kln, struct Sel *sel)
 {
 	if (KLON_IS_TABLEAU(sel->place) && sel->card && sel->card->next) {
 		sel->card = sel->card->next;
@@ -81,7 +81,7 @@ bool sel_less(struct Klon kln, struct UiSelection *sel)
 	return false;
 }
 
-void sel_anothercard(struct Klon kln, struct UiSelection *sel, enum SelDirection dir)
+void sel_anothercard(struct Klon kln, struct Sel *sel, enum SelDirection dir)
 {
 	int x = place_2_card_x(sel->place);
 	bool tab = KLON_IS_TABLEAU(sel->place);
@@ -111,7 +111,7 @@ void sel_anothercard(struct Klon kln, struct UiSelection *sel, enum SelDirection
 	}
 }
 
-void sel_anothercardmv(struct Klon kln, struct UiSelection sel, enum SelDirection dir, KlonCardPlace *mv)
+void sel_anothercardmv(struct Klon kln, struct Sel sel, enum SelDirection dir, KlonCardPlace *mv)
 {
 	assert(sel.card);
 	int x = place_2_card_x(*mv);
@@ -142,7 +142,7 @@ void sel_anothercardmv(struct Klon kln, struct UiSelection sel, enum SelDirectio
 	}
 }
 
-void sel_endmv(struct Klon *kln, struct UiSelection *sel, KlonCardPlace mv)
+void sel_endmv(struct Klon *kln, struct Sel *sel, KlonCardPlace mv)
 {
 	assert(sel->card);
 	if (klon_canmove(*kln, sel->card, mv))

@@ -5,36 +5,7 @@
 #include <stdbool.h>
 #include "card.h"   // IWYU pragma: keep
 #include "klon.h"
-
-/*
-represents the card pile or location that the user has selected
-a pointer to struct Card is not enough because it's possible to select a
-place where cards can be put but currently contains no cards
-
-possible values:
-
-	.card = NULL, .place = 0
-		nothing selected
-
-	.card = NULL, .place = KLON_STOCK
-		stock selected
-
-	.card = card_top(kln->discard), .place = KLON_DISCARD
-		discard selected
-
-	.card = card_top(kln->foundations[n]), .place = KLON_FOUNDATION(n)
-		nth foundation selected
-
-	.card = kln->tableau[n] or some of its ->nexts, .card is visible, .place = KLON_TABLEAU(n)
-		nth tableau selected, including the specified card and all its ->nexts
-
-	.card = NULL, .place = KLON_TABLEAU(n)
-		tableau n selected, but there are no cards in that tableau
-*/
-struct UiSelection {
-	struct Card *card;
-	KlonCardPlace place;
-};
+#include "sel.h"
 
 // sets up curses color pairs
 void ui_initcolors(void);
@@ -42,6 +13,6 @@ void ui_initcolors(void);
 // draws kln on win
 // color and pick correspond to similarly named command-line arguments
 // moving should be true if user is currently moving a card, otherwise false
-void ui_drawklon(WINDOW *win, struct Klon kln, struct UiSelection sel, bool moving, bool color);
+void ui_drawklon(WINDOW *win, struct Klon kln, struct Sel sel, bool moving, bool color);
 
 #endif  // UI_H

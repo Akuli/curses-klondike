@@ -63,7 +63,7 @@ struct Help help[] = {
 	{ NULL, NULL }
 };
 
-static void new_game(struct Klon *kln, struct UiSelection *sel, KlonCardPlace *mv)
+static void new_game(struct Klon *kln, struct Sel *sel, KlonCardPlace *mv)
 {
 	klon_init(kln, card_createallshuf());
 	sel->place = KLON_STOCK;
@@ -72,7 +72,7 @@ static void new_game(struct Klon *kln, struct UiSelection *sel, KlonCardPlace *m
 }
 
 // returns whether to continue playing
-static bool handle_key(struct Klon *kln, struct UiSelection *sel, KlonCardPlace *mv, int k, struct Args ar)
+static bool handle_key(struct Klon *kln, struct Sel *sel, KlonCardPlace *mv, int k, struct Args ar)
 {
 	if (k == 'h') {
 		help_show(stdscr);
@@ -154,10 +154,10 @@ static bool handle_key(struct Klon *kln, struct UiSelection *sel, KlonCardPlace 
 }
 
 // creates a temp copy of the kln, modifies it nicely and calls ui_drawkln
-static void draw_klon_with_mv(WINDOW *win, struct Klon kln, struct UiSelection sel, KlonCardPlace mv, bool color)
+static void draw_klon_with_mv(WINDOW *win, struct Klon kln, struct Sel sel, KlonCardPlace mv, bool color)
 {
 	struct Klon tmpkln;
-	struct UiSelection tmpsel = { .place = mv };
+	struct Sel tmpsel = { .place = mv };
 
 	tmpsel.card = klon_dup(kln, &tmpkln, sel.card);
 	klon_move(&tmpkln, tmpsel.card, tmpsel.place, true);
@@ -206,7 +206,7 @@ int main(int argc, char **argv)
 	refresh();   // yes, this is needed before drawing the cards for some reason
 
 	struct Klon kln;
-	struct UiSelection sel;
+	struct Sel sel;
 	KlonCardPlace mv;
 	new_game(&kln, &sel, &mv);
 
