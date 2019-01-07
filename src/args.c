@@ -163,7 +163,7 @@ out:
 }
 
 // returns true on success, false on failure
-static int is_valid_integer(char *str, int min, int max)
+static bool is_valid_integer(char *str, int min, int max)
 {
 	// see the example in linux man-pages strtol(3)
 	errno = 0;

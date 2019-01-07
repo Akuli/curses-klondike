@@ -98,12 +98,8 @@ static bool handle_key(struct Klon *kln, struct UiSelection *sel, KlonCardPlace 
 		return true;
 	}
 
-	if (k == 'd') {
-		if (*mv)
-			*mv = KLON_DISCARD;
-		else
-			sel_byplace(*kln, sel, KLON_DISCARD);
-	}
+	if (k == 'd' && !*mv)
+		sel_byplace(*kln, sel, KLON_DISCARD);
 
 	if (k == 'f' && sel->card && !*mv) {
 		for (int i=0; i < 4; i++)

@@ -25,7 +25,6 @@ static int get_max_width(WINDOW *win, int xoff, int yoff)
 	return getmaxx(win) - xoff - PICTURE_WIDTH - 3;  // 3 is for more space between picture and helps
 }
 
-// returns number of lines printed
 static void print_wrapped(WINDOW *win, char *s, int xoff, int *yoff)
 {
 	int maxlen;
