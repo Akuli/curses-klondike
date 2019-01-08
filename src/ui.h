@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include "card.h"   // IWYU pragma: keep
 #include "klon.h"
-#include "sel.h"
+#include "selmv.h"
 
 // sets up curses color pairs
 void ui_initcolors(void);

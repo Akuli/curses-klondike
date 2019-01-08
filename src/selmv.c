@@ -1,4 +1,4 @@
-#include "sel.h"
+#include "selmv.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -41,10 +41,15 @@ static struct Card *get_visible_top_card(struct Klon kln, KlonCardPlace plc)
 	return NULL;
 }
 
-void sel_byplace(struct Klon kln, struct Sel *sel, KlonCardPlace plc)
+void selmv_byplace(struct Klon kln, struct SelMv *selmv, KlonCardPlace plc)
 {
-	sel->place = plc;
-	sel->card = get_visible_top_card(kln, plc);
+	if (selmv->ismv) {
+		selmv->mv.dst = plc;
+		selmv->mv.card = get_visible_top_card(kln, plc);
+	} else {
+		selmv->sel.place = plc;
+		selmv->sel.card = get_visible_top_card(kln, plc);
+	}
 }
 
 // if tabfndonly, only allows moving to tableau or foundations
@@ -81,16 +86,18 @@ bool sel_less(struct Klon kln, struct Sel *sel)
 	return false;
 }
 
-void sel_anothercard(struct Klon kln, struct Sel *sel, enum SelDirection dir)
+static void sel_another_card(struct Klon kln, struct SelMv *selmv, enum SelDirection dir)
 {
-	int x = place_2_card_x(sel->place);
-	bool tab = KLON_IS_TABLEAU(sel->place);
+	assert(!selmv->ismv);
+
+	int x = place_2_card_x(selmv->sel.place);
+	bool tab = KLON_IS_TABLEAU(selmv->sel.place);
 
 	switch(dir) {
 	case SEL_LEFT:
 	case SEL_RIGHT:
 		if (change_x_left_right(&x, dir, tab, false))
-			sel_byplace(kln, sel, tab ? KLON_TABLEAU(x) : card_x_2_top_place(x));
+			selmv_byplace(kln, selmv, tab ? KLON_TABLEAU(x) : card_x_2_top_place(x));
 		break;
 
 	case SEL_UP:
@@ -98,12 +105,12 @@ void sel_anothercard(struct Klon kln, struct Sel *sel, enum SelDirection dir)
 			break;
 
 		if (card_x_2_top_place(x))
-			sel_byplace(kln, sel, card_x_2_top_place(x));
+			selmv_byplace(kln, selmv, card_x_2_top_place(x));
 		break;
 
 	case SEL_DOWN:
 		if (!tab)
-			sel_byplace(kln, sel, KLON_TABLEAU(x));
+			selmv_byplace(kln, selmv, KLON_TABLEAU(x));
 		break;
 
 	default:
@@ -111,30 +118,27 @@ void sel_anothercard(struct Klon kln, struct Sel *sel, enum SelDirection dir)
 	}
 }
 
-void sel_anothercardmv(struct Klon kln, struct Sel sel, enum SelDirection dir, KlonCardPlace *mv)
+static void mv_another_card(struct Klon kln, struct Mv *mv, enum SelDirection dir)
 {
-	assert(sel.card);
-	int x = place_2_card_x(*mv);
-	bool tab = KLON_IS_TABLEAU(*mv);
+	assert(mv->card);
+	int x = place_2_card_x(mv->dst);
+	bool tab = KLON_IS_TABLEAU(mv->dst);
 
 	switch(dir) {
 	case SEL_LEFT:
 	case SEL_RIGHT:
 		if (change_x_left_right(&x, dir, tab, true))
-			*mv = tab ? KLON_TABLEAU(x) : card_x_2_top_place(x);
+			mv->dst = tab ? KLON_TABLEAU(x) : card_x_2_top_place(x);
 		break;
 
 	case SEL_UP:
-		if (tab) {
-			// can only move to foundations, but multiple cards not even there
-			if (KLON_IS_FOUNDATION(card_x_2_top_place(x)) && !sel.card->next)
-				*mv = card_x_2_top_place(x);
-		} else
-			*mv = KLON_TABLEAU(x);
+		// can only move from table to foundations, but multiple cards not even there
+		if (tab && KLON_IS_FOUNDATION(card_x_2_top_place(x)) && !mv->card->next)
+			mv->dst = card_x_2_top_place(x);
 		break;
 
 	case SEL_DOWN:
-		*mv = KLON_TABLEAU(x);
+		mv->dst = KLON_TABLEAU(x);
 		break;
 
 	default:
@@ -142,10 +146,28 @@ void sel_anothercardmv(struct Klon kln, struct Sel sel, enum SelDirection dir, K
 	}
 }
 
-void sel_endmv(struct Klon *kln, struct Sel *sel, KlonCardPlace mv)
+void selmv_anothercard(struct Klon kln, struct SelMv *selmv, enum SelDirection dir)
 {
-	assert(sel->card);
-	if (klon_canmove(*kln, sel->card, mv))
-		klon_move(kln, sel->card, mv, false);
-	sel_byplace(*kln, sel, mv);
+	if (selmv->ismv)
+		mv_another_card(kln, &selmv->mv, dir);
+	else
+		sel_another_card(kln, selmv, dir);
+}
+
+void selmv_beginmv(struct SelMv *selmv)
+{
+	selmv->ismv = true;
+	selmv->mv.card = selmv->sel.card;
+	selmv->mv.src = selmv->mv.dst = selmv->sel.place;
+}
+
+void selmv_endmv(struct Klon *kln, struct SelMv *selmv)
+{
+	assert(selmv->ismv);
+	assert(selmv->mv.card);
+	if (klon_canmove(*kln, selmv->mv.card, selmv->mv.dst))
+		klon_move(kln, selmv->mv.card, selmv->mv.dst, false);
+
+	selmv->ismv = false;
+	selmv_byplace(*kln, selmv, selmv->mv.dst);
 }

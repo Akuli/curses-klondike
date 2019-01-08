@@ -12,7 +12,7 @@
 #include "card.h"
 #include "help.h"
 #include "misc.h"
-#include "sel.h"
+#include "selmv.h"
 #include "klon.h"
 #include "ui.h"
 
@@ -63,16 +63,16 @@ struct Help help[] = {
 	{ NULL, NULL }
 };
 
-static void new_game(struct Klon *kln, struct Sel *sel, KlonCardPlace *mv)
+static void new_game(struct Klon *kln, struct SelMv *selmv)
 {
 	klon_init(kln, card_createallshuf());
-	sel->place = KLON_STOCK;
-	sel->card = NULL;
-	*mv = 0;
+	selmv->ismv = false;
+	selmv->sel.place = KLON_STOCK;
+	selmv->sel.card = NULL;
 }
 
 // returns whether to continue playing
-static bool handle_key(struct Klon *kln, struct Sel *sel, KlonCardPlace *mv, int k, struct Args ar)
+static bool handle_key(struct Klon *kln, struct SelMv *selmv, int k, struct Args ar)
 {
 	if (k == 'h') {
 		help_show(stdscr);
@@ -84,69 +84,66 @@ static bool handle_key(struct Klon *kln, struct Sel *sel, KlonCardPlace *mv, int
 
 	if (k == 'n') {
 		klon_free(*kln);
-		new_game(kln, sel, mv);
+		new_game(kln, selmv);
 	}
 
-	if (k == 's' && !*mv) {
+	if (k == 's' && !selmv->ismv) {
 		klon_stock2discard(kln, ar.pick);
 
 		// if you change this, think about what if the discard card was selected?
 		// then the moved card ended up on top of the old discarded card
 		// and we have 2 cards selected, so you need to handle that
-		sel_byplace(*kln, sel, KLON_DISCARD);
+		selmv_byplace(*kln, selmv, KLON_DISCARD);
 
 		return true;
 	}
 
-	if (k == 'd' && !*mv)
-		sel_byplace(*kln, sel, KLON_DISCARD);
+	if (k == 'd' && !selmv->ismv)
+		selmv_byplace(*kln, selmv, KLON_DISCARD);
 
-	if (k == 'f' && sel->card && !*mv) {
+	if (k == 'f' && selmv->sel.card && !selmv->ismv) {
 		for (int i=0; i < 4; i++)
-			if (klon_canmove(*kln, sel->card, KLON_FOUNDATION(i))) {
-				klon_move(kln, sel->card, KLON_FOUNDATION(i), false);
-				sel_byplace(*kln, sel, sel->place);  // updates sel->card if needed
+			if (klon_canmove(*kln, selmv->sel.card, KLON_FOUNDATION(i))) {
+				klon_move(kln, selmv->sel.card, KLON_FOUNDATION(i), false);
+				selmv_byplace(*kln, selmv, selmv->sel.place);  // updates selmv->sel.card if needed
 				break;
 			}
 		return true;
 	}
 
 	if (k == 27) {   // esc key, didn't find a KEY_ constant for this
-		if (*mv)
-			*mv = 0;
+		if (selmv->ismv)
+			selmv->ismv = false;
 		return true;
 	}
 
 	if (k == KEY_LEFT || k == KEY_RIGHT || k == KEY_UP || k == KEY_DOWN) {
-		if (*mv)
-			sel_anothercardmv(*kln, *sel, curses_key_to_seldirection(k), mv);
-		else {
-			if (k == KEY_UP && sel_more(*kln, sel))
+		if (!selmv->ismv) {
+			if (k == KEY_UP && sel_more(*kln, &selmv->sel))
 				return true;
-			if (k == KEY_DOWN && sel_less(*kln, sel))
+			if (k == KEY_DOWN && sel_less(*kln, &selmv->sel))
 				return true;
-			sel_anothercard(*kln, sel, curses_key_to_seldirection(k));
 		}
+
+		selmv_anothercard(*kln, selmv, curses_key_to_seldirection(k));
 		return true;
 	}
 
 	if (k == '\n') {
-		if (*mv) {
-			sel_endmv(kln, sel, *mv);
-			*mv = 0;
-		}
-		else if (sel->place == KLON_STOCK)
+		if (selmv->ismv)
+			selmv_endmv(kln, selmv);
+		else if (selmv->sel.place == KLON_STOCK)
 			klon_stock2discard(kln, ar.pick);
-		else if (sel->card && sel->card->visible)
-			*mv = sel->place;
+		else if (selmv->sel.card && selmv->sel.card->visible)
+			selmv_beginmv(selmv);
 		return true;
 	}
 
 	if ('1' <= k && k <= '7') {
-		if (*mv)
-			*mv = KLON_TABLEAU(k - '1');
+		if (selmv->ismv)
+			selmv->ismv = KLON_TABLEAU(k - '1');
 		else
-			sel_byplace(*kln, sel, KLON_TABLEAU(k - '1'));
+			selmv_byplace(*kln, selmv, KLON_TABLEAU(k - '1'));
 		return true;
 	}
 
@@ -154,15 +151,15 @@ static bool handle_key(struct Klon *kln, struct Sel *sel, KlonCardPlace *mv, int
 }
 
 // creates a temp copy of the kln, modifies it nicely and calls ui_drawkln
-static void draw_klon_with_mv(WINDOW *win, struct Klon kln, struct Sel sel, KlonCardPlace mv, bool color)
+static void draw_klon_with_mv(WINDOW *win, struct Klon kln, struct SelMv selmv, bool color)
 {
+	assert(selmv.ismv);
+
 	struct Klon tmpkln;
-	struct Sel tmpsel = { .place = mv };
+	struct Sel tmpsel = { .card = klon_dup(kln, &tmpkln, selmv.mv.card), .place = selmv.mv.dst };
 
-	tmpsel.card = klon_dup(kln, &tmpkln, sel.card);
 	klon_move(&tmpkln, tmpsel.card, tmpsel.place, true);
-
-	ui_drawklon(win, tmpkln, tmpsel, !!mv, color);
+	ui_drawklon(win, tmpkln, tmpsel, selmv.ismv, color);
 	klon_free(tmpkln);
 }
 
@@ -206,16 +203,15 @@ int main(int argc, char **argv)
 	refresh();   // yes, this is needed before drawing the cards for some reason
 
 	struct Klon kln;
-	struct Sel sel;
-	KlonCardPlace mv;
-	new_game(&kln, &sel, &mv);
+	struct SelMv selmv;
+	new_game(&kln, &selmv);
 
 	bool first = true;
 	do {
-		if (mv)
-			draw_klon_with_mv(stdscr, kln, sel, mv, color);
+		if (selmv.ismv)
+			draw_klon_with_mv(stdscr, kln, selmv, color);
 		else
-			ui_drawklon(stdscr, kln, sel, !!mv, color);
+			ui_drawklon(stdscr, kln, selmv.sel, false, color);
 
 		if (first) {
 			wattron(stdscr, COLOR_PAIR(2));
@@ -225,7 +221,7 @@ int main(int argc, char **argv)
 		}
 
 		refresh();
-	} while( handle_key(&kln, &sel, &mv, getch(), ar) );
+	} while( handle_key(&kln, &selmv, getch(), ar) );
 
 	klon_free(kln);
 	endwin();
