@@ -149,7 +149,7 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ys
 	}
 }
 
-void ui_drawklon(WINDOW *win, struct Klon kln, struct Sel sel, bool moving, bool color)
+static void draw_the_klon(WINDOW *win, struct Klon kln, struct Sel sel, bool moving, bool color)
 {
 	werase(win);
 
@@ -197,4 +197,17 @@ void ui_drawklon(WINDOW *win, struct Klon kln, struct Sel sel, bool moving, bool
 		char *msg = "you win :)";
 		mvwaddstr(win, h/2, (w - strlen(msg))/2, msg);
 	}
+}
+
+void ui_drawklon(WINDOW *win, struct Klon kln, struct SelMv selmv, bool color)
+{
+	if (selmv.ismv) {
+		struct Klon tmpkln;
+		struct Sel tmpsel = { .card = klon_dup(kln, &tmpkln, selmv.mv.card), .place = selmv.mv.dst };
+
+		klon_move(&tmpkln, tmpsel.card, tmpsel.place, true);
+		draw_the_klon(win, tmpkln, tmpsel, true, color);
+		klon_free(tmpkln);
+	} else
+		draw_the_klon(win, kln, selmv.sel, false, color);
 }

@@ -150,19 +150,6 @@ static bool handle_key(struct Klon *kln, struct SelMv *selmv, int k, struct Args
 	return true;
 }
 
-// creates a temp copy of the kln, modifies it nicely and calls ui_drawkln
-static void draw_klon_with_mv(WINDOW *win, struct Klon kln, struct SelMv selmv, bool color)
-{
-	assert(selmv.ismv);
-
-	struct Klon tmpkln;
-	struct Sel tmpsel = { .card = klon_dup(kln, &tmpkln, selmv.mv.card), .place = selmv.mv.dst };
-
-	klon_move(&tmpkln, tmpsel.card, tmpsel.place, true);
-	ui_drawklon(win, tmpkln, tmpsel, selmv.ismv, color);
-	klon_free(tmpkln);
-}
-
 int main(int argc, char **argv)
 {
 	// displaying unicodes correctly needs setlocale here AND cursesw instead of curses in makefile
@@ -208,10 +195,7 @@ int main(int argc, char **argv)
 
 	bool first = true;
 	do {
-		if (selmv.ismv)
-			draw_klon_with_mv(stdscr, kln, selmv, color);
-		else
-			ui_drawklon(stdscr, kln, selmv.sel, false, color);
+		ui_drawklon(stdscr, kln, selmv, color);
 
 		if (first) {
 			wattron(stdscr, COLOR_PAIR(2));
