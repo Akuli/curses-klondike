@@ -24,6 +24,13 @@ Then you can download my code, compile it and run.
 
 ## FAQ
 
+### I don't like the rules that this game uses! When X happens, it should do Y instead of Z
+
+See `./cursesklon --help`. Maybe one of the options is what you want. If none
+of them is, [create an issue].
+
+[create an issue]: https://github.com/Akuli/curses-klondike/issues/new
+
 ### Why did you write a klondike game?
 
 Because it's fun.
