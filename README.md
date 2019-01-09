@@ -24,6 +24,11 @@ Then you can download my code, compile it and run.
 
 ## FAQ
 
+### How do I exit this game?
+
+It's not vim, so you can quit it like any other sane curses program (less,
+bsdgames tetris etc). In other words, press q to quit.
+
 ### I don't like the rules that this game uses! When X happens, it should do Y instead of Z
 
 See `./cursesklon --help`. Maybe one of the options is what you want. If none
