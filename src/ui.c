@@ -1,4 +1,5 @@
 #include "ui.h"
+#include <assert.h>
 #include <curses.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -149,7 +150,10 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ys
 	}
 }
 
-static void draw_the_klon(WINDOW *win, struct Klon kln, struct Sel sel, bool moving, bool color)
+// https://github.com/Akuli/curses-klondike/issues/2
+enum Issue2HideMode { I2_HIDE_ALL, I2_SHOW_LAST_ONLY, I2_SHOW_ALL };
+
+static void draw_the_klon(WINDOW *win, struct Klon kln, struct Sel sel, bool moving, bool color, enum Issue2HideMode i2)
 {
 	werase(win);
 
@@ -164,8 +168,18 @@ static void draw_the_klon(WINDOW *win, struct Klon kln, struct Sel sel, bool mov
 		nshowdis++;
 
 	int x = ui_x(1, w);
-	for (struct Card *crd = card_tops(kln.discard, nshowdis); crd; (crd = crd->next), (x += X_OFFSET))
-		draw_card(win, crd, x, ui_y(0, h), sel.place == KLON_DISCARD && !crd->next, color);
+	for (struct Card *crd = card_tops(kln.discard, nshowdis); crd; (crd = crd->next), (x += X_OFFSET)) {
+		struct Card crdval = *crd;
+
+		assert(crdval.visible);
+		if (i2 == I2_HIDE_ALL)
+			crdval.visible = false;
+		if (i2 == I2_SHOW_LAST_ONLY)
+			crdval.visible = !crd->next;
+
+		draw_card(win, &crdval, x, ui_y(0, h), sel.place == KLON_DISCARD && !crd->next, color);
+	}
+
 	if (!kln.discard)   // nothing was drawn, but if the discard is selected, at least draw that
 		draw_card(win, NULL, ui_x(1, w), ui_y(0, h), sel.place == KLON_DISCARD, color);
 
@@ -202,12 +216,28 @@ static void draw_the_klon(WINDOW *win, struct Klon kln, struct Sel sel, bool mov
 void ui_drawklon(WINDOW *win, struct Klon kln, struct SelMv selmv, bool color)
 {
 	if (selmv.ismv) {
+		enum Issue2HideMode i2 = (selmv.mv.src == KLON_DISCARD) ? (
+			(selmv.mv.dst == KLON_DISCARD) ? I2_SHOW_LAST_ONLY : I2_HIDE_ALL
+		) : I2_SHOW_LAST_ONLY;
+
 		struct Klon tmpkln;
 		struct Sel tmpsel = { .card = klon_dup(kln, &tmpkln, selmv.mv.card), .place = selmv.mv.dst };
 
 		klon_move(&tmpkln, tmpsel.card, tmpsel.place, true);
-		draw_the_klon(win, tmpkln, tmpsel, true, color);
+		draw_the_klon(win, tmpkln, tmpsel, true, color, i2);
 		klon_free(tmpkln);
 	} else
-		draw_the_klon(win, kln, selmv.sel, false, color);
+		draw_the_klon(win, kln, selmv.sel, false, color, I2_SHOW_LAST_ONLY);
+
+	if (selmv.ismv)
+		mvwprintw(win, 20, 0, "ismv = true, mv.src = %c, mv.dst = %c", selmv.mv.src, selmv.mv.dst);
+	else
+		mvwprintw(win, 20, 0, "ismv = false, sel.place = %c", selmv.sel.place);
+
+	if (selmv.ismv && selmv.mv.src == KLON_DISCARD) {
+		if (selmv.mv.dst == KLON_DISCARD)
+			mvwprintw(win, 21, 0, "hiding all but one");
+		else
+			mvwprintw(win, 21, 0, "hiding all");
+	}
 }

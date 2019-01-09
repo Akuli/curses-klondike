@@ -1,3 +1,4 @@
+// TODO: noecho
 // for setenv(3)
 #define _POSIX_C_SOURCE 200112L
 
