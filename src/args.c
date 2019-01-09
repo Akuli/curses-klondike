@@ -32,6 +32,7 @@ static struct OptSpec option_specs[] = {
 	{ "--pick", "n", TYPE_INT, 1, 13*4 - (1+2+3+4+5+6+7), "pick n cards from stock at a time, default is 3" },
 	{ "--discard-hide", NULL, TYPE_YESNO, 0, 0, "only show topmost discarded card (not useful with --pick=1)" }
 };
+#define LONGEST_OPTION "--discard-hide"
 
 static void print_help_option(struct OptSpec opt)
 {
@@ -53,7 +54,7 @@ static void print_help_option(struct OptSpec opt)
 		break;
 	}
 
-	fprintf(args_outfile, "  %-12s  %s\n", pre, opt.desc);
+	fprintf(args_outfile, "  %-*s  %s\n", (int)( sizeof(LONGEST_OPTION)-1 ), pre, opt.desc);
 	if (freepre)
 		free(pre);
 }

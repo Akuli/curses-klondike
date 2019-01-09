@@ -76,9 +76,9 @@ TEST(args_help)
 	read_args_file(args_outfile,
 		"Usage: asdasd [--help] [--no-colors] [--pick n] [--discard-hide]\n\n"
 		"Options:\n"
-		"  --help        show this help message and exit\n"
-		"  --no-colors   don't use colors, even if the terminal supports colors\n"
-		"  --pick n      pick n cards from stock at a time, default is 3\n"
+		"  --help          show this help message and exit\n"
+		"  --no-colors     don't use colors, even if the terminal supports colors\n"
+		"  --pick n        pick n cards from stock at a time, default is 3\n"
 		"  --discard-hide  only show topmost discarded card (not useful with --pick=1)\n"
 	);
 }
