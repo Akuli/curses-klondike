@@ -29,7 +29,8 @@ struct OptSpec {
 static struct OptSpec option_specs[] = {
 	{ "--help", NULL, TYPE_YESNO, 0, 0, "show this help message and exit" },
 	{ "--no-colors", NULL, TYPE_YESNO, 0, 0, "don't use colors, even if the terminal supports colors" },
-	{ "--pick", "n", TYPE_INT, 1, 13*4 - (1+2+3+4+5+6+7), "pick n cards from stock at a time, default is 3" }
+	{ "--pick", "n", TYPE_INT, 1, 13*4 - (1+2+3+4+5+6+7), "pick n cards from stock at a time, default is 3" },
+	{ "--discard-hide", NULL, TYPE_YESNO, 0, 0, "only show topmost discarded card (not useful with --pick=1)" }
 };
 
 static void print_help_option(struct OptSpec opt)
@@ -240,7 +241,8 @@ static int check_tokens(char *argv0, struct Token *toks, int ntoks)
 
 static struct Args default_args = {
 	.color = true,
-	.pick = 3
+	.pick = 3,
+	.discardhide = false
 };
 
 // returns true to keep running, or false to exit with status 0
@@ -259,6 +261,8 @@ static bool tokens_to_struct_args(char *argv0, struct Token *toks, int ntoks, st
 			ar->color = false;
 		else if OPTION_IS(--pick)
 			ar->pick = atoi(toks[i].value);  // atoi won't fail, the value is already validated
+		else if OPTION_IS(--discard-hide)
+			ar->discardhide = true;
 		else
 			assert(0);
 

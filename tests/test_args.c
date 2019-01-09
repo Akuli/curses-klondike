@@ -74,11 +74,12 @@ TEST(args_help)
 	struct Args ar;
 	assert(args_parse(&ar, ARGS("asdasd", "--help")) == 0);
 	read_args_file(args_outfile,
-		"Usage: asdasd [--help] [--no-colors] [--pick n]\n\n"
+		"Usage: asdasd [--help] [--no-colors] [--pick n] [--discard-hide]\n\n"
 		"Options:\n"
 		"  --help        show this help message and exit\n"
 		"  --no-colors   don't use colors, even if the terminal supports colors\n"
 		"  --pick n      pick n cards from stock at a time, default is 3\n"
+		"  --discard-hide  only show topmost discarded card (not useful with --pick=1)\n"
 	);
 }
 
@@ -88,14 +89,16 @@ TEST(args_defaults)
 	assert(args_parse(&ar, ARGS("asdasd")) == -1);
 	assert(ar.color);
 	assert(ar.pick == 3);
+	assert(!ar.discardhide);
 }
 
 TEST(args_no_defaults)
 {
 	struct Args ar;
-	assert(args_parse(&ar, ARGS("asdasd", "--no-color", "--pick=2")) == -1);
+	assert(args_parse(&ar, ARGS("asdasd", "--no-color", "--pick=2", "--discard-hide")) == -1);
 	assert(!ar.color);
 	assert(ar.pick == 2);
+	assert(ar.discardhide);
 }
 
 #define HELP_STUFF "\nRun 'asdasd --help' for help.\n"

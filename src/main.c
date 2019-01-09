@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 
 	bool first = true;
 	do {
-		ui_drawklon(stdscr, kln, selmv, color);
+		ui_drawklon(stdscr, kln, selmv, color, ar.discardhide);
 
 		if (first) {
 			wattron(stdscr, COLOR_PAIR(2));
