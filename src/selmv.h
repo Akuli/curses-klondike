@@ -49,7 +49,7 @@ struct SelMv {
 
 enum SelDirection { SEL_LEFT, SEL_RIGHT, SEL_UP, SEL_DOWN };
 
-// selects the topmost card at plc
+// selects the topmost card at plc (or prepare to move there)
 void selmv_byplace(struct Klon kln, struct SelMv *selmv, KlonCardPlace plc);
 
 // select another card at left, right, top or bottom, if possible

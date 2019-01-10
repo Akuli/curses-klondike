@@ -141,10 +141,7 @@ static bool handle_key(struct Klon *kln, struct SelMv *selmv, int k, struct Args
 	}
 
 	if ('1' <= k && k <= '7') {
-		if (selmv->ismv)
-			selmv->ismv = KLON_TABLEAU(k - '1');
-		else
-			selmv_byplace(*kln, selmv, KLON_TABLEAU(k - '1'));
+		selmv_byplace(*kln, selmv, KLON_TABLEAU(k - '1'));
 		return true;
 	}
 

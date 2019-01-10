@@ -45,7 +45,6 @@ void selmv_byplace(struct Klon kln, struct SelMv *selmv, KlonCardPlace plc)
 {
 	if (selmv->ismv) {
 		selmv->mv.dst = plc;
-		selmv->mv.card = get_visible_top_card(kln, plc);
 	} else {
 		selmv->sel.place = plc;
 		selmv->sel.card = get_visible_top_card(kln, plc);
@@ -86,72 +85,39 @@ bool sel_less(struct Klon kln, struct Sel *sel)
 	return false;
 }
 
-static void sel_another_card(struct Klon kln, struct SelMv *selmv, enum SelDirection dir)
+void selmv_anothercard(struct Klon kln, struct SelMv *selmv, enum SelDirection dir)
 {
-	assert(!selmv->ismv);
+	if (selmv->ismv)
+		assert(selmv->mv.card);
 
-	int x = place_2_card_x(selmv->sel.place);
-	bool tab = KLON_IS_TABLEAU(selmv->sel.place);
+	int x = place_2_card_x(selmv->ismv ? selmv->mv.dst : selmv->sel.place);
+	bool tab = KLON_IS_TABLEAU(selmv->ismv ? selmv->mv.dst : selmv->sel.place);
 
 	switch(dir) {
 	case SEL_LEFT:
 	case SEL_RIGHT:
-		if (change_x_left_right(&x, dir, tab, false))
+		if (change_x_left_right(&x, dir, tab, selmv->ismv))
 			selmv_byplace(kln, selmv, tab ? KLON_TABLEAU(x) : card_x_2_top_place(x));
 		break;
 
 	case SEL_UP:
-		if (!tab)
-			break;
-
-		if (card_x_2_top_place(x))
-			selmv_byplace(kln, selmv, card_x_2_top_place(x));
+		if (selmv->ismv) {
+			// can only move from table to foundations, but multiple cards not even there
+			if (tab && KLON_IS_FOUNDATION(card_x_2_top_place(x)) && !selmv->mv.card->next)
+				selmv_byplace(kln, selmv, card_x_2_top_place(x));
+		} else
+			if (tab && card_x_2_top_place(x))
+				selmv_byplace(kln, selmv, card_x_2_top_place(x));
 		break;
 
 	case SEL_DOWN:
-		if (!tab)
+		if (selmv->ismv || !tab)
 			selmv_byplace(kln, selmv, KLON_TABLEAU(x));
 		break;
 
 	default:
 		assert(0);
 	}
-}
-
-static void mv_another_card(struct Klon kln, struct Mv *mv, enum SelDirection dir)
-{
-	assert(mv->card);
-	int x = place_2_card_x(mv->dst);
-	bool tab = KLON_IS_TABLEAU(mv->dst);
-
-	switch(dir) {
-	case SEL_LEFT:
-	case SEL_RIGHT:
-		if (change_x_left_right(&x, dir, tab, true))
-			mv->dst = tab ? KLON_TABLEAU(x) : card_x_2_top_place(x);
-		break;
-
-	case SEL_UP:
-		// can only move from table to foundations, but multiple cards not even there
-		if (tab && KLON_IS_FOUNDATION(card_x_2_top_place(x)) && !mv->card->next)
-			mv->dst = card_x_2_top_place(x);
-		break;
-
-	case SEL_DOWN:
-		mv->dst = KLON_TABLEAU(x);
-		break;
-
-	default:
-		assert(0);
-	}
-}
-
-void selmv_anothercard(struct Klon kln, struct SelMv *selmv, enum SelDirection dir)
-{
-	if (selmv->ismv)
-		mv_another_card(kln, &selmv->mv, dir);
-	else
-		sel_another_card(kln, selmv, dir);
 }
 
 void selmv_beginmv(struct SelMv *selmv)
