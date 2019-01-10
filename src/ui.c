@@ -153,7 +153,7 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ys
 // https://github.com/Akuli/curses-klondike/issues/2
 enum DiscardHide { DH_HIDE_ALL, DH_SHOW_LAST_ONLY, DH_SHOW_ALL };
 
-static void draw_the_klon(WINDOW *win, struct Klon kln, struct Sel sel, bool moving, bool color, enum DiscardHide i2)
+static void draw_the_klon(WINDOW *win, struct Klon kln, struct Sel sel, bool moving, bool color, enum DiscardHide dh, int dscxoff)
 {
 	werase(win);
 
@@ -168,13 +168,13 @@ static void draw_the_klon(WINDOW *win, struct Klon kln, struct Sel sel, bool mov
 		nshowdis++;
 
 	int x = ui_x(1, w);
-	for (struct Card *crd = card_tops(kln.discard, nshowdis); crd; (crd = crd->next), (x += X_OFFSET)) {
+	for (struct Card *crd = card_tops(kln.discard, nshowdis); crd; (crd = crd->next), (x += dscxoff)) {
 		struct Card crdval = *crd;
 
 		assert(crdval.visible);
-		if (i2 == DH_HIDE_ALL)
+		if (dh == DH_HIDE_ALL)
 			crdval.visible = false;
-		if (i2 == DH_SHOW_LAST_ONLY)
+		if (dh == DH_SHOW_LAST_ONLY)
 			crdval.visible = !crd->next;
 
 		draw_card(win, &crdval, x, ui_y(0, h), sel.place == KLON_DISCARD && !crd->next, color);
@@ -231,14 +231,15 @@ static enum DiscardHide decide_what_to_hide(struct SelMv selmv, bool cmdlnopt)
 void ui_drawklon(WINDOW *win, struct Klon kln, struct SelMv selmv, bool color, bool discardhide)
 {
 	enum DiscardHide dh = decide_what_to_hide(selmv, discardhide);
+	int dscxoff = discardhide ? 1 : X_OFFSET;
 
 	if (selmv.ismv) {
 		struct Klon tmpkln;
 		struct Sel tmpsel = { .card = klon_dup(kln, &tmpkln, selmv.mv.card), .place = selmv.mv.dst };
 
 		klon_move(&tmpkln, tmpsel.card, tmpsel.place, true);
-		draw_the_klon(win, tmpkln, tmpsel, true, color, dh);
+		draw_the_klon(win, tmpkln, tmpsel, true, color, dh, dscxoff);
 		klon_free(tmpkln);
 	} else
-		draw_the_klon(win, kln, selmv.sel, false, color, dh);
+		draw_the_klon(win, kln, selmv.sel, false, color, dh, dscxoff);
 }
