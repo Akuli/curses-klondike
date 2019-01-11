@@ -200,9 +200,9 @@ int main(int argc, char **argv)
 			getmaxyx(stdscr, h, w);
 			(void) w;   // silence warning about unused variable
 
-			wattron(stdscr, COLOR_PAIR(2));
+			wattron(stdscr, A_STANDOUT);
 			mvwaddstr(stdscr, h-1, 0, "Press h for help.");
-			wattroff(stdscr, COLOR_PAIR(2));
+			wattroff(stdscr, A_STANDOUT);
 			first = false;
 		}
 
