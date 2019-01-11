@@ -17,7 +17,7 @@ static void bounds_check(struct ScrollState *st)
 	int winh, padh, w;
 	getmaxyx(st->win, winh, w);
 	getmaxyx(st->pad, padh, w);
-	padh -= BOTTOM_BAR_SIZE;
+	winh -= BOTTOM_BAR_SIZE;
 	(void) w;  // w is needed only because getmaxyx wants it, this suppresses warning
 
 	// it's important that the negativeness check is last
@@ -45,8 +45,14 @@ static void draw_pad_to_window(struct ScrollState *st)
 	copywin(st->pad, st->win, st->firstlineno, 0, 0, 0, min(winh, padh)-1, min(winw, padw)-1, true);
 #undef min
 
+	char *msg;
+	if (winh < padh)
+		msg = "Move with ↑ and ↓, or press q to quit this help.";
+	else
+		msg = "Press q to quit this help.";
+
 	wattron(st->win, A_STANDOUT);
-	mvwaddstr(st->win, winh, 0, "Move with ↑ and ↓, or press q to quit this help.");
+	mvwaddstr(st->win, winh, 0, msg);
 	wattroff(st->win, A_STANDOUT);
 
 	wrefresh(st->win);

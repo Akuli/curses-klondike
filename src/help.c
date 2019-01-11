@@ -90,9 +90,6 @@ static int print_all_help(WINDOW *win, int w)
 	for (int i = 0; help[i].key && help[i].desc; i++)
 		print_help_item(win, w, help[i], &y);
 
-	y++;
-	print_wrapped(win, w, "Press any key to get out of this help...", 0, &y);
-
 #define max(a, b) ((a)>(b) ? (a) : (b))
 	return max(y, (int)PICTURE_HEIGHT);
 #undef max
