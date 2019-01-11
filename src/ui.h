@@ -3,9 +3,8 @@
 
 #include <curses.h>
 #include <stdbool.h>
-#include "card.h"   // IWYU pragma: keep
-#include "klon.h"
-#include "selmv.h"
+#include "klon.h"    // IWYU pragma: keep
+#include "selmv.h"   // IWYU pragma: keep
 
 // sets up curses color pairs
 void ui_initcolors(void);

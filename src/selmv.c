@@ -4,7 +4,6 @@
 #include <stddef.h>
 #include "card.h"
 #include "klon.h"
-#include "ui.h"
 
 static int place_2_card_x(KlonCardPlace plc)
 {
