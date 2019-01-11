@@ -40,7 +40,7 @@ static void draw_pad_to_window(struct ScrollState *st)
 	wclear(st->win);  // werase() doesn't fill window with dark background in color mode
 
 	// min stuff and -1 are needed because curses is awesome
-	// if this code is wrong, it either segfaults or shows nothing in the help
+	// if this code is wrong, it either segfaults or does nothing
 #define min(a, b) ((a)<(b) ? (a) : (b))
 	copywin(st->pad, st->win, st->firstlineno, 0, 0, 0, min(winh, padh)-1, min(winw, padw)-1, true);
 #undef min

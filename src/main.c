@@ -196,8 +196,12 @@ int main(int argc, char **argv)
 		ui_drawklon(stdscr, kln, selmv, color, ar.discardhide);
 
 		if (first) {
+			int w, h;
+			getmaxyx(stdscr, h, w);
+			(void) w;   // silence warning about unused variable
+
 			wattron(stdscr, COLOR_PAIR(2));
-			mvwaddstr(stdscr, getmaxy(stdscr) - 1, 0, "Press h for help.");
+			mvwaddstr(stdscr, h-1, 0, "Press h for help.");
 			wattroff(stdscr, COLOR_PAIR(2));
 			first = false;
 		}

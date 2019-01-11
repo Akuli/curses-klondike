@@ -116,6 +116,10 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ys
 	if (!botcrd)
 		return;
 
+	int w, h;
+	getmaxyx(win, h, w);
+	(void)w;   // suppress warning about unused var
+
 	// the text (num and suit) of botcrd is at ystart+1
 	// let's figure out where it is for the topmost card
 	int toptxty = ystart+1;
@@ -128,7 +132,7 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ys
 	// we can make all cards visible by displaying some cards with a smaller offset
 	// we'll display n cards with the bigger offset
 	int n = ncardstotal;
-	while (toptxty >= getmaxy(win)) {
+	while (toptxty >= h) {
 		toptxty -= Y_OFFSET_BIG;
 		toptxty += Y_OFFSET_SMALL;
 		n--;

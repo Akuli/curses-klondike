@@ -102,6 +102,7 @@ void help_show(WINDOW *win)
 {
 	int w, h;
 	getmaxyx(win, h, w);
+	(void) h;  // silence warning about unused var
 
 	WINDOW *pad = newpad(print_all_help(NULL, w), w);
 	if (!pad)
