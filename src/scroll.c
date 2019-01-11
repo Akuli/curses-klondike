@@ -45,9 +45,9 @@ static void draw_pad_to_window(struct ScrollState *st)
 	copywin(st->pad, st->win, st->firstlineno, 0, 0, 0, min(winh, padh)-1, min(winw, padw)-1, true);
 #undef min
 
-	attron(A_STANDOUT);
+	wattron(st->win, A_STANDOUT);
 	mvwaddstr(st->win, winh, 0, "Move with ↑ and ↓, or press q to quit this help.");
-	attroff(A_STANDOUT);
+	wattroff(st->win, A_STANDOUT);
 
 	wrefresh(st->win);
 }
