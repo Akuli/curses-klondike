@@ -240,15 +240,6 @@ void klon_stock2discard(struct Klon *kln, unsigned int pick)
 	kln->discardshow = i;
 }
 
-void sel_2foundation(struct Klon *kln, struct Card *crd)
-{
-	for (int i=0; i < 4; i++)
-		if (klon_canmove(*kln, crd, KLON_FOUNDATION(i))) {
-			klon_move(kln, crd, KLON_FOUNDATION(i), false);
-			break;
-		}
-}
-
 bool klon_win(struct Klon kln)
 {
 	for (int i=0; i < 4; i++) {
