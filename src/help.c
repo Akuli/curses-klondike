@@ -144,12 +144,11 @@ static void print_wrapped(WINDOW *win, int w, char *s, int xoff, int *yoff)
 
 static int get_longest_key_length(void)
 {
-	int max = 0, len;
-	for (struct HelpKey *k = help_keys; k->key && k->desc; k++)
-		if ( (len = mbstowcs(NULL, k->key, 0)) > max )
-			max = len;
-
-	return max;
+	static unsigned int res = 0;
+	if (res == 0)
+		for (struct HelpKey *k = help_keys; k->key && k->desc; k++)
+			res = max(res, mbstowcs(NULL, k->key, 0));
+	return res;
 }
 
 static void print_help_item(WINDOW *win, int w, struct HelpKey help, int *y)

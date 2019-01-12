@@ -75,13 +75,11 @@ TEST(card_str)
 			.visible = visible,
 			.next = NULL
 		};
-		char sbuf[CARD_SUITSTRMAX], nbuf[CARD_NUMSTRMAX];
-		card_suitstr(crd, sbuf);
-		card_numstr(crd, nbuf);
 
 		// the unicode should be 3 bytes
-		assert(strlen(sbuf) == 3);
-		assert(strcmp(nbuf, tests[i].numstr) == 0);
+		// TODO: check that each suit has a unique suitstr?
+		assert(strlen(card_suitstr(crd)) == 3);
+		assert(strcmp(card_numstr(crd), tests[i].numstr) == 0);
 	}
 }
 

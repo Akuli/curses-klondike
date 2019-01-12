@@ -23,10 +23,10 @@ struct Card *card_createallshuf(void);
 // does nothing if crd is NULL
 void card_free(struct Card *crd);
 
-// these write \0-terminated utf8 strings to buf
-// buf must have room for at least CARD_{NUM,SUIT}STRMAX bytes
-void card_numstr(struct Card crd, char *buf);
-void card_suitstr(struct Card crd, char *buf);
+// these return \0-terminated utf8
+// don't free the result
+char *card_numstr(struct Card crd);
+char *card_suitstr(struct Card crd);
 
 
 // Card.num representations: A,2,3,...,9,10,J,Q,K (biggest is "10")

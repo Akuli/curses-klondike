@@ -66,54 +66,33 @@ void card_free(struct Card *crd)
 	}
 }
 
-void card_numstr(struct Card crd, char *buf)
+char *card_numstr(struct Card crd)
 {
-	switch(crd.num) {
-	case 1:
-		strcpy(buf, "A");
-		break;
-	case 11:
-		strcpy(buf, "J");
-		break;
-	case 12:
-		strcpy(buf, "Q");
-		break;
-	case 13:
-		strcpy(buf, "K");
-		break;
-	default:
-		assert(2 <= crd.num && crd.num <= 10);
-		sprintf(buf, "%d", crd.num);
-		break;
-	}
+	static char *nstrs[] = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
+	assert(sizeof(nstrs)/sizeof(nstrs[0]) == 13);
+	assert(1 <= crd.num && crd.num <= 13);
+	return nstrs[crd.num - 1];
 }
 
-void card_suitstr(struct Card crd, char *buf)
+char *card_suitstr(struct Card crd)
 {
+	static char spade[] = "♠";
+	static char heart[] = "♥";
+	static char diamond[] = "♦";
+	static char club[] = "♣";
+
 	switch(crd.suit) {
-	case SUIT_SPADE:
-		strcpy(buf, "\xe2\x99\xa0");
-		break;
-	case SUIT_HEART:
-		strcpy(buf, "\xe2\x99\xa5");
-		break;
-	case SUIT_DIAMOND:
-		strcpy(buf, "\xe2\x99\xa6");
-		break;
-	case SUIT_CLUB:
-		strcpy(buf, "\xe2\x99\xa3");
-		break;
-	default:
-		assert(0);
+	case SUIT_SPADE: return spade;
+	case SUIT_HEART: return heart;
+	case SUIT_DIAMOND: return diamond;
+	case SUIT_CLUB: return club;
+	default: assert(0);
 	}
 }
 
 void card_debug(struct Card crd)
 {
-	char sbuf[CARD_SUITSTRMAX], nbuf[CARD_NUMSTRMAX];
-	card_suitstr(crd, sbuf);
-	card_numstr(crd, nbuf);
-	printf("%s%s\n", sbuf, nbuf);
+	printf("%s%s\n", card_suitstr(crd), card_numstr(crd));
 }
 
 // crd can be NULL

@@ -94,17 +94,13 @@ static void draw_card(WINDOW *win, struct Card *crd, int xstart, int ystart, boo
 		return;
 
 	if (crd->visible) {
-		char sbuf[CARD_SUITSTRMAX], nbuf[CARD_NUMSTRMAX];
-		card_suitstr(*crd, sbuf);
-		card_numstr(*crd, nbuf);
-
 		int attr = COLOR_PAIR(SUIT_COLOR(crd->suit) ? RED_SUIT_PAIR : BLACK_SUIT_PAIR);
 		if (color)
 			wattron(win, attr);
-		mvaddstr(ystart+1, xstart+1, nbuf);
-		mvaddstr(ystart+1, xstart+CARD_WIDTH-2, sbuf);
-		mvaddstr(ystart+CARD_HEIGHT-2, xstart+1, sbuf);
-		mvaddstr(ystart+CARD_HEIGHT-2, xstart+CARD_WIDTH-1-strlen(nbuf), nbuf);
+		mvaddstr(ystart+1, xstart+1, card_numstr(*crd));
+		mvaddstr(ystart+1, xstart+CARD_WIDTH-2, card_suitstr(*crd));
+		mvaddstr(ystart+CARD_HEIGHT-2, xstart+1, card_suitstr(*crd));
+		mvaddstr(ystart+CARD_HEIGHT-2, xstart+CARD_WIDTH-1-strlen(card_numstr(*crd)), card_numstr(*crd));
 		if (color)
 			wattroff(win, attr);
 	}
