@@ -53,7 +53,7 @@ struct Help help[] = {
 	{ "h", "show this help" },
 	{ "q", "quit" },
 	{ "n", "new game" },
-	{ "s", "move a card from stock to discard and select discard" },
+	{ "s", "move card(s) from stock to discard and select discard" },
 	{ "d", "select discard" },
 	{ "f", "move selected card to a foundation, if possible" },
 	{ "Enter", "start moving the selected card(s), or complete the move if currently moving" },
@@ -73,10 +73,10 @@ static void new_game(struct Klon *kln, struct SelMv *selmv)
 }
 
 // returns whether to continue playing
-static bool handle_key(struct Klon *kln, struct SelMv *selmv, int k, struct Args ar)
+static bool handle_key(struct Klon *kln, struct SelMv *selmv, int k, struct Args ar, char *argv0)
 {
 	if (k == 'h') {
-		help_show(stdscr);
+		help_show(stdscr, argv0);
 		return true;
 	}
 
@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 		}
 
 		refresh();
-	} while( handle_key(&kln, &selmv, getch(), ar) );
+	} while( handle_key(&kln, &selmv, getch(), ar, argv[0]) );
 
 	klon_free(kln);
 	endwin();

@@ -11,6 +11,6 @@ struct Help {
 extern struct Help help[];
 
 // screen must be erased after calling, but not before
-void help_show(WINDOW *win);
+void help_show(WINDOW *win, char *argv0);
 
 #endif  // HELP_H

@@ -1,9 +1,16 @@
 #include "help.h"
+#include <assert.h>
 #include <curses.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 #include "misc.h"
 #include "scroll.h"
+
+// copy/pasted from man page, i don't know why i get warnings without these
+int mvwaddwstr(WINDOW *win, int y, int x, const wchar_t *wstr);
+int mvwaddnwstr(WINDOW *win, int y, int x, const wchar_t *wstr, int n);
 
 static char *picture[] = {
 	"╭──╮╭──╮    ╭──╮╭──╮╭──╮╭──╮",
@@ -19,10 +26,62 @@ static char *picture[] = {
 #define PICTURE_WIDTH (mbstowcs(NULL, picture[0], 0))
 #define PICTURE_HEIGHT (sizeof(picture)/sizeof(picture[0]))
 
+// note: there's a %s in the rules, that should be substituted with argv[0]
+static char rules[] =
+	"Here the “suit” of a card means ♥, ♦, ♠ or ♣. "
+	"The suits ♥ and ♦ are “red”; ♠ and ♣ are “black”. "
+	"The “number” of a card means one of A,2,3,4,…,9,10,J,Q,K. "
+	"“Visible” cards are cards whose suit and number are visible to you, aka “face-up” cards.\n\n"
+
+	"The goal is to move all cards to foundations. "
+	"Each foundation can contain cards of the same suit in increasing order, starting at A. "
+	"For example, if you see ♥A in tableau or discard, you can move it to an empty foundation, and when you see ♥2, you can move it on top of the ♥A and so on.\n\n"
+
+	"Visible cards on tableau must be in decreasing order with altering colors. "
+	"For example, ♥J ♣10 ♦9 is valid, because the colors are red-black-red and the numbers are 11-10-9.\n\n"
+
+	"If all visible cards are moved away from a tableau place, the topmost non-visible card is flipped, so that it becomes visible. "
+	"Usually getting all those cards to flip is the most challenging thing in a klondike game. "
+	"If there are no non-visible cards left, the place becomes empty, and a K card can be moved to it.\n\n"
+
+	"Moving one or more cards from one tableau place to another is allowed. "
+	"Tableau cards can also be moved to foundations, but only one at a time.\n\n"
+
+	"You can use stock and discard at any time to get more possible moves. "
+	"Cards can be moved from stock to discard, and the topmost card in discard can be moved to tableau or to a foundation. "
+	"By default, 3 cards are moved from stock to discard if the stock contains 3 or more cards; otherwise, all stock cards are moved to discard. "
+	"This can be customized with the --pick option; for example, --pick=1 moves 3 cards instead of 1, which makes the game a lot easier.\n\n"
+
+	"Moving the topmost card of a foundation to tableau is also allowed. "
+	"This can be useful in some cases.\n\n"
+
+	"If the game is too hard or too easy, you can customize it with command-line options. "
+	//                               this is a non-breaking space ----↓
+	"Quit this help and then the game by pressing q twice, and run “%s --help” to get a list of all supported options."
+	;
+
+// return value must be free()d
+static char *get_rules(char *argv0)
+{
+	int len = snprintf(NULL, 0, rules, argv0);
+	assert(len > 0);
+
+	char *buf = malloc(len+1);
+	if (!buf)
+		fatal_error("malloc() failed");
+
+	int n = snprintf(buf, len+1, rules, argv0);
+	assert(n == len);
+	return buf;
+}
+
 /*
 in most functions, win can be NULL to not actually draw anything but count number of lines needed
 w is width, if WINDOW is not NULL then w is what getmaxyx(win) gives
+convenient maybe_blah() functions do nothing (but the arguments are evaluated! they could be e.g. y++) if win is NULL
 */
+static void maybe_mvwaddstr(WINDOW *win, int y, int x, char *s) { if (win) mvwaddstr(win, y, x, s); }
+static void maybe_mvwaddnwstr(WINDOW *win, int y, int x, wchar_t *s, int n) { if (win) mvwaddnwstr(win, y, x, s, n); }
 
 static int get_max_width(int w, int xoff, int yoff)
 {
@@ -31,29 +90,59 @@ static int get_max_width(int w, int xoff, int yoff)
 	return w - xoff - PICTURE_WIDTH - 3;  // 3 is for more space between picture and helps
 }
 
-static void maybe_mvwaddnstr(WINDOW *win, int y, int x, char *s, int n) { if (win) mvwaddnstr(win, y, x, s, n); }
-static void maybe_mvwaddstr(WINDOW *win, int y, int x, char *s) { if (win) mvwaddstr(win, y, x, s); }
+// return value must be free()d
+static wchar_t *string_to_wstring(char *s)
+{
+	size_t n = mbstowcs(NULL, s, 0) + 1;
+	wchar_t *ws = malloc(n * sizeof(wchar_t));
+	if (!ws)
+		fatal_error("malloc() failed");
+
+	size_t m = mbstowcs(ws, s, n);
+	assert(m == n-1);
+	return ws;
+}
 
 static void print_wrapped(WINDOW *win, int w, char *s, int xoff, int *yoff)
 {
-	int maxlen;
-	while ((int)strlen(s) > (maxlen = get_max_width(w, xoff, *yoff))) {
-		// strrchr doesn't work for this because the \0 isn't at maxlen
-		// memrchr is a gnu extension :(
-		int i = maxlen;
-		while (s[i] != ' ' && i > 0)
-			i--;
+	// unicode is easiest to do with wchars in this case
+	// wchars work because posix wchar_t is 4 bytes
+	// windows has two-byte wchars which is too small for some unicodes, lol
+	assert(sizeof(wchar_t) >= 4);
+	wchar_t *wsstart = string_to_wstring(s);
+	wchar_t *ws = wsstart;
 
-		if (i == 0) {
-			// no spaces found, just break it at whatever is at maxlen
-			maybe_mvwaddnstr(win, (*yoff)++, xoff, s, maxlen);
-			s += maxlen;
+	while (*ws) {
+		int slen = wcslen(ws);
+		int maxw = get_max_width(w, xoff, *yoff);
+#define min(a, b) ((a)<(b) ? (a) : (b))
+		int end = min(slen, maxw);
+#undef min
+		wchar_t *brk;      // must be >=ws and <=ws+end
+
+		// can break at newline?
+		brk = wmemchr(ws, L'\n', end+1);   // +1 includes ws[end]
+
+		// can break at space?
+		if (!brk && end != slen) {
+			// can't use wcsrchr because could be: end != wcslen(ws)
+			for (brk = ws+end; brk > ws; brk--)
+				if (*brk == ' ')
+					break;
+			if (brk == ws)  // nothing found
+				brk = NULL;
+		}
+
+		if (brk) {
+			maybe_mvwaddnwstr(win, (*yoff)++, xoff, ws, brk - ws);
+			ws = brk+1;
 		} else {
-			maybe_mvwaddnstr(win, (*yoff)++, xoff, s, i);
-			s += i+1;
+			maybe_mvwaddnwstr(win, (*yoff)++, xoff, ws, end);
+			ws += end;
 		}
 	}
-	maybe_mvwaddstr(win, (*yoff)++, xoff, s);
+
+	free(wsstart);
 }
 
 static int get_longest_key_length(void)
@@ -78,8 +167,23 @@ static void print_help_item(WINDOW *win, int w, struct Help help, int *y)
 	//(*y)++;  // blank line
 }
 
+static void print_title(WINDOW *win, int w, char *title, int *y)
+{
+	*y += 2;
+
+	if (win) {
+		int len = mbstowcs(NULL, title, 0);
+		int x = (w - len)/2;
+		mvwhline(win, *y, 0, 0, x-1);
+		mvwaddstr(win, *y, x, title);
+		mvwhline(win, *y, x+len+1, 0, w - (x+len+1));
+	}
+
+	*y += 2;
+}
+
 // returns number of lines
-static int print_all_help(WINDOW *win, int w)
+static int print_all_help(WINDOW *win, int w, char *argv0)
 {
 	int picx = w - PICTURE_WIDTH;
 
@@ -90,21 +194,26 @@ static int print_all_help(WINDOW *win, int w)
 	for (int i = 0; help[i].key && help[i].desc; i++)
 		print_help_item(win, w, help[i], &y);
 
+	print_title(win, w, "Rules", &y);
+	char *s = get_rules(argv0);
+	print_wrapped(win, w, s, 0, &y);
+	free(s);
+
 #define max(a, b) ((a)>(b) ? (a) : (b))
 	return max(y, (int)PICTURE_HEIGHT);
 #undef max
 }
 
-void help_show(WINDOW *win)
+void help_show(WINDOW *win, char *argv0)
 {
 	int w, h;
 	getmaxyx(win, h, w);
 	(void) h;  // silence warning about unused var
 
-	WINDOW *pad = newpad(print_all_help(NULL, w), w);
+	WINDOW *pad = newpad(print_all_help(NULL, w, argv0), w);
 	if (!pad)
 		fatal_error("newpad() failed");
-	print_all_help(pad, w);
+	print_all_help(pad, w, argv0);
 
 	scroll_showpad(win, pad);
 }

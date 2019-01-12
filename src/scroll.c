@@ -47,9 +47,9 @@ static void draw_pad_to_window(struct ScrollState *st)
 
 	char *msg;
 	if (winh < padh)
-		msg = "Move with ↑ and ↓, or press q to quit this help.";
+		msg = "Move with ↑ and ↓, or press q to quit.";
 	else
-		msg = "Press q to quit this help.";
+		msg = "Press q to quit.";
 
 	wattron(st->win, A_STANDOUT);
 	mvwaddstr(st->win, winh, 0, msg);
@@ -84,6 +84,7 @@ static bool handle_key(struct ScrollState *st, int k)
 		break;
 
 	case KEY_NPAGE:
+	case ' ':
 		st->firstlineno += winh;
 		break;
 
