@@ -23,7 +23,7 @@ void deinit_args_tests(void)
 	fclose(args_errfile);
 }
 
-static void escape_print(char *s)
+static void escape_print(const char *s)
 {
 	putchar('"');
 	char ch;
@@ -41,7 +41,7 @@ static void escape_print(char *s)
 	putchar('"');
 }
 
-static void read_args_file(FILE *f, char *val)
+static void read_args_file(FILE *f, const char *val)
 {
 	char buf[1000];
 

@@ -32,6 +32,7 @@ static void exitcb(void)
 void (*onerrorexit)(void) = exitcb;
 
 // these are externed in args.h
+// these can't be const or even have initial values because stdout,stderr are not const
 FILE *args_outfile;
 FILE *args_errfile;
 
@@ -49,7 +50,7 @@ static enum SelDirection curses_key_to_seldirection(int k)
 
 
 // help is externed in help.h
-struct HelpKey help_keys[] = {
+const struct HelpKey help_keys[] = {
 	{ "h", "show this help" },
 	{ "q", "quit" },
 	{ "n", "new game" },
@@ -73,7 +74,7 @@ static void new_game(struct Klon *kln, struct SelMv *selmv)
 }
 
 // returns whether to continue playing
-static bool handle_key(struct Klon *kln, struct SelMv *selmv, int k, struct Args ar, char *argv0)
+static bool handle_key(struct Klon *kln, struct SelMv *selmv, int k, struct Args ar, const char *argv0)
 {
 	if (k == 'h') {
 		help_show(stdscr, argv0);

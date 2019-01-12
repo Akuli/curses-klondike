@@ -4,7 +4,7 @@
 #include <string.h>
 #include "misc.h"
 
-void fatal_error(char *msg)
+void fatal_error(const char *msg)
 {
 	if (onerrorexit)
 		onerrorexit();

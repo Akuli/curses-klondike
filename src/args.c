@@ -17,49 +17,48 @@ doesn't support --, but nobody needs it for this program imo
 enum OptType { TYPE_YESNO, TYPE_INT };
 
 struct OptSpec {
-	char *name;
-	char *metavar;
+	const char *name;
+	const char *metavar;
 	enum OptType type;
 	int min;
 	int max;
-	char *desc;
+	const char *desc;
 };
 
 // TODO: document env vars in --help
-static struct OptSpec option_specs[] = {
+static const struct OptSpec option_specs[] = {
 	{ "--help", NULL, TYPE_YESNO, 0, 0, "show this help message and exit" },
 	{ "--no-colors", NULL, TYPE_YESNO, 0, 0, "don't use colors, even if the terminal supports colors" },
 	{ "--pick", "n", TYPE_INT, 1, 13*4 - (1+2+3+4+5+6+7), "pick n cards from stock at a time, default is 3" },
 	{ "--discard-hide", NULL, TYPE_YESNO, 0, 0, "only show topmost discarded card (not useful with --pick=1)" }
 };
-#define LONGEST_OPTION "--discard-hide"
+#define LONGEST_OPTION "--discard-hide"   // TODO: replace this with a function that calculates length
 
 static void print_help_option(struct OptSpec opt)
 {
-	char *pre;
-	bool freepre = false;
+	const char *pre;
+	char *tofree = NULL;   // free(NULL) does nothing
 
 	switch(opt.type) {
 	case TYPE_YESNO:
 		pre = opt.name;
 		break;
 	default:
-		if (!( pre = malloc(strlen(opt.name) + 1 + strlen(opt.metavar) + 1) ))
+		if (!( tofree = malloc(strlen(opt.name) + 1 + strlen(opt.metavar) + 1) ))
 			fatal_error("malloc() failed");
-		freepre = true;
 
-		strcpy(pre, opt.name);
-		strcat(pre, " ");
-		strcat(pre, opt.metavar);
+		strcpy(tofree, opt.name);
+		strcat(tofree, " ");
+		strcat(tofree, opt.metavar);
+		pre = tofree;
 		break;
 	}
 
 	fprintf(args_outfile, "  %-*s  %s\n", (int)( sizeof(LONGEST_OPTION)-1 ), pre, opt.desc);
-	if (freepre)
-		free(pre);
+	free(tofree);
 }
 
-static void print_help(char *argv0)
+static void print_help(const char *argv0)
 {
 	fprintf(args_outfile, "Usage: %s", argv0);
 	for (unsigned int i = 0; i < sizeof(option_specs)/sizeof(option_specs[0]); i++) {
@@ -80,7 +79,7 @@ static void print_help(char *argv0)
 		print_help_option(option_specs[i]);
 }
 
-static bool startswith(char *s, char *pre)
+static bool startswith(const char *s, const char *pre)
 {
 	return (strstr(s, pre) == s);
 }
@@ -89,13 +88,13 @@ static bool startswith(char *s, char *pre)
 // needed because one arg token can come from 2 argv items: --pick 3
 // or just 1: --no-colors, --pick=3
 struct Token {
-	struct OptSpec *spec;  // pointer to an item of option_specs
-	char *value;  // from argv, don't free()
+	const struct OptSpec *spec;  // pointer to an item of option_specs
+	const char *value;  // from argv
 };
 
-static struct OptSpec *find_from_option_specs(char *argv0, char *nam)
+static const struct OptSpec *find_from_option_specs(const char *argv0, const char *nam)
 {
-	struct OptSpec *res = NULL;
+	const struct OptSpec *res = NULL;
 	for (unsigned int i = 0; i < sizeof(option_specs)/sizeof(option_specs[0]); i++) {
 		if (!startswith(option_specs[i].name, nam))
 			continue;
@@ -115,7 +114,7 @@ static struct OptSpec *find_from_option_specs(char *argv0, char *nam)
 
 // returns number of args used, or -1 on error
 // argc and argv should point to remaining args, not always all the args
-static int tokenize(char *argv0, struct Token *tok, int argc, char **argv)
+static int tokenize(const char *argv0, struct Token *tok, int argc, char *const *argv)
 {
 	assert(argc >= 1);
 	if (argv[0][0] != '-' || argv[0][1] != '-' || !( 'a' <= argv[0][2] && argv[0][2] <= 'z' )) {
@@ -147,7 +146,7 @@ static int tokenize(char *argv0, struct Token *tok, int argc, char **argv)
 		}
 	}
 
-	struct OptSpec *spec = find_from_option_specs(argv0, nam);
+	const struct OptSpec *spec = find_from_option_specs(argv0, nam);
 	if (!spec)
 		goto err;
 
@@ -165,7 +164,7 @@ out:
 }
 
 // returns true on success, false on failure
-static bool is_valid_integer(char *str, int min, int max)
+static bool is_valid_integer(const char *str, int min, int max)
 {
 	// see the example in linux man-pages strtol(3)
 	errno = 0;
@@ -188,7 +187,7 @@ static bool is_valid_integer(char *str, int min, int max)
 }
 
 // returns 0 on success, negative on failure
-static int check_token_by_type(char *argv0, struct Token tok)
+static int check_token_by_type(const char *argv0, struct Token tok)
 {
 	switch(tok.spec->type) {
 	case TYPE_YESNO:
@@ -220,7 +219,7 @@ static int check_token_by_type(char *argv0, struct Token tok)
 }
 
 // returns 0 on success, negative on failure
-static int check_tokens(char *argv0, struct Token *toks, int ntoks)
+static int check_tokens(const char *argv0, const struct Token *toks, int ntoks)
 {
 	// to detect duplicates
 	bool seen[sizeof(option_specs)/sizeof(option_specs[0])] = {0};
@@ -240,14 +239,14 @@ static int check_tokens(char *argv0, struct Token *toks, int ntoks)
 	return 0;
 }
 
-static struct Args default_args = {
+static const struct Args default_args = {
 	.color = true,
 	.pick = 3,
 	.discardhide = false
 };
 
 // returns true to keep running, or false to exit with status 0
-static bool tokens_to_struct_args(char *argv0, struct Token *toks, int ntoks, struct Args *ar)
+static bool tokens_to_struct_args(const char *argv0, const struct Token *toks, int ntoks, struct Args *ar)
 {
 	memcpy(ar, &default_args, sizeof(default_args));
 	for (int i = 0; i < ntoks; i++) {
@@ -273,7 +272,7 @@ static bool tokens_to_struct_args(char *argv0, struct Token *toks, int ntoks, st
 	return true;
 }
 
-int args_parse(struct Args *ar, int argc, char **argv)
+int args_parse(struct Args *ar, int argc, char *const *argv)
 {
 	char *argv0 = *argv++;
 	argc--;

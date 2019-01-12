@@ -66,7 +66,7 @@ void card_free(struct Card *crd)
 	}
 }
 
-char *card_numstr(struct Card crd)
+const char *card_numstr(struct Card crd)
 {
 	static char *nstrs[] = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
 	assert(sizeof(nstrs)/sizeof(nstrs[0]) == 13);
@@ -74,7 +74,7 @@ char *card_numstr(struct Card crd)
 	return nstrs[crd.num - 1];
 }
 
-char *card_suitstr(struct Card crd)
+const char *card_suitstr(struct Card crd)
 {
 	static char spade[] = "♠";
 	static char heart[] = "♥";

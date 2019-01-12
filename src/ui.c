@@ -54,8 +54,8 @@ struct Border {
 };
 
 // https://en.wikipedia.org/wiki/Box-drawing_character#Unicode
-static struct Border normal_border = { "─", "│", "╭", "╮", "╰", "╯" };
-static struct Border selected_border = { "═", "║", "╔", "╗", "╚", "╝" };
+static const struct Border normal_border = { "─", "│", "╭", "╮", "╰", "╯" };
+static const struct Border selected_border = { "═", "║", "╔", "╗", "╚", "╝" };
 
 // box() is annoyingly for subwindows only
 static void draw_box(WINDOW *win, int xstart, int ystart, int w, int h, char bg, bool sel)
@@ -86,7 +86,7 @@ static void draw_box(WINDOW *win, int xstart, int ystart, int w, int h, char bg,
 // newwin() doesn't work because partially erasing borders is surprisingly tricky
 // partial erasing is needed for cards that are on top of cards
 // since we can't use subwindow borders, they're not very helpful
-static void draw_card(WINDOW *win, struct Card *crd, int xstart, int ystart, bool sel, bool color)
+static void draw_card(WINDOW *win, const struct Card *crd, int xstart, int ystart, bool sel, bool color)
 {
 	if (crd || sel)
 		draw_box(win, xstart, ystart, CARD_WIDTH, CARD_HEIGHT, (!crd || crd->visible) ? ' ' : '?', sel);
@@ -107,7 +107,7 @@ static void draw_card(WINDOW *win, struct Card *crd, int xstart, int ystart, boo
 }
 
 // unlike a simple for loop, handles overflow
-static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ystart, struct Card *firstsel, bool color)
+static void draw_card_stack(WINDOW *win, const struct Card *botcrd, int xstart, int ystart, const struct Card *firstsel, bool color)
 {
 	if (!botcrd)
 		return;
@@ -142,7 +142,7 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ys
 	// let's draw the cards
 	bool sel = false;
 	int y = ystart;
-	for (struct Card *crd = botcrd; crd; crd = crd->next) {
+	for (const struct Card *crd = botcrd; crd; crd = crd->next) {
 		if (crd == firstsel)
 			sel = true;
 		draw_card(win, crd, xstart, y, sel, color);
@@ -153,6 +153,7 @@ static void draw_card_stack(WINDOW *win, struct Card *botcrd, int xstart, int ys
 // https://github.com/Akuli/curses-klondike/issues/2
 enum DiscardHide { DH_HIDE_ALL, DH_SHOW_LAST_ONLY, DH_SHOW_ALL };
 
+// TODO: this function is quite long, break it up
 static void draw_the_klon(WINDOW *win, struct Klon kln, struct Sel sel, bool moving, bool color, enum DiscardHide dh, int dscxoff)
 {
 	werase(win);

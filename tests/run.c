@@ -9,10 +9,10 @@ static void donothing(void) { }
 void (*onerrorexit)(void) = donothing;
 
 // externed in help.h
-struct HelpKey help_keys[] = { {NULL, NULL} };
+const struct HelpKey help_keys[] = { {NULL, NULL} };
 
 
-static void run_test(char *nam, void (*f)(void))
+static void run_test(const char *nam, void (*f)(void))
 {
 	printf("%-50s  ", nam);
 	fflush(stdout);

@@ -4,13 +4,13 @@
 #include <curses.h>
 
 struct HelpKey {
-	char *key;
-	char *desc;
+	const char *key;
+	const char *desc;
 };
 
-extern struct HelpKey help_keys[];
+extern const struct HelpKey help_keys[];
 
 // screen must be erased after calling, but not before
-void help_show(WINDOW *win, char *argv0);
+void help_show(WINDOW *win, const char *argv0);
 
 #endif  // HELP_H

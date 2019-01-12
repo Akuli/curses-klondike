@@ -1,7 +1,8 @@
 #ifndef MISC_H
 #define MISC_H
 
-void fatal_error(char *msg);
+// doesn't return
+void fatal_error(const char *msg);
 
 // fatal_error() will call this before it does anything else
 extern void (*onerrorexit)(void);

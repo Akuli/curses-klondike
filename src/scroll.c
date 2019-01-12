@@ -7,8 +7,8 @@
 #define BOTTOM_BAR_SIZE 1
 
 struct ScrollState {
-	WINDOW *win;
-	WINDOW *pad;
+	WINDOW *const win;
+	WINDOW *const pad;
 	int firstlineno;   // 0 means first line
 };
 
@@ -105,11 +105,7 @@ static bool handle_key(struct ScrollState *st, int k)
 // must wrefresh(win) after this, but not before
 void scroll_showpad(WINDOW *win, WINDOW *pad)
 {
-	struct ScrollState st;
-	st.win = win;
-	st.pad = pad;
-	st.firstlineno = 0;
-
+	struct ScrollState st = { .win = win, .pad = pad, .firstlineno = 0 };
 	do {
 		werase(win);
 		draw_pad_to_window(&st);

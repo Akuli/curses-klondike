@@ -25,14 +25,8 @@ void card_free(struct Card *crd);
 
 // these return \0-terminated utf8
 // don't free the result
-char *card_numstr(struct Card crd);
-char *card_suitstr(struct Card crd);
-
-
-// Card.num representations: A,2,3,...,9,10,J,Q,K (biggest is "10")
-// suits are 3 bytes of utf8 + \0
-#define CARD_NUMSTRMAX (sizeof("10"))
-#define CARD_SUITSTRMAX (3+1)
+const char *card_numstr(struct Card crd);
+const char *card_suitstr(struct Card crd);
 
 // prints card_str to stdout
 void card_debug(struct Card crd);

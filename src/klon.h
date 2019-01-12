@@ -44,17 +44,17 @@ void klon_free(struct Klon kln);
 // also creates new cards
 // if srccrd is non-NULL, returns the corresponding card of dst
 // if srccrd is NULL, returns NULL
-struct Card *klon_dup(struct Klon src, struct Klon *dst, struct Card *srccrd);
+struct Card *klon_dup(struct Klon src, struct Klon *dst, const struct Card *srccrd);
 
 // returns whether a card can be moved to on top of dst
 // use klon_stocktodiscard() instead for stock -> discard moves, this returns false for those
 // crd must be a card in kln
-bool klon_canmove(struct Klon kln, struct Card *crd, KlonCardPlace dst);
+bool klon_canmove(struct Klon kln, const struct Card *crd, KlonCardPlace dst);
 
 // replaces crd with NULL in kln
 // if crd is someothercrd->next, someothercrd is returned
 // if kln->discard != NULL and crd == card_top(kln->discard), updates kln->discardshow
-struct Card *klon_detachcard(struct Klon *kln, struct Card *crd);
+struct Card *klon_detachcard(struct Klon *kln, const struct Card *crd);
 
 // moves the src card and ->next cards (if any) to dst
 // the move must be valid, see klon_canmove()

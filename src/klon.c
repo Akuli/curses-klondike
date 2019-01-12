@@ -23,7 +23,7 @@ void klon_init(struct Klon *kln, struct Card *list)
 		kln->foundations[i] = NULL;
 }
 
-static int print_cards(struct Card *list)
+static int print_cards(const struct Card *list)
 {
 	int n = 0;
 	for (; list; list = list->next) {
@@ -67,7 +67,7 @@ void klon_free(struct Klon kln)
 		card_free(kln.tableau[i]);
 }
 
-static void copy_cards(struct Card *src, struct Card **dst, struct Card *srccrd, struct Card **dstcrd)
+static void copy_cards(const struct Card *src, struct Card **dst, const struct Card *srccrd, struct Card **dstcrd)
 {
 	*dst = NULL;
 	struct Card *top = NULL;
@@ -90,7 +90,7 @@ static void copy_cards(struct Card *src, struct Card **dst, struct Card *srccrd,
 	}
 }
 
-struct Card *klon_dup(struct Klon src, struct Klon *dst, struct Card *srccrd)
+struct Card *klon_dup(struct Klon src, struct Klon *dst, const struct Card *srccrd)
 {
 	struct Card *dstcrd = NULL;
 
@@ -105,7 +105,7 @@ struct Card *klon_dup(struct Klon src, struct Klon *dst, struct Card *srccrd)
 	return dstcrd;
 }
 
-static bool card_in_some_tableau(struct Klon kln, struct Card *crd)
+static bool card_in_some_tableau(struct Klon kln, const struct Card *crd)
 {
 	for (int i=0; i < 7; i++)
 		for (struct Card *tabcrd = kln.tableau[i]; tabcrd; tabcrd = tabcrd->next)
@@ -114,7 +114,7 @@ static bool card_in_some_tableau(struct Klon kln, struct Card *crd)
 	return false;
 }
 
-bool klon_canmove(struct Klon kln, struct Card *crd, KlonCardPlace dst)
+bool klon_canmove(struct Klon kln, const struct Card *crd, KlonCardPlace dst)
 {
 	// taking cards stock to discard is handled by klon_stactodiscard() and not allowed here
 	if (crd->next) {
@@ -151,7 +151,7 @@ bool klon_canmove(struct Klon kln, struct Card *crd, KlonCardPlace dst)
 }
 
 // a double-linked list would make this easier but many other things harder
-struct Card *klon_detachcard(struct Klon *kln, struct Card *crd)
+struct Card *klon_detachcard(struct Klon *kln, const struct Card *crd)
 {
 	struct Card **look4[2+4+7];
 	struct Card ***look4ptr = look4;

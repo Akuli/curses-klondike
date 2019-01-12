@@ -15,6 +15,6 @@ extern FILE *args_outfile;
 extern FILE *args_errfile;
 
 // returns an exit status to return from main, or -1 to keep going
-int args_parse(struct Args *ar, int argc, char **argv);
+int args_parse(struct Args *ar, int argc, char *const *argv);
 
 #endif   // ARGS_H

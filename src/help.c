@@ -11,7 +11,7 @@
 int mvwaddwstr(WINDOW *win, int y, int x, const wchar_t *wstr);
 int mvwaddnwstr(WINDOW *win, int y, int x, const wchar_t *wstr, int n);
 
-static char *picture[] = {
+static const char *picture[] = {
 	"╭──╮╭──╮    ╭──╮╭──╮╭──╮╭──╮",
 	"│  ││  │    │ foundations  │",
 	"╰──╯╰──╯    ╰──╯╰──╯╰──╯╰──╯",
@@ -26,7 +26,7 @@ static char *picture[] = {
 #define PICTURE_HEIGHT (sizeof(picture)/sizeof(picture[0]))
 
 // note: there's a %s in the rules, that should be substituted with argv[0]
-static char rules[] =
+static const char rules[] =
 	"Here the “suit” of a card means ♥, ♦, ♠ or ♣. "
 	"The suits ♥ and ♦ are “red”; ♠ and ♣ are “black”. "
 	"The “number” of a card means one of A,2,3,4,…,9,10,J,Q,K. "
@@ -60,7 +60,7 @@ static char rules[] =
 	;
 
 // return value must be free()d
-static char *get_rules(char *argv0)
+static char *get_rules(const char *argv0)
 {
 	int len = snprintf(NULL, 0, rules, argv0);
 	assert(len > 0);
@@ -79,8 +79,8 @@ in most functions, win can be NULL to not actually draw anything but count numbe
 w is width, if WINDOW is not NULL then w is what getmaxyx(win) gives
 convenient maybe_blah() functions do nothing (but the arguments are evaluated! they could be e.g. y++) if win is NULL
 */
-static void maybe_mvwaddstr(WINDOW *win, int y, int x, char *s) { if (win) mvwaddstr(win, y, x, s); }
-static void maybe_mvwaddnwstr(WINDOW *win, int y, int x, wchar_t *s, int n) { if (win) mvwaddnwstr(win, y, x, s, n); }
+static void maybe_mvwaddstr(WINDOW *win, int y, int x, const char *s) { if (win) mvwaddstr(win, y, x, s); }
+static void maybe_mvwaddnwstr(WINDOW *win, int y, int x, const wchar_t *s, int n) { if (win) mvwaddnwstr(win, y, x, s, n); }
 
 static int get_max_width(int w, int xoff, int yoff)
 {
@@ -90,7 +90,7 @@ static int get_max_width(int w, int xoff, int yoff)
 }
 
 // return value must be free()d
-static wchar_t *string_to_wstring(char *s)
+static wchar_t *string_to_wstring(const char *s)
 {
 	size_t n = mbstowcs(NULL, s, 0) + 1;
 	wchar_t *ws = malloc(n * sizeof(wchar_t));
@@ -102,7 +102,7 @@ static wchar_t *string_to_wstring(char *s)
 	return ws;
 }
 
-static void print_wrapped(WINDOW *win, int w, char *s, int xoff, int *yoff)
+static void print_wrapped(WINDOW *win, int w, const char *s, int xoff, int *yoff)
 {
 	// unicode is easiest to do with wchars in this case
 	// wchars work because posix wchar_t is 4 bytes
@@ -146,7 +146,7 @@ static int get_longest_key_length(void)
 {
 	static unsigned int res = 0;
 	if (res == 0)
-		for (struct HelpKey *k = help_keys; k->key && k->desc; k++)
+		for (const struct HelpKey *k = help_keys; k->key && k->desc; k++)
 			res = max(res, mbstowcs(NULL, k->key, 0));
 	return res;
 }
@@ -163,7 +163,7 @@ static void print_help_item(WINDOW *win, int w, struct HelpKey help, int *y)
 	//(*y)++;  // blank line
 }
 
-static void print_title(WINDOW *win, int w, char *title, int *y)
+static void print_title(WINDOW *win, int w, const char *title, int *y)
 {
 	*y += 2;
 
@@ -179,7 +179,7 @@ static void print_title(WINDOW *win, int w, char *title, int *y)
 }
 
 // returns number of lines
-static int print_all_help(WINDOW *win, int w, char *argv0)
+static int print_all_help(WINDOW *win, int w, const char *argv0)
 {
 	int picx = w - PICTURE_WIDTH;
 
@@ -187,7 +187,7 @@ static int print_all_help(WINDOW *win, int w, char *argv0)
 		maybe_mvwaddstr(win, y, picx, picture[y]);
 
 	int y = 0;
-	for (struct HelpKey *k = help_keys; k->key && k->desc; k++)
+	for (const struct HelpKey *k = help_keys; k->key && k->desc; k++)
 		print_help_item(win, w, *k, &y);
 
 	print_title(win, w, "Rules", &y);
@@ -198,7 +198,7 @@ static int print_all_help(WINDOW *win, int w, char *argv0)
 	return max(y, (int)PICTURE_HEIGHT);
 }
 
-void help_show(WINDOW *win, char *argv0)
+void help_show(WINDOW *win, const char *argv0)
 {
 	int w, h;
 	getmaxyx(win, h, w);
