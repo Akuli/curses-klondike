@@ -59,8 +59,10 @@ const struct HelpKey help_keys[] = {
 	{ "f", "move selected card to a foundation, if possible" },
 	{ "Enter", "start moving the selected card(s), or complete the move if currently moving" },
 	{ "Esc", "if currently moving card(s), stop that" },
-	{ "↑,↓", "select more/less tableau cards or move selection up/down" },
 	{ "←,→", "move selection left/right" },
+	{ "↑,↓", "move selection up/down or select more/less tableau cards" },
+	{ "PageUp", "select all tableau cards" },
+	{ "PageDown", "select only 1 tableau card" },
 	{ "1,2,…,7", "select tableau by number" },
 	{ NULL, NULL }
 };
@@ -128,6 +130,13 @@ static bool handle_key(struct Klon *kln, struct SelMv *selmv, int k, struct Args
 		}
 
 		selmv_anothercard(*kln, selmv, curses_key_to_seldirection(k));
+		return true;
+	}
+
+	if ((k == KEY_PPAGE || k == KEY_NPAGE) && !selmv->ismv) {
+		bool (*func)(struct Klon, struct Sel *) = (k==KEY_PPAGE ? sel_more : sel_less);
+		while (func(*kln, &selmv->sel))
+			;
 		return true;
 	}
 
