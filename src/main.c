@@ -49,7 +49,7 @@ static enum SelDirection curses_key_to_seldirection(int k)
 
 
 // help is externed in help.h
-struct Help help[] = {
+struct HelpKey help_keys[] = {
 	{ "h", "show this help" },
 	{ "q", "quit" },
 	{ "n", "new game" },

@@ -3,7 +3,6 @@
 #include <curses.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <wchar.h>
 #include "misc.h"
 #include "scroll.h"
@@ -115,9 +114,7 @@ static void print_wrapped(WINDOW *win, int w, char *s, int xoff, int *yoff)
 	while (*ws) {
 		int slen = wcslen(ws);
 		int maxw = get_max_width(w, xoff, *yoff);
-#define min(a, b) ((a)<(b) ? (a) : (b))
 		int end = min(slen, maxw);
-#undef min
 		wchar_t *brk;      // must be >=ws and <=ws+end
 
 		// can break at newline?
@@ -148,14 +145,14 @@ static void print_wrapped(WINDOW *win, int w, char *s, int xoff, int *yoff)
 static int get_longest_key_length(void)
 {
 	int max = 0, len;
-	for (int i = 0; help[i].key && help[i].desc; i++)
-		if ( (len = mbstowcs(NULL, help[i].key, 0)) > max )
+	for (struct HelpKey *k = help_keys; k->key && k->desc; k++)
+		if ( (len = mbstowcs(NULL, k->key, 0)) > max )
 			max = len;
 
 	return max;
 }
 
-static void print_help_item(WINDOW *win, int w, struct Help help, int *y)
+static void print_help_item(WINDOW *win, int w, struct HelpKey help, int *y)
 {
 	int keymax = get_longest_key_length();
 	int nspace = keymax - mbstowcs(NULL, help.key, 0);
@@ -191,17 +188,15 @@ static int print_all_help(WINDOW *win, int w, char *argv0)
 		maybe_mvwaddstr(win, y, picx, picture[y]);
 
 	int y = 0;
-	for (int i = 0; help[i].key && help[i].desc; i++)
-		print_help_item(win, w, help[i], &y);
+	for (struct HelpKey *k = help_keys; k->key && k->desc; k++)
+		print_help_item(win, w, *k, &y);
 
 	print_title(win, w, "Rules", &y);
 	char *s = get_rules(argv0);
 	print_wrapped(win, w, s, 0, &y);
 	free(s);
 
-#define max(a, b) ((a)>(b) ? (a) : (b))
 	return max(y, (int)PICTURE_HEIGHT);
-#undef max
 }
 
 void help_show(WINDOW *win, char *argv0)

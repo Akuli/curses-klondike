@@ -1,7 +1,8 @@
+#include "scroll.h"
 #include <curses.h>
 #include <limits.h>
 #include <stdbool.h>
-#include "scroll.h"
+#include "misc.h"
 
 #define BOTTOM_BAR_SIZE 1
 
@@ -41,9 +42,7 @@ static void draw_pad_to_window(struct ScrollState *st)
 
 	// min stuff and -1 are needed because curses is awesome
 	// if this code is wrong, it either segfaults or does nothing
-#define min(a, b) ((a)<(b) ? (a) : (b))
 	copywin(st->pad, st->win, st->firstlineno, 0, 0, 0, min(winh, padh)-1, min(winw, padw)-1, true);
-#undef min
 
 	char *msg;
 	if (winh < padh)
