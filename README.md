@@ -1,6 +1,6 @@
 # Curses klondike
 
-This is a text-based [klondike] game written in curses using C.
+This is a text-based [klondike] game written in C using curses.
 
 [klondike]: https://en.wikipedia.org/wiki/Klondike_(solitaire)
 
