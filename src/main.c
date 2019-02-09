@@ -56,7 +56,8 @@ const struct HelpKey help_keys[] = {
 	{ "n", "new game" },
 	{ "s", "move card(s) from stock to discard and select discard" },
 	{ "d", "select discard" },
-	{ "f", "move selected card to a foundation, if possible" },
+	{ "f", "move selected card to any foundation, if possible" },
+	{ "g", "move any card to any foundation, if possible" },
 	{ "Enter", "start moving the selected card(s), or complete the move if currently moving" },
 	{ "Esc", "if currently moving card(s), stop that" },
 	{ "←,→", "move selection left/right" },
@@ -105,13 +106,23 @@ static bool handle_key(struct Klon *kln, struct SelMv *selmv, int k, struct Args
 	if (k == 'd' && !selmv->ismv)
 		selmv_byplace(*kln, selmv, KLON_DISCARD);
 
-	if (k == 'f' && selmv->sel.card && !selmv->ismv) {
-		for (int i=0; i < 4; i++)
-			if (klon_canmove(*kln, selmv->sel.card, KLON_FOUNDATION(i))) {
-				klon_move(kln, selmv->sel.card, KLON_FOUNDATION(i), false);
-				selmv_byplace(*kln, selmv, selmv->sel.place);  // updates selmv->sel.card if needed
-				break;
-			}
+	if (k == 'f' && !selmv->ismv && selmv->sel.card) {
+		if (klon_move2foundation(kln, selmv->sel.card))
+			selmv_byplace(*kln, selmv, selmv->sel.place);  // updates selmv->sel.card if needed
+		return true;
+	}
+
+	if (k == 'g' && !selmv->ismv) {
+		// inefficient, but not noticably inefficient
+		if (klon_move2foundation(kln, card_top(kln->discard)))
+			goto moved;
+		for (int i = 0; i < 7; i++)
+			if (klon_move2foundation(kln, card_top(kln->tableau[i])))
+				goto moved;
+		return true;
+
+	moved:
+		selmv_byplace(*kln, selmv, selmv->sel.place);  // updates selmv->sel.card if needed
 		return true;
 	}
 

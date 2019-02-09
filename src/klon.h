@@ -61,6 +61,10 @@ struct Card *klon_detachcard(struct Klon *kln, const struct Card *crd);
 // if raw, accepts invalid moves (klon_canmove) and never sets ->visible
 void klon_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst, bool raw);
 
+// convenience function for moving a card to any foundation
+// does nothing if card is NULL
+bool klon_move2foundation(struct Klon *kln, struct Card *card);
+
 // takes cards stock --> discard, or if stock is empty, puts all discardeds to stock
 // pick is the value of the --pick option
 void klon_stock2discard(struct Klon *kln, unsigned int pick);

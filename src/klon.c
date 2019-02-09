@@ -212,6 +212,19 @@ void klon_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst, bool raw)
 	card_pushtop(dstp, crd);
 }
 
+bool klon_move2foundation(struct Klon *kln, struct Card *card)
+{
+	if (!card)
+		return false;
+
+	for (int i=0; i < 4; i++)
+		if (klon_canmove(*kln, card, KLON_FOUNDATION(i))) {
+			klon_move(kln, card, KLON_FOUNDATION(i), false);
+			return true;
+		}
+	return false;
+}
+
 void klon_stock2discard(struct Klon *kln, unsigned int pick)
 {
 	assert(1 <= pick && pick <= 13*4 - (1+2+3+4+5+6+7));
