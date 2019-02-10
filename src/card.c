@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "misc.h"
 
 // handy_random(n) returns a random integer >= 0 and < n

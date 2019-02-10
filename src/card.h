@@ -5,8 +5,10 @@
 
 enum Suit { SUIT_SPADE, SUIT_HEART, SUIT_DIAMOND, SUIT_CLUB };
 
-// 1 for red, 0 for black
-#define SUIT_COLOR(s) ((s) == SUIT_HEART || (s) == SUIT_DIAMOND)
+// must be >=1 because are used as curses color pairs
+enum SuitColor { SUITCOLOR_RED = 1, SUITCOLOR_BLACK };
+
+#define SUIT_COLOR(s) ( ((s)==SUIT_HEART || (s)==SUIT_DIAMOND) ? SUITCOLOR_RED : SUITCOLOR_BLACK )
 
 struct Card {
 	unsigned int num;  // 1 for A, 11 for J, 12 for Q, 13 for K, others the obvious way

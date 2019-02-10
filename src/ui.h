@@ -6,7 +6,7 @@
 #include "klon.h"    // IWYU pragma: keep
 #include "selmv.h"   // IWYU pragma: keep
 
-// sets up curses color pairs
+// sets up curses color pairs for SuitColor from card.h
 void ui_initcolors(void);
 
 // draws kln on win

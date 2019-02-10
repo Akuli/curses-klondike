@@ -80,7 +80,7 @@ static void new_game(struct Klon *kln, struct SelMv *selmv)
 static bool handle_key(struct Klon *kln, struct SelMv *selmv, int k, struct Args ar, const char *argv0)
 {
 	if (k == 'h') {
-		help_show(stdscr, argv0);
+		help_show(stdscr, argv0, ar.color);
 		return true;
 	}
 
@@ -198,8 +198,9 @@ int main(int argc, char **argv)
 		fatal_error("initscr() failed");
 	initscred = true;
 
-	bool color = (ar.color && has_colors() && start_color() != ERR);
-	if (color)
+	// changing ar.color here makes things easier
+	ar.color = (ar.color && has_colors() && start_color() != ERR);
+	if (ar.color)
 		ui_initcolors();
 
 	if (cbreak() == ERR) fatal_error("cbreak() failed");
@@ -214,7 +215,7 @@ int main(int argc, char **argv)
 
 	bool first = true;
 	do {
-		ui_drawklon(stdscr, kln, selmv, color, ar.discardhide);
+		ui_drawklon(stdscr, kln, selmv, ar.color, ar.discardhide);
 
 		if (first) {
 			int w, h;

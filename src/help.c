@@ -1,14 +1,15 @@
 #include "help.h"
 #include <assert.h>
 #include <curses.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
+#include "card.h"     // for SuitColor enum
 #include "misc.h"
 #include "scroll.h"
 
-// copy/pasted from man page, i don't know why i get warnings without these
-int mvwaddwstr(WINDOW *win, int y, int x, const wchar_t *wstr);
+// copy/pasted from man page, i don't know why i get warnings without this
 int mvwaddnwstr(WINDOW *win, int y, int x, const wchar_t *wstr, int n);
 
 static const char *picture[] = {
@@ -28,7 +29,6 @@ static const char *picture[] = {
 // note: there's a %s in the rules, that should be substituted with argv[0]
 static const char rules[] =
 	"Here the “suit” of a card means ♥, ♦, ♠ or ♣. "
-	"The suits ♥ and ♦ are “red”; ♠ and ♣ are “black”. "
 	"The “number” of a card means one of A,2,3,4,…,9,10,J,Q,K. "
 	"“Visible” cards are cards whose suit and number are visible to you, aka “face-up” cards.\n\n"
 
@@ -74,14 +74,6 @@ static char *get_rules(const char *argv0)
 	return buf;
 }
 
-/*
-in most functions, win can be NULL to not actually draw anything but count number of lines needed
-w is width, if WINDOW is not NULL then w is what getmaxyx(win) gives
-convenient maybe_blah() functions do nothing (but the arguments are evaluated! they could be e.g. y++) if win is NULL
-*/
-static void maybe_mvwaddstr(WINDOW *win, int y, int x, const char *s) { if (win) mvwaddstr(win, y, x, s); }
-static void maybe_mvwaddnwstr(WINDOW *win, int y, int x, const wchar_t *s, int n) { if (win) mvwaddnwstr(win, y, x, s, n); }
-
 static int get_max_width(int w, int xoff, int yoff)
 {
 	if (yoff > (int)PICTURE_HEIGHT)
@@ -102,7 +94,36 @@ static wchar_t *string_to_wstring(const char *s)
 	return ws;
 }
 
-static void print_wrapped(WINDOW *win, int w, const char *s, int xoff, int *yoff)
+static void print_colored(WINDOW *win, int y, int x, const wchar_t *s, int n, bool color)
+{
+	if (!win)
+		return;
+
+	for (int i = 0; i < n; i++) {
+		int attr = 0;
+		if (color)
+			switch(s[i]) {
+			case L'♥':
+			case L'♦':
+				attr = COLOR_PAIR(SUITCOLOR_RED);
+				break;
+			case L'♠':
+			case L'♣':
+				attr = COLOR_PAIR(SUITCOLOR_BLACK);
+				break;
+			default:
+				break;
+			}
+
+		if (attr)
+			wattron(win, attr);
+		mvwaddnwstr(win, y, x+i, s+i, 1);
+		if (attr)
+			wattroff(win, attr);
+	}
+}
+
+static void print_wrapped_colored(WINDOW *win, int w, const char *s, int xoff, int *yoff, bool color)
 {
 	// unicode is easiest to do with wchars in this case
 	// wchars work because posix wchar_t is 4 bytes
@@ -131,10 +152,10 @@ static void print_wrapped(WINDOW *win, int w, const char *s, int xoff, int *yoff
 		}
 
 		if (brk) {
-			maybe_mvwaddnwstr(win, (*yoff)++, xoff, ws, brk - ws);
+			print_colored(win, (*yoff)++, xoff, ws, brk - ws, color);
 			ws = brk+1;
 		} else {
-			maybe_mvwaddnwstr(win, (*yoff)++, xoff, ws, end);
+			print_colored(win, (*yoff)++, xoff, ws, end, color);
 			ws += end;
 		}
 	}
@@ -156,10 +177,10 @@ static void print_help_item(WINDOW *win, int w, struct HelpKey help, int *y)
 	int keymax = get_longest_key_length();
 	int nspace = keymax - mbstowcs(NULL, help.key, 0);
 
-	if (win)   // i didn't feel like creating a maybe_mvwprintw that messes with va_args
+	if (win)
 		mvwprintw(win, *y, 0, "%*s%s:", nspace, "", help.key);
 
-	print_wrapped(win, w, help.desc, keymax + 2, y);
+	print_wrapped_colored(win, w, help.desc, keymax + 2, y, false);
 	//(*y)++;  // blank line
 }
 
@@ -179,12 +200,13 @@ static void print_title(WINDOW *win, int w, const char *title, int *y)
 }
 
 // returns number of lines
-static int print_all_help(WINDOW *win, int w, const char *argv0)
+static int print_all_help(WINDOW *win, int w, const char *argv0, bool color)
 {
 	int picx = w - PICTURE_WIDTH;
 
-	for (int y = 0; y < (int)PICTURE_HEIGHT; y++)
-		maybe_mvwaddstr(win, y, picx, picture[y]);
+	if (win)
+		for (int y = 0; y < (int)PICTURE_HEIGHT; y++)
+			mvwaddstr(win, y, picx, picture[y]);
 
 	int y = 0;
 	for (const struct HelpKey *k = help_keys; k->key && k->desc; k++)
@@ -192,22 +214,22 @@ static int print_all_help(WINDOW *win, int w, const char *argv0)
 
 	print_title(win, w, "Rules", &y);
 	char *s = get_rules(argv0);
-	print_wrapped(win, w, s, 0, &y);
+	print_wrapped_colored(win, w, s, 0, &y, color);
 	free(s);
 
 	return max(y, (int)PICTURE_HEIGHT);
 }
 
-void help_show(WINDOW *win, const char *argv0)
+void help_show(WINDOW *win, const char *argv0, bool color)
 {
 	int w, h;
 	getmaxyx(win, h, w);
 	(void) h;  // silence warning about unused var
 
-	WINDOW *pad = newpad(print_all_help(NULL, w, argv0), w);
+	WINDOW *pad = newpad(print_all_help(NULL, w, argv0, false), w);
 	if (!pad)
 		fatal_error("newpad() failed");
-	print_all_help(pad, w, argv0);
+	print_all_help(pad, w, argv0, color);
 
 	scroll_showpad(win, pad);
 }

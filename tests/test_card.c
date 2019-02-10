@@ -6,10 +6,13 @@
 
 TEST(card_suit_color)
 {
-	assert(SUIT_COLOR(SUIT_SPADE) == 0);
-	assert(SUIT_COLOR(SUIT_CLUB) == 0);
-	assert(SUIT_COLOR(SUIT_DIAMOND) == 1);
-	assert(SUIT_COLOR(SUIT_HEART) == 1);
+	assert(SUITCOLOR_RED >= 1);
+	assert(SUITCOLOR_BLACK >= 1);
+
+	assert(SUIT_COLOR(SUIT_SPADE) == SUITCOLOR_BLACK);
+	assert(SUIT_COLOR(SUIT_CLUB) == SUITCOLOR_BLACK);
+	assert(SUIT_COLOR(SUIT_DIAMOND) == SUITCOLOR_RED);
+	assert(SUIT_COLOR(SUIT_HEART) == SUITCOLOR_RED);
 }
 
 TEST(card_createallshuf_free)

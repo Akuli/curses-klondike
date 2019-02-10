@@ -2,6 +2,7 @@
 #define HELP_H
 
 #include <curses.h>
+#include <stdbool.h>
 
 struct HelpKey {
 	const char *key;
@@ -11,6 +12,6 @@ struct HelpKey {
 extern const struct HelpKey help_keys[];
 
 // screen must be erased after calling, but not before
-void help_show(WINDOW *win, const char *argv0);
+void help_show(WINDOW *win, const char *argv0, bool color);
 
 #endif  // HELP_H

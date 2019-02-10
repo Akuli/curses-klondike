@@ -16,13 +16,10 @@
 #define Y_OFFSET_SMALL 1
 #define Y_OFFSET_BIG 2
 
-#define RED_SUIT_PAIR 1
-#define BLACK_SUIT_PAIR 2
-
 void ui_initcolors(void)
 {
-	if (init_pair(RED_SUIT_PAIR, COLOR_RED, COLOR_BLACK) == ERR) fatal_error("init_color() failed");
-	if (init_pair(BLACK_SUIT_PAIR, COLOR_WHITE, COLOR_BLACK) == ERR) fatal_error("init_color() failed");
+	if (init_pair(SUITCOLOR_RED, COLOR_RED, COLOR_BLACK) == ERR) fatal_error("init_color() failed");
+	if (init_pair(SUITCOLOR_BLACK, COLOR_WHITE, COLOR_BLACK) == ERR) fatal_error("init_color() failed");
 }
 
 // ui_x() and ui_y() convert coordinates from card counts to curses coordinates
@@ -94,7 +91,8 @@ static void draw_card(WINDOW *win, const struct Card *crd, int xstart, int ystar
 		return;
 
 	if (crd->visible) {
-		int attr = COLOR_PAIR(SUIT_COLOR(crd->suit) ? RED_SUIT_PAIR : BLACK_SUIT_PAIR);
+		// SUIT_COLOR returns a valid color pair number
+		int attr = COLOR_PAIR(SUIT_COLOR(crd->suit));
 		if (color)
 			wattron(win, attr);
 		mvaddstr(ystart+1, xstart+1, card_numstr(*crd));
