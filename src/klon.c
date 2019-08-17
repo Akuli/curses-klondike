@@ -260,7 +260,7 @@ bool klon_win(struct Klon kln)
 		for (struct Card *crd = kln.foundations[i]; crd; crd = crd->next)
 			n++;
 
-		assert(n <= 13);
+		// n can be >13 when cards are being moved
 		if (n < 13)
 			return false;
 	}
