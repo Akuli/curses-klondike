@@ -11,12 +11,12 @@ TEST(card_createallshuf_free)
 	// TODO: test shuffling better? e.g. get stuck if ANY card always ends up in
 	// the same place
 	int num = -1;
-	enum Suit suit;
+	Suit suit;
 
 	while(true) {
 		struct Card *crd = card_createallshuf();
 		int crdnum = crd->num;
-		enum Suit crdsuit = crd->suit;
+		Suit crdsuit = crd->suit;
 		card_free(crd);
 
 		if (num == -1) {

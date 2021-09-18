@@ -99,7 +99,7 @@ static void draw_card(WINDOW *win, const struct Card *crd, int xstart, int ystar
 
 	if (crd->visible) {
 		// underlying values of SuitColor are valid color pair numbers
-		int attr = COLOR_PAIR(get_color_pair_number(suit_color(crd->suit)));
+		int attr = COLOR_PAIR(crd->suit.color().color_pair_number());
 		if (color)
 			wattron(win, attr);
 		mvaddstr(ystart+1, xstart+1, card_numstr(*crd));

@@ -102,11 +102,11 @@ static void print_colored(WINDOW *win, int y, int x, const wchar_t *s, int n, bo
 			switch(s[i]) {
 			case L'♥':
 			case L'♦':
-				attr = COLOR_PAIR(suitcolor_number(SuitColor::RED));
+				attr = COLOR_PAIR(SuitColor(SuitColor::RED).color_pair_number());
 				break;
 			case L'♠':
 			case L'♣':
-				attr = COLOR_PAIR(suitcolor_number(SuitColor::BLACK));
+				attr = COLOR_PAIR(SuitColor(SuitColor::BLACK).color_pair_number());
 				break;
 			default:
 				break;

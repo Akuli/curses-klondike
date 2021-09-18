@@ -3,29 +3,47 @@
 
 #include <stdexcept>
 
-enum class Suit { SPADE, HEART, DIAMOND, CLUB };
+// https://stackoverflow.com/a/53284026
 
-// must be >=1 because are used as curses color pairs
-enum class SuitColor { RED = 1, BLACK };
-inline int suitcolor_number(SuitColor sc) { return static_cast<int>(sc); } // https://stackoverflow.com/a/11421471
+class SuitColor {
+public:
+	enum Value { RED, BLACK };
+	SuitColor() = default;
+	constexpr SuitColor(Value v) : val(v) {}
+	operator Value() const { return val; }
 
-inline SuitColor suit_color(Suit s)
-{
-	switch(s) {
-		case Suit::HEART:
-		case Suit::DIAMOND:
-			return SuitColor::RED;
+	int color_pair_number() { return static_cast<int>(val) + 1; }  // must be >=1
 
-		case Suit::SPADE:
-		case Suit::CLUB:
-			return SuitColor::BLACK;
+private:
+	Value val;
+};
+
+class Suit {
+public:
+	enum Value { SPADE, HEART, DIAMOND, CLUB };
+	Suit() = default;
+	constexpr Suit(Value v) : val(v) {}
+	operator Value() const { return val; }
+
+	SuitColor color() const {
+		switch(*this) {
+			case Suit::HEART:
+			case Suit::DIAMOND:
+				return SuitColor::RED;
+			case Suit::SPADE:
+			case Suit::CLUB:
+				return SuitColor::BLACK;
+		}
+		throw std::logic_error("bad enum value");
 	}
-	throw std::logic_error("bad enum value");
-}
+
+private:
+	Value val;
+};
 
 struct Card {
 	unsigned int num;  // 1 for A, 11 for J, 12 for Q, 13 for K, others the obvious way
-	enum Suit suit;
+	Suit suit;
 	bool visible;
 	struct Card *next = nullptr;   // the card that is on top of this card
 };
