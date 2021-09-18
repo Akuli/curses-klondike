@@ -57,22 +57,13 @@ void klon_debug(struct Klon kln)
 	printf("total: %d cards\n", total);
 }
 
-void klon_free(struct Klon kln)
-{
-	card_free(kln.stock);
-	card_free(kln.discard);
-	for (int i=0; i < 4; i++)
-		card_free(kln.foundations[i]);
-	for (int i=0; i < 7; i++)
-		card_free(kln.tableau[i]);
-}
-
 static void copy_cards(const struct Card *src, struct Card **dst, const struct Card *srccrd, struct Card **dstcrd)
 {
 	*dst = NULL;
 	struct Card *top = NULL;
 
 	for (; src; src = src->next) {
+		// FIXME: leaks mem
 		struct Card *dup = (struct Card *) malloc(sizeof(struct Card));
 		if (!dup)
 			fatal_error("malloc() failed");

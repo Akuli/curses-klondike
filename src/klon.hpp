@@ -3,7 +3,6 @@
 #ifndef KLON_H
 #define KLON_H
 
-#include <stdbool.h>
 #include "card.hpp" // IWYU pragma: keep
 
 struct Klon {
@@ -36,9 +35,6 @@ void klon_init(struct Klon *kln, struct Card *list);
 
 // prints debug info about where cards are
 void klon_debug(struct Klon kln);
-
-// frees all cards in the game
-void klon_free(struct Klon kln);
 
 // copies everything from src to dst
 // also creates new cards

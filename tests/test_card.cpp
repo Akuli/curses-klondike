@@ -5,28 +5,6 @@
 #include "util.hpp"
 #include "../src/card.hpp"
 
-TEST(card_createallshuf_free)
-{
-	// this gets stuck if the cards don't shuffle at all
-	// TODO: test shuffling better? e.g. get stuck if ANY card always ends up in
-	// the same place
-	int num = -1;
-	Suit suit;
-
-	while(true) {
-		struct Card *crd = card_createallshuf();
-		int crdnum = crd->num;
-		Suit crdsuit = crd->suit;
-		card_free(crd);
-
-		if (num == -1) {
-			num = crdnum;
-			suit = crdsuit;
-		} else if (num != crdnum && suit != crdsuit)
-			break;
-	}
-}
-
 TEST(card_createallshuf_gives_all_52_cards)
 {
 	int got[4][13] = {0};

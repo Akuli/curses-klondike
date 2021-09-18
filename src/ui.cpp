@@ -16,17 +16,11 @@
 #define Y_OFFSET_SMALL 1
 #define Y_OFFSET_BIG 2
 
-// https://stackoverflow.com/a/11421471
-static int get_color_pair_number(SuitColor sc)
-{
-	return static_cast<int>(sc);
-}
-
 void ui_initcolors(void)
 {
 	// underlying values of SuitColor are valid color pair numbers
-	if (init_pair(get_color_pair_number(SuitColor::RED), COLOR_RED, COLOR_BLACK) == ERR) fatal_error("init_color() failed");
-	if (init_pair(get_color_pair_number(SuitColor::BLACK), COLOR_WHITE, COLOR_BLACK) == ERR) fatal_error("init_color() failed");
+	if (init_pair(SuitColor(SuitColor::RED).color_pair_number(), COLOR_RED, COLOR_BLACK) == ERR) fatal_error("init_color() failed");
+	if (init_pair(SuitColor(SuitColor::BLACK).color_pair_number(), COLOR_WHITE, COLOR_BLACK) == ERR) fatal_error("init_color() failed");
 }
 
 // ui_x() and ui_y() convert coordinates from card counts to curses coordinates
@@ -245,7 +239,6 @@ void ui_drawklon(WINDOW *win, struct Klon kln, struct SelMv selmv, bool color, b
 
 		klon_move(&tmpkln, tmpsel.card, tmpsel.place, true);
 		draw_the_klon(win, tmpkln, tmpsel, true, color, dh, dscxoff);
-		klon_free(tmpkln);
 	} else
 		draw_the_klon(win, kln, selmv.sel, false, color, dh, dscxoff);
 }

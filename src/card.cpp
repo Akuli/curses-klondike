@@ -1,5 +1,6 @@
 #include "card.hpp"
 #include <algorithm>
+#include <memory>
 #include <vector>
 #include <assert.h>
 #include <stdbool.h>
@@ -7,34 +8,22 @@
 #include <stdlib.h>
 #include "misc.hpp"
 
-struct Card *card_createallshuf(void)
+std::unique_ptr<Card[]> card_createallshuf()
 {
-	std::vector<struct Card *> cards;
+	std::unique_ptr<Card[]> arrptr = std::make_unique<Card[]>(13*4);
+	int i = 0;
 	for (Suit s : std::vector<Suit>{ Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE }) {
 		for (int n = 1; n <= 13; n++) {
-			struct Card *crd = (struct Card *)malloc(sizeof(struct Card));
-			if (!crd)
-				fatal_error("malloc() failed");
-
-			*crd = Card{ n, s };
-			cards.push_back(crd);
+			arrptr[i++] = Card{ n, s };
 		}
 	}
 
-	std::random_shuffle(cards.begin(), cards.end());
+	std::random_shuffle(arrptr.get(), arrptr.get() + 13*4);
 
-	for (unsigned j = 0; j < cards.size(); j++)
-		cards[j]->next = (j+1 == cards.size() ? nullptr : cards[j+1]);
-	return cards[0];
-}
-
-void card_free(struct Card *crd)
-{
-	struct Card *nxt;
-	for (; crd; crd = nxt) {
-		nxt = crd->next;
-		free(crd);
-	}
+	arrptr[13*4 - 1].next = nullptr;
+	for (int i = 13*4 - 2; i >= 0; i--)
+		arrptr[i].next = &arrptr.get()[i+1];
+	return arrptr;
 }
 
 std::string card_numstr(struct Card crd)

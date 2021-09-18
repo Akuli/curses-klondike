@@ -62,16 +62,17 @@ const struct HelpKey help_keys[] = {
 	{ NULL, NULL }
 };
 
-static void new_game(struct Klon *kln, struct SelMv *selmv)
+static void new_game(Klon *kln, SelMv *selmv, std::unique_ptr<Card[]>& cardlist)
 {
-	klon_init(kln, card_createallshuf());
+	cardlist = card_createallshuf();
+	klon_init(kln, cardlist.get());
 	selmv->ismv = false;
 	selmv->sel.place = KLON_STOCK;
 	selmv->sel.card = NULL;
 }
 
 // returns whether to continue playing
-static bool handle_key(struct Klon *kln, struct SelMv *selmv, int k, struct Args ar, const char *argv0)
+static bool handle_key(Klon *kln, SelMv *selmv, int k, Args ar, const char *argv0, std::unique_ptr<Card[]>& cardlist)
 {
 	if (k == 'h') {
 		help_show(stdscr, argv0, ar.color);
@@ -81,10 +82,8 @@ static bool handle_key(struct Klon *kln, struct SelMv *selmv, int k, struct Args
 	if (k == 'q')
 		return false;
 
-	if (k == 'n') {
-		klon_free(*kln);
-		new_game(kln, selmv);
-	}
+	if (k == 'n')
+		new_game(kln, selmv, cardlist);
 
 	if (k == 's' && !selmv->ismv) {
 		klon_stock2discard(kln, ar.pick);
@@ -139,7 +138,7 @@ static bool handle_key(struct Klon *kln, struct SelMv *selmv, int k, struct Args
 	}
 
 	if ((k == KEY_PPAGE || k == KEY_NPAGE) && !selmv->ismv) {
-		bool (*func)(struct Klon, struct Sel *) = (k==KEY_PPAGE ? sel_more : sel_less);
+		bool (*func)(Klon, Sel *) = (k==KEY_PPAGE ? sel_more : sel_less);
 		while (func(*kln, &selmv->sel))
 			;
 		return true;
@@ -173,7 +172,7 @@ int main(int argc, char **argv)
 	for (int i = 0; i < argc; i++)
 		argvec.push_back(argv[i]);
 
-	struct Args ar;
+	Args ar;
 	int sts = args_parse(ar, argvec, stdout, stderr);
 	if (sts >= 0)
 		return sts;
@@ -205,9 +204,10 @@ int main(int argc, char **argv)
 
 	refresh();   // yes, this is needed before drawing the cards for some reason
 
-	struct Klon kln;
-	struct SelMv selmv;
-	new_game(&kln, &selmv);
+	std::unique_ptr<Card[]> cardlist = nullptr;
+	Klon kln;
+	SelMv selmv;
+	new_game(&kln, &selmv, cardlist);
 
 	bool first = true;
 	do {
@@ -225,9 +225,8 @@ int main(int argc, char **argv)
 		}
 
 		refresh();
-	} while( handle_key(&kln, &selmv, getch(), ar, argv[0]) );
+	} while( handle_key(&kln, &selmv, getch(), ar, argv[0], cardlist) );  // TODO: too many args
 
-	klon_free(kln);
 	endwin();
 
 	return 0;

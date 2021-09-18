@@ -1,6 +1,8 @@
 #ifndef CARD_H
 #define CARD_H
 
+#include <memory>
+#include <vector>
 #include <stdexcept>
 
 // https://stackoverflow.com/a/53284026
@@ -55,39 +57,35 @@ struct Card {
 	int num;  // 1 for A, 11 for J, 12 for Q, 13 for K, others the obvious way
 	Suit suit;
 	bool visible = false;
-	struct Card *next = nullptr;   // the card that is on top of this card
+	Card *next = nullptr;   // the card that is on top of this card
 };
 
 // creates a shuffled, linked list of 52 non-visible cards
-// returns bottommost card, others are available with ->next
-struct Card *card_createallshuf(void);
+// use .get() to access bottommost card, others are available with ->next
+std::unique_ptr<Card[]> card_createallshuf();
 
-// frees the card, and its ->next and ->next->next etc
-// does nothing if crd is NULL
-void card_free(struct Card *crd);
-
-std::string card_numstr(struct Card crd);
+std::string card_numstr(Card crd);
 
 // prints card_str to stdout
-void card_debug(struct Card crd);
+void card_debug(Card crd);
 
 // returns topmost card in a linked list of cards
 // special case to make some things easier: card_top(NULL) == NULL
 // card_top(nonnull)->next is always NULL
-struct Card *card_top(struct Card *crd);
+Card *card_top(Card *crd);
 
 // returns at most n topmost cards from a linked list of cards as another linked list
 // card_tops(NULL, n) == NULL
-struct Card *card_tops(struct Card *crd, unsigned int n);
+Card *card_tops(Card *crd, unsigned int n);
 
 // gets bottommost card from a linked list of cards
 // sets *bot to (*bot)->next (that can be NULL)
 // bad things happen if *bot is NULL
-struct Card *card_popbot(struct Card **bot);
+Card *card_popbot(Card **bot);
 
 // adds a card to top of a linked list of cards
 // if *list is NULL, sets *list to newtop
 // if *list is non-NULL, sets card_top(*list)->next to newtop
-void card_pushtop(struct Card **list, struct Card *newtop);
+void card_pushtop(Card **list, Card *newtop);
 
 #endif  // CARD_H
