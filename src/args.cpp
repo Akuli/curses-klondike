@@ -11,13 +11,7 @@ doesn't support --, but nobody needs it for this program imo
 #include <vector>
 #include <stdexcept>
 #include "args.hpp"
-#include <assert.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "misc.hpp"
 
 enum class OptType { YESNO, INT };
@@ -200,24 +194,23 @@ static bool check_tokens(Printer printer, std::vector<Token> toks)
 
 
 // returns true to keep running, or false to exit with status 0
-static bool tokens_to_struct_args(Printer printer, const Token *toks, int ntoks, Args& ar)
+static bool tokens_to_struct_args(Printer printer, std::vector<Token> toks, Args& ar)
 {
 	ar = {};
-	for (int i = 0; i < ntoks; i++) {
-
-		if (toks[i].spec.name == "--help") {
+	for (Token tok : toks) {
+		if (tok.spec.name == "--help") {
 			print_help(printer);
 			return false;
 		}
 
-		if (toks[i].spec.name == "--no-colors")
+		if (tok.spec.name == "--no-colors")
 			ar.color = false;
-		else if (toks[i].spec.name == "--pick")
-			ar.pick = std::stoi(toks[i].value.value());  // already validated
-		else if (toks[i].spec.name == "--discard-hide")
+		else if (tok.spec.name == "--pick")
+			ar.pick = std::stoi(tok.value.value());  // already validated
+		else if (tok.spec.name == "--discard-hide")
 			ar.discardhide = true;
 		else
-			assert(0);
+			throw std::logic_error("unknown arg name: " + tok.spec.name);
 	}
 
 	return true;
@@ -250,5 +243,5 @@ int args_parse(Args& ar, std::vector<std::string> argvec, FILE *out, FILE *err)
 		return 2;
 	}
 
-	return tokens_to_struct_args(printer, toks.data(), toks.size(), ar) ? -1 : 0;
+	return tokens_to_struct_args(printer, toks, ar) ? -1 : 0;
 }
