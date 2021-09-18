@@ -144,7 +144,7 @@ bool klon_canmove(struct Klon kln, const struct Card *crd, KlonCardPlace dst)
 			return (crd->num == 13);
 
 		tab = card_top(tab);
-		return (SUIT_COLOR(crd->suit) != SUIT_COLOR(tab->suit) && crd->num == tab->num - 1);
+		return (suit_color(crd->suit) != suit_color(tab->suit) && crd->num == tab->num - 1);
 	}
 
 	assert(0);

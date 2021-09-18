@@ -1,14 +1,27 @@
 #ifndef CARD_H
 #define CARD_H
 
-#include <stdbool.h>
+#include <stdexcept>
 
-enum Suit { SUIT_SPADE, SUIT_HEART, SUIT_DIAMOND, SUIT_CLUB };
+enum class Suit { SPADE, HEART, DIAMOND, CLUB };
 
 // must be >=1 because are used as curses color pairs
-enum SuitColor { SUITCOLOR_RED = 1, SUITCOLOR_BLACK };
+enum class SuitColor { RED = 1, BLACK };
+inline int suitcolor_number(SuitColor sc) { return static_cast<int>(sc); } // https://stackoverflow.com/a/11421471
 
-#define SUIT_COLOR(s) ( ((s)==SUIT_HEART || (s)==SUIT_DIAMOND) ? SUITCOLOR_RED : SUITCOLOR_BLACK )
+inline SuitColor suit_color(Suit s)
+{
+	switch(s) {
+		case Suit::HEART:
+		case Suit::DIAMOND:
+			return SuitColor::RED;
+
+		case Suit::SPADE:
+		case Suit::CLUB:
+			return SuitColor::BLACK;
+	}
+	throw std::logic_error("bad enum value");
+}
 
 struct Card {
 	unsigned int num;  // 1 for A, 11 for J, 12 for Q, 13 for K, others the obvious way

@@ -1,19 +1,9 @@
+#include <vector>
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
 #include "util.hpp"
 #include "../src/card.hpp"
-
-TEST(card_suit_color)
-{
-	assert(SUITCOLOR_RED >= 1);
-	assert(SUITCOLOR_BLACK >= 1);
-
-	assert(SUIT_COLOR(SUIT_SPADE) == SUITCOLOR_BLACK);
-	assert(SUIT_COLOR(SUIT_CLUB) == SUITCOLOR_BLACK);
-	assert(SUIT_COLOR(SUIT_DIAMOND) == SUITCOLOR_RED);
-	assert(SUIT_COLOR(SUIT_HEART) == SUITCOLOR_RED);
-}
 
 TEST(card_createallshuf_free)
 {
@@ -65,14 +55,13 @@ TEST(card_str)
 		{12, "Q"},
 		{13, "K"}
 	};
-	enum Suit suits[] = { SUIT_SPADE, SUIT_HEART, SUIT_DIAMOND, SUIT_CLUB };
 
 	// nested for loops without nested indentations or braces
 	for (unsigned int i=0; i < sizeof(tests)/sizeof(tests[0]); i++)
-	for (int j=0; j < 4; j++)
+	for (Suit s : std::vector<Suit>{ Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE })
 	for (int visible=0; visible < 2; visible++)
 	{
-		struct Card crd = { tests[i].num, suits[j], visible };
+		struct Card crd = { tests[i].num, s, visible };
 
 		// the unicode should be 3 bytes
 		// TODO: check that each suit has a unique suitstr?
@@ -84,17 +73,17 @@ TEST(card_str)
 static void abccards(struct Card *a, struct Card *b, struct Card *c, bool link)
 {
 	a->num = 1;
-	a->suit = SUIT_SPADE;
+	a->suit = Suit::SPADE;
 	a->visible = true;
 	a->next = link ? b : NULL;
 
 	b->num = 2;
-	b->suit = SUIT_DIAMOND;
+	b->suit = Suit::DIAMOND;
 	b->visible = false;
-	b->next = link ? c : NULL;;
+	b->next = link ? c : NULL;
 
 	c->num = 3;
-	c->suit = SUIT_HEART;
+	c->suit = Suit::HEART;
 	c->visible = true;
 	c->next = NULL;
 }

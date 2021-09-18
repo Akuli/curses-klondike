@@ -1,4 +1,5 @@
 #include "card.hpp"
+#include <vector>
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -32,17 +33,16 @@ struct Card *card_createallshuf(void)
 {
 	struct Card *cards[13*4 + 1];
 	cards[13*4] = NULL;
-	enum Suit suits[] = { SUIT_SPADE, SUIT_HEART, SUIT_DIAMOND, SUIT_CLUB };
 
 	int i = 0;
-	for (int s = 0; s < 4; s++) {
+	for (Suit s : std::vector<Suit>{ Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE }) {
 		for (int n = 1; n <= 13; n++) {
 			struct Card *crd = (struct Card *)malloc(sizeof(struct Card));
 			if (!crd)
 				fatal_error("malloc() failed");
 
 			crd->num = n;
-			crd->suit = suits[s];
+			crd->suit = s;
 			crd->visible = false;
 			// crd->next is initialized below
 			cards[i++] = crd;
@@ -75,18 +75,13 @@ const char *card_numstr(struct Card crd)
 
 const char *card_suitstr(struct Card crd)
 {
-	static char spade[] = "♠";
-	static char heart[] = "♥";
-	static char diamond[] = "♦";
-	static char club[] = "♣";
-
 	switch(crd.suit) {
-	case SUIT_SPADE: return spade;
-	case SUIT_HEART: return heart;
-	case SUIT_DIAMOND: return diamond;
-	case SUIT_CLUB: return club;
-	default: assert(0);
+		case Suit::SPADE: return "♠";
+		case Suit::HEART: return "♥";
+		case Suit::DIAMOND: return "♦";
+		case Suit::CLUB: return "♣";
 	}
+	throw std::logic_error("bad suit");
 }
 
 void card_debug(struct Card crd)
