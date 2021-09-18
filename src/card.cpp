@@ -65,7 +65,7 @@ void card_free(struct Card *crd)
 	}
 }
 
-const char *card_numstr(struct Card crd)
+std::string card_numstr(struct Card crd)
 {
 	static const char *nstrs[] = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
 	assert(sizeof(nstrs)/sizeof(nstrs[0]) == 13);
@@ -73,20 +73,9 @@ const char *card_numstr(struct Card crd)
 	return nstrs[crd.num - 1];
 }
 
-const char *card_suitstr(struct Card crd)
-{
-	switch(crd.suit) {
-		case Suit::SPADE: return "♠";
-		case Suit::HEART: return "♥";
-		case Suit::DIAMOND: return "♦";
-		case Suit::CLUB: return "♣";
-	}
-	throw std::logic_error("bad suit");
-}
-
 void card_debug(struct Card crd)
 {
-	printf("%s%s\n", card_suitstr(crd), card_numstr(crd));
+	printf("%s%s\n", crd.suit.string().c_str(), card_numstr(crd).c_str());
 }
 
 // crd can be NULL

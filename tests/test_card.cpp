@@ -61,12 +61,8 @@ TEST(card_str)
 	for (Suit s : std::vector<Suit>{ Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE })
 	for (int visible=0; visible < 2; visible++)
 	{
-		struct Card crd = { tests[i].num, s, visible };
-
-		// the unicode should be 3 bytes
-		// TODO: check that each suit has a unique suitstr?
-		assert(strlen(card_suitstr(crd)) == 3);
-		assert(strcmp(card_numstr(crd), tests[i].numstr) == 0);
+		struct Card crd = { tests[i].num, s, (bool)visible };
+		assert(strcmp(card_numstr(crd).c_str(), tests[i].numstr) == 0);
 	}
 }
 

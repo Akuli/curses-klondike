@@ -27,7 +27,7 @@ static int print_cards(const struct Card *list)
 {
 	int n = 0;
 	for (; list; list = list->next) {
-		printf(" %c%s%s", list->visible ? 'v' : '?', card_suitstr(*list), card_numstr(*list));
+		printf(" %c%s%s", list->visible ? 'v' : '?', list->suit.string().c_str(), card_numstr(*list).c_str());
 		n++;
 	}
 	printf(" (%d cards)\n", n);

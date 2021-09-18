@@ -102,10 +102,10 @@ static void draw_card(WINDOW *win, const struct Card *crd, int xstart, int ystar
 		int attr = COLOR_PAIR(crd->suit.color().color_pair_number());
 		if (color)
 			wattron(win, attr);
-		mvaddstr(ystart+1, xstart+1, card_numstr(*crd));
-		mvaddstr(ystart+1, xstart+CARD_WIDTH-2, card_suitstr(*crd));
-		mvaddstr(ystart+CARD_HEIGHT-2, xstart+1, card_suitstr(*crd));
-		mvaddstr(ystart+CARD_HEIGHT-2, xstart+CARD_WIDTH-1-strlen(card_numstr(*crd)), card_numstr(*crd));
+		mvaddstr(ystart+1, xstart+1, card_numstr(*crd).c_str());
+		mvaddstr(ystart+1, xstart+CARD_WIDTH-2, crd->suit.string().c_str());
+		mvaddstr(ystart+CARD_HEIGHT-2, xstart+1, crd->suit.string().c_str());
+		mvaddstr(ystart+CARD_HEIGHT-2, xstart+CARD_WIDTH-1-card_numstr(*crd).length(), card_numstr(*crd).c_str());
 		if (color)
 			wattroff(win, attr);
 	}

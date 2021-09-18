@@ -37,6 +37,16 @@ public:
 		throw std::logic_error("bad enum value");
 	}
 
+	std::string string() const {
+		switch(*this) {
+			case Suit::SPADE: return "♠";
+			case Suit::HEART: return "♥";
+			case Suit::DIAMOND: return "♦";
+			case Suit::CLUB: return "♣";
+		}
+		throw std::logic_error("bad suit");
+	}
+
 private:
 	Value val;
 };
@@ -56,10 +66,7 @@ struct Card *card_createallshuf(void);
 // does nothing if crd is NULL
 void card_free(struct Card *crd);
 
-// these return \0-terminated utf8
-// don't free the result
-const char *card_numstr(struct Card crd);
-const char *card_suitstr(struct Card crd);
+std::string card_numstr(struct Card crd);
 
 // prints card_str to stdout
 void card_debug(struct Card crd);
