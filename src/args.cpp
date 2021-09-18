@@ -38,7 +38,7 @@ static const std::vector<OptSpec> option_specs = {
 	{ "--pick", "n", OptType::INT, 1, 13*4 - (1+2+3+4+5+6+7), "pick n cards from stock at a time, default is 3" },
 	{ "--discard-hide", std::nullopt, OptType::YESNO, 0, 0, "only show topmost discarded card (not useful with --pick=1)" }
 };
-static std::string longest_option = "--discard-hide";   // TODO: replace this with a function that calculates length
+static const std::string longest_option = "--discard-hide";   // TODO: replace this with a function that calculates length
 
 struct Printer {
 	FILE *out;
