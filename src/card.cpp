@@ -1,4 +1,5 @@
 #include "card.hpp"
+#include <algorithm>
 #include <vector>
 #include <assert.h>
 #include <stdbool.h>
@@ -6,50 +7,24 @@
 #include <stdlib.h>
 #include "misc.hpp"
 
-// handy_random(n) returns a random integer >= 0 and < n
-static unsigned int handy_random(unsigned int n)
-{
-	// have fun figuring out how this works
-	int toobig = (RAND_MAX / n) * n;
-	int res;
-	do {
-		res = rand();
-	} while (res >= toobig);
-	return res % n;
-}
-
-// https://stackoverflow.com/a/6274381
-static void shuffle(struct Card **arr, int len)
-{
-	for (int i = len-1; i > 0; i--) {
-		int j = handy_random(i+1);
-		struct Card *tmp = arr[i];
-		arr[i] = arr[j];
-		arr[j] = tmp;
-	}
-}
-
 struct Card *card_createallshuf(void)
 {
-	struct Card *cards[13*4 + 1];
-	cards[13*4] = NULL;
-
-	int i = 0;
+	std::vector<struct Card *> cards;
 	for (Suit s : std::vector<Suit>{ Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE }) {
 		for (int n = 1; n <= 13; n++) {
 			struct Card *crd = (struct Card *)malloc(sizeof(struct Card));
 			if (!crd)
 				fatal_error("malloc() failed");
 
-			*crd = (struct Card){ n, s };
-			cards[i++] = crd;
+			*crd = Card{ n, s };
+			cards.push_back(crd);
 		}
 	}
 
-	shuffle(cards, 13*4);
+	std::random_shuffle(cards.begin(), cards.end());
 
-	for (int j = 0; j < 13*4; j++)
-		cards[j]->next = cards[j+1];
+	for (unsigned j = 0; j < cards.size(); j++)
+		cards[j]->next = (j+1 == cards.size() ? nullptr : cards[j+1]);
 	return cards[0];
 }
 
