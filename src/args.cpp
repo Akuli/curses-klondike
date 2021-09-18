@@ -140,15 +140,14 @@ static bool is_valid_integer(std::string str, int min, int max)
 	}
 }
 
-// returns 0 on success, negative on failure
-static int check_token_by_type(Printer printer, Token tok)
+static bool check_token_by_type(Printer printer, Token tok)
 {
 	switch(tok.spec.type) {
 	case OptType::YESNO:
-		if (tok.value) {
+		if (tok.value.has_value()) {
 			std::fprintf(printer.err, "%s: use just '%s', not '%s=something' or '%s something'\n",
 					printer.argv0.c_str(), tok.spec.name.c_str(), tok.spec.name.c_str(), tok.spec.name.c_str());
-			return -1;
+			return false;
 		}
 		break;
 
@@ -159,23 +158,21 @@ static int check_token_by_type(Printer printer, Token tok)
 					tok.spec.name.c_str(), tok.spec.metavar.value().c_str(),
 					tok.spec.name.c_str(), tok.spec.metavar.value().c_str(),
 					tok.spec.name.c_str());
-			return -1;
+			return false;
 		}
 		if (!is_valid_integer(tok.value.value(), tok.spec.min, tok.spec.max)) {
 			std::fprintf(printer.err, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
 					printer.argv0.c_str(), tok.spec.name.c_str(), tok.spec.min, tok.spec.max, tok.value.value().c_str());
-			return -1;
+			return false;
 		}
 		break;
 	}
 
-	return 0;
+	return true;
 }
 
-// returns 0 on success, negative on failure
 static bool check_tokens(Printer printer, std::vector<Token> toks)
 {
-	// to detect duplicates
 	std::set<std::string> seen = {};
 
 	for (Token tok : toks) {
@@ -185,7 +182,7 @@ static bool check_tokens(Printer printer, std::vector<Token> toks)
 		}
 		seen.insert(tok.spec.name);
 
-		if (check_token_by_type(printer, tok) < 0)
+		if (!check_token_by_type(printer, tok))
 			return false;
 	}
 
