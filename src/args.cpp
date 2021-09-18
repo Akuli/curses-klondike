@@ -23,7 +23,7 @@ enum class OptType { YESNO, INT };
 
 struct OptSpec {
 	std::string name;
-	const char *metavar;  // TODO: figure out how to make optional string
+	std::optional<std::string> metavar;
 	OptType type;
 	int min;
 	int max;
@@ -32,10 +32,10 @@ struct OptSpec {
 
 // TODO: document env vars in --help
 static const OptSpec option_specs[] = {
-	{ "--help", nullptr, OptType::YESNO, 0, 0, "show this help message and exit" },
-	{ "--no-colors", nullptr, OptType::YESNO, 0, 0, "don't use colors, even if the terminal supports colors" },
+	{ "--help", std::nullopt, OptType::YESNO, 0, 0, "show this help message and exit" },
+	{ "--no-colors", std::nullopt, OptType::YESNO, 0, 0, "don't use colors, even if the terminal supports colors" },
 	{ "--pick", "n", OptType::INT, 1, 13*4 - (1+2+3+4+5+6+7), "pick n cards from stock at a time, default is 3" },
-	{ "--discard-hide", nullptr, OptType::YESNO, 0, 0, "only show topmost discarded card (not useful with --pick=1)" }
+	{ "--discard-hide", std::nullopt, OptType::YESNO, 0, 0, "only show topmost discarded card (not useful with --pick=1)" }
 };
 static std::string longest_option = "--discard-hide";   // TODO: replace this with a function that calculates length
 
@@ -48,10 +48,8 @@ struct Printer {
 static void print_help_option(Printer printer, OptSpec opt)
 {
 	std::string pre = opt.name;
-	if (opt.type == OptType::INT) {
-		pre += " ";
-		pre += opt.metavar;
-	}
+	if (opt.metavar.has_value())
+		pre += " " + opt.metavar.value();
 
 	std::fprintf(printer.out, "  %-*s  %s\n", (int)longest_option.length(), pre.c_str(), opt.desc.c_str());
 }
@@ -61,10 +59,8 @@ static void print_help(Printer printer)
 	std::fprintf(printer.out, "Usage: %s", printer.argv0.c_str());
 	for (OptSpec spec : option_specs) {
 		std::string s = spec.name;
-		if (spec.type == OptType::INT) {
-			s += " ";
-			s += spec.metavar;
-		}
+		if (spec.metavar.has_value())
+			s += " " + spec.metavar.value();
 		std::fprintf(printer.out, " [%s]", s.c_str());
 	}
 
@@ -171,7 +167,10 @@ static int check_token_by_type(Printer printer, Token tok)
 	case OptType::INT:
 		if (!tok.value) {
 			std::fprintf(printer.err, "%s: use '%s %s' or '%s=%s', not just '%s'\n",
-					printer.argv0.c_str(), tok.spec->name.c_str(), tok.spec->metavar, tok.spec->name.c_str(), tok.spec->metavar, tok.spec->name.c_str());
+					printer.argv0.c_str(),
+					tok.spec->name.c_str(), tok.spec->metavar.value().c_str(),
+					tok.spec->name.c_str(), tok.spec->metavar.value().c_str(),
+					tok.spec->name.c_str());
 			return -1;
 		}
 		if (!is_valid_integer(tok.value, tok.spec->min, tok.spec->max)) {

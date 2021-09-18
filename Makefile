@@ -1,4 +1,5 @@
-CFLAGS += -Wall -Wextra -Wpedantic -std=c++17 -Wno-unused-parameter
+# compile_flags.txt is for clangd
+CFLAGS += -Wall -Wextra -Wpedantic -Wno-unused-parameter $(shell cat compile_flags.txt)
 LDFLAGS += -lncursesw     # needs cursesw instead of curses for unicodes
 IWYU ?= iwyu
 
