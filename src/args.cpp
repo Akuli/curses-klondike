@@ -4,6 +4,11 @@ so i did it myself, why not :D
 doesn't support --, but nobody needs it for this program imo
 */
 
+#include <deque>
+#include <string>
+#include <optional>
+#include <vector>
+#include <stdexcept>
 #include "args.hpp"
 #include <assert.h>
 #include <errno.h>
@@ -14,211 +19,168 @@ doesn't support --, but nobody needs it for this program imo
 #include <string.h>
 #include "misc.hpp"
 
-enum OptType { TYPE_YESNO, TYPE_INT };
+enum class OptType { YESNO, INT };
 
 struct OptSpec {
-	const char *name;
-	const char *metavar;
-	enum OptType type;
+	std::string name;
+	const char *metavar;  // TODO: figure out how to make optional string
+	OptType type;
 	int min;
 	int max;
-	const char *desc;
+	std::string desc;
 };
 
 // TODO: document env vars in --help
-static const struct OptSpec option_specs[] = {
-	{ "--help", NULL, TYPE_YESNO, 0, 0, "show this help message and exit" },
-	{ "--no-colors", NULL, TYPE_YESNO, 0, 0, "don't use colors, even if the terminal supports colors" },
-	{ "--pick", "n", TYPE_INT, 1, 13*4 - (1+2+3+4+5+6+7), "pick n cards from stock at a time, default is 3" },
-	{ "--discard-hide", NULL, TYPE_YESNO, 0, 0, "only show topmost discarded card (not useful with --pick=1)" }
+static const OptSpec option_specs[] = {
+	{ "--help", nullptr, OptType::YESNO, 0, 0, "show this help message and exit" },
+	{ "--no-colors", nullptr, OptType::YESNO, 0, 0, "don't use colors, even if the terminal supports colors" },
+	{ "--pick", "n", OptType::INT, 1, 13*4 - (1+2+3+4+5+6+7), "pick n cards from stock at a time, default is 3" },
+	{ "--discard-hide", nullptr, OptType::YESNO, 0, 0, "only show topmost discarded card (not useful with --pick=1)" }
 };
-#define LONGEST_OPTION "--discard-hide"   // TODO: replace this with a function that calculates length
+static std::string longest_option = "--discard-hide";   // TODO: replace this with a function that calculates length
 
-static void print_help_option(struct OptSpec opt)
+static void print_help_option(OptSpec opt)
 {
-	const char *pre;
-	char *tofree = NULL;   // free(NULL) does nothing
-
-	switch(opt.type) {
-	case TYPE_YESNO:
-		pre = opt.name;
-		break;
-	default:
-		if (!( tofree = (char*)malloc(strlen(opt.name) + 1 + strlen(opt.metavar) + 1) ))
-			fatal_error("malloc() failed");
-
-		strcpy(tofree, opt.name);
-		strcat(tofree, " ");
-		strcat(tofree, opt.metavar);
-		pre = tofree;
-		break;
+	std::string pre = opt.name;
+	if (opt.type == OptType::INT) {
+		pre += " ";
+		pre += opt.metavar;
 	}
 
-	fprintf(args_outfile, "  %-*s  %s\n", (int)( sizeof(LONGEST_OPTION)-1 ), pre, opt.desc);
-	free(tofree);
+	std::fprintf(args_outfile, "  %-*s  %s\n", (int)longest_option.length(), pre.c_str(), opt.desc.c_str());
 }
 
-static void print_help(const char *argv0)
+static void print_help(std::string argv0)
 {
-	fprintf(args_outfile, "Usage: %s", argv0);
-	for (unsigned int i = 0; i < sizeof(option_specs)/sizeof(option_specs[0]); i++) {
-		switch(option_specs[i].type) {
-		case TYPE_YESNO:
-			fprintf(args_outfile, " [%s]", option_specs[i].name);
-			break;
-		case TYPE_INT:
-			fprintf(args_outfile, " [%s %s]", option_specs[i].name, option_specs[i].metavar);
-			break;
-		default:
-			assert(0);
+	std::fprintf(args_outfile, "Usage: %s", argv0.c_str());
+	for (OptSpec spec : option_specs) {
+		std::string s = spec.name;
+		if (spec.type == OptType::INT) {
+			s += " ";
+			s += spec.metavar;
 		}
+		std::fprintf(args_outfile, " [%s]", s.c_str());
 	}
 
-	fprintf(args_outfile, "\n\nOptions:\n");
-	for (unsigned int i = 0; i < sizeof(option_specs)/sizeof(option_specs[0]); i++)
-		print_help_option(option_specs[i]);
-}
-
-static bool startswith(const char *s, const char *pre)
-{
-	return (strstr(s, pre) == s);
+	std::fprintf(args_outfile, "\n\nOptions:\n");
+	for (OptSpec spec : option_specs)
+		print_help_option(spec);
 }
 
 // represents an option and a value, if any
 // needed because one arg token can come from 2 argv items: --pick 3
 // or just 1: --no-colors, --pick=3
 struct Token {
-	const struct OptSpec *spec;  // pointer to an item of option_specs
-	const char *value;  // from argv
+	const OptSpec *spec;  // pointer to an item of option_specs
+	const char *value;  // TODO: figure out how to do string or null
 };
 
-static const struct OptSpec *find_from_option_specs(const char *argv0, const char *nam)
+static const OptSpec *find_from_option_specs(std::string argv0, const char *nam)
 {
-	const struct OptSpec *res = NULL;
+	const OptSpec *res = nullptr;
 	for (unsigned int i = 0; i < sizeof(option_specs)/sizeof(option_specs[0]); i++) {
-		if (!startswith(option_specs[i].name, nam))
+		if (option_specs[i].name.find(nam) != 0)
 			continue;
 
 		if (res) {
-			fprintf(args_errfile, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
-					argv0, nam, res->name, option_specs[i].name);
-			return NULL;
+			std::fprintf(args_errfile, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
+					argv0.c_str(), nam, res->name.c_str(), option_specs[i].name.c_str());
+			return nullptr;
 		}
 		res = &option_specs[i];
 	}
 
 	if (!res)
-		fprintf(args_errfile, "%s: unknown option '%s'\n", argv0, nam);
+		std::fprintf(args_errfile, "%s: unknown option '%s'\n", argv0.c_str(), nam);
 	return res;
 }
 
-// returns number of args used, or -1 on error
 // argc and argv should point to remaining args, not always all the args
-static int tokenize(const char *argv0, struct Token *tok, int argc, const char *const *argv)
+static bool tokenize(std::string argv0, Token& tok, std::deque<std::string>& argq)
 {
-	assert(argc >= 1);
-	if (argv[0][0] != '-' || argv[0][1] != '-' || !( 'a' <= argv[0][2] && argv[0][2] <= 'z' )) {
-		fprintf(args_errfile, "%s: unexpected argument: '%s'\n", argv0, argv[0]);
-		return -1;
+	std::string arg = argq[0];
+	argq.pop_front();
+
+	if (arg.length() < 3 || arg.find("--") != 0) {
+		std::fprintf(args_errfile, "%s: unexpected argument: '%s'\n", argv0.c_str(), arg.c_str());
+		return false;
 	}
 
-	char *freeme = nullptr;
-	int nused;
-	const char *nam, *val, *eq;
-	if ( (eq = strchr(argv[0], '=')) ) {
-		nused = 1;
-		freeme = (char*)malloc(eq - argv[0] + 1);
-		if (!freeme)
-			fatal_error("malloc() failed");
+	std::string nam;
+	char *val;  // TODO: std::optional<std::string>
 
-		memcpy(freeme, argv[0], eq - argv[0]);
-		freeme[ eq - argv[0] ] = 0;
-		nam = freeme;
-		val = eq+1;
+	size_t i = arg.find("=");
+	if (i != std::string::npos) {
+		nam = arg.substr(0, i);
+		std::string valstring = arg.substr(i+1);
+		val = (char*)malloc(valstring.length() + 1);
+		assert(val);
+		strcpy(val, valstring.c_str());
 	} else {
-		nam = (char*)argv[0];
-		if (argc >= 2 && argv[1][0] != '-') {  // TODO: handle negative numbers as arguments?
-			nused = 2;
-			val = (char*)argv[1];
+		nam = arg;
+		if (argq.empty() || argq[0].c_str()[0] == '-') {
+			val = nullptr;
 		} else {
-			nused = 1;
-			val = NULL;
+			std::string valarg = argq[0];
+			argq.pop_front();
+
+			// TODO: handle negative numbers as arguments?
+			val = (char*)malloc(valarg.length() + 1);
+			assert(val);
+			strcpy(val, valarg.c_str());
 		}
 	}
 
-	const struct OptSpec *spec = find_from_option_specs(argv0, nam);
+	const OptSpec *spec = find_from_option_specs(argv0, nam.c_str());
 	if (!spec)
-		goto err;
+		return false;
 
-	tok->spec = spec;
-	tok->value = val;
-	goto out;
-
-err:
-	nused = -1;
-	// "fall through" to out
-out:
-	free(freeme);
-	return nused;
+	tok.spec = spec;
+	tok.value = val;
+	return true;
 }
 
-// returns true on success, false on failure
-static bool is_valid_integer(const char *str, int min, int max)
+static bool is_valid_integer(std::string str, int min, int max)
 {
-	// see the example in linux man-pages strtol(3)
-	errno = 0;
-	char *endptr;
-	long val = strtol(str, &endptr, 10);
-
-	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN))
-			|| (errno != 0 && val == 0)) {
-		errno = 0;
+	try {
+		int n = std::stoi(str);
+		return min <= n && n <= max;
+	} catch(...) {
 		return false;
 	}
-
-	if (endptr == str)   // no digits found
-		return false;
-
-	if (*endptr)   // further characters after number
-		return false;
-
-	return( (long)min <= val && val <= (long)max );
 }
 
 // returns 0 on success, negative on failure
-static int check_token_by_type(const char *argv0, struct Token tok)
+static int check_token_by_type(std::string argv0, Token tok)
 {
 	switch(tok.spec->type) {
-	case TYPE_YESNO:
+	case OptType::YESNO:
 		if (tok.value) {
-			fprintf(args_errfile, "%s: use just '%s', not '%s=something' or '%s something'\n",
-					argv0, tok.spec->name, tok.spec->name, tok.spec->name);
+			std::fprintf(args_errfile, "%s: use just '%s', not '%s=something' or '%s something'\n",
+					argv0.c_str(), tok.spec->name.c_str(), tok.spec->name.c_str(), tok.spec->name.c_str());
 			return -1;
 		}
 		break;
 
-	case TYPE_INT:
+	case OptType::INT:
 		if (!tok.value) {
-			fprintf(args_errfile, "%s: use '%s %s' or '%s=%s', not just '%s'\n",
-					argv0, tok.spec->name, tok.spec->metavar, tok.spec->name, tok.spec->metavar, tok.spec->name);
+			std::fprintf(args_errfile, "%s: use '%s %s' or '%s=%s', not just '%s'\n",
+					argv0.c_str(), tok.spec->name.c_str(), tok.spec->metavar, tok.spec->name.c_str(), tok.spec->metavar, tok.spec->name.c_str());
 			return -1;
 		}
 		if (!is_valid_integer(tok.value, tok.spec->min, tok.spec->max)) {
-			fprintf(args_errfile, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
-					argv0, tok.spec->name, tok.spec->min, tok.spec->max, tok.value);
+			std::fprintf(args_errfile, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
+					argv0.c_str(), tok.spec->name.c_str(), tok.spec->min, tok.spec->max, tok.value);
 			return -1;
 		}
 		break;
-
-	default:
-		assert(0);
 	}
 
 	return 0;
 }
 
 // returns 0 on success, negative on failure
-static int check_tokens(const char *argv0, const struct Token *toks, int ntoks)
+static bool check_tokens(std::string argv0, const Token *toks, int ntoks)
 {
 	// to detect duplicates
 	bool seen[sizeof(option_specs)/sizeof(option_specs[0])] = {0};
@@ -226,79 +188,68 @@ static int check_tokens(const char *argv0, const struct Token *toks, int ntoks)
 	for (int i = 0; i < ntoks; i++) {
 		int j = toks[i].spec - &option_specs[0];
 		if (seen[j]) {
-			fprintf(args_errfile, "%s: repeated option '%s'\n", argv0, toks[i].spec->name);
-			return -1;
+			std::fprintf(args_errfile, "%s: repeated option '%s'\n", argv0.c_str(), toks[i].spec->name.c_str());
+			return false;
 		}
 		seen[j] = true;
 
 		if (check_token_by_type(argv0, toks[i]) < 0)
-			return -1;
-	}
-
-	return 0;
-}
-
-static const struct Args default_args = {};
-
-// returns true to keep running, or false to exit with status 0
-static bool tokens_to_struct_args(const char *argv0, const struct Token *toks, int ntoks, struct Args *ar)
-{
-	memcpy(ar, &default_args, sizeof(default_args));
-	for (int i = 0; i < ntoks; i++) {
-#define OPTION_IS(opt) (strcmp(toks[i].spec->name, #opt) == 0)
-
-		if OPTION_IS(--help) {
-			print_help(argv0);
 			return false;
-		}
-
-		if OPTION_IS(--no-colors)
-			ar->color = false;
-		else if OPTION_IS(--pick)
-			ar->pick = atoi(toks[i].value);  // atoi won't fail, the value is already validated
-		else if OPTION_IS(--discard-hide)
-			ar->discardhide = true;
-		else
-			assert(0);
-
-#undef OPTION_IS
 	}
 
 	return true;
 }
 
-int args_parse(struct Args *ar, int argc, const char *const *argv)
+
+// returns true to keep running, or false to exit with status 0
+static bool tokens_to_struct_args(const char *argv0, const Token *toks, int ntoks, Args& ar)
 {
-	const char *argv0 = *argv++;
-	argc--;
+	ar = {};
+	for (int i = 0; i < ntoks; i++) {
 
-	// a token comes from 1 or 2 args, so there are at most argc tokens
-	struct Token *toks = (struct Token *) malloc(sizeof(struct Token) * argc);
-	if (!toks)
-		fatal_error("malloc() failed");
-	int ntoks = 0;
-
-	while (argc > 0) {
-		int n = tokenize(argv0, &toks[ntoks++], argc, argv);
-		if (n < 0) {
-			// TODO: use some kind of smart pointer shit instead of copy/pasta
-			free(toks);
-			fprintf(args_errfile, "Run '%s --help' for help.\n", argv0);
-			return 2;
+		if (toks[i].spec->name == "--help") {
+			print_help(argv0);
+			return false;
 		}
-		argc -= n;
-		argv += n;
+
+		if (toks[i].spec->name == "--no-colors")
+			ar.color = false;
+		else if (toks[i].spec->name == "--pick")
+			ar.pick = atoi(toks[i].value);  // atoi won't fail, the value is already validated
+		else if (toks[i].spec->name == "--discard-hide")
+			ar.discardhide = true;
+		else
+			assert(0);
 	}
 
-	if (check_tokens(argv0, toks, ntoks) < 0) {
+	return true;
+}
+
+int args_parse(Args& ar, std::vector<std::string> argvec)
+{
+	std::deque<std::string> argq;
+	for (std::string v : argvec)
+		argq.push_back(v);
+
+	std::string argv0 = argq[0];
+	argq.pop_front();
+
+	std::vector<Token> toks = {};
+	while (!argq.empty()) {
+		Token t;
+		if (!tokenize(argv0, t, argq)) {
+			// TODO: use some kind of smart pointer shit instead of copy/pasta
+			std::fprintf(args_errfile, "Run '%s --help' for help.\n", argv0.c_str());
+			return 2;
+		}
+		toks.push_back(t);
+	}
+
+	if (!check_tokens(argv0, toks.data(), toks.size())) {
 		// TODO: use some kind of smart pointer shit instead of copy/pasta
-		free(toks);
-		fprintf(args_errfile, "Run '%s --help' for help.\n", argv0);
+		std::fprintf(args_errfile, "Run '%s --help' for help.\n", argv0.c_str());
 		return 2;
 	}
 
-	bool run = tokens_to_struct_args(argv0, toks, ntoks, ar);
-
-	free(toks);
-	return run ? -1 : 0;
+	return tokens_to_struct_args(argv0.c_str(), toks.data(), toks.size(), ar) ? -1 : 0;
 }

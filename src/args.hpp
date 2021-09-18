@@ -1,7 +1,8 @@
 #ifndef ARGS_H
 #define ARGS_H
 
-#include <stdbool.h>
+#include <vector>
+#include <string>
 #include <stdio.h>
 
 struct Args {
@@ -15,6 +16,6 @@ extern FILE *args_outfile;
 extern FILE *args_errfile;
 
 // returns an exit status to return from main, or -1 to keep going
-int args_parse(struct Args *ar, int argc, const char *const *argv);
+int args_parse(Args& ar, std::vector<std::string> argvec);
 
 #endif   // ARGS_H

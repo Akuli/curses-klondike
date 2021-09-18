@@ -177,8 +177,12 @@ int main(int argc, char **argv)
 
 	args_outfile = stdout;
 	args_errfile = stderr;
+	std::vector<std::string> argvec = {};
+	for (int i = 0; i < argc; i++)
+		argvec.push_back(argv[i]);
+
 	struct Args ar;
-	int sts = args_parse(&ar, argc, argv);
+	int sts = args_parse(ar, argvec);
 	if (sts >= 0)
 		return sts;
 
