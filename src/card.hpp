@@ -14,7 +14,7 @@ struct Card {
 	unsigned int num;  // 1 for A, 11 for J, 12 for Q, 13 for K, others the obvious way
 	enum Suit suit;
 	bool visible;
-	struct Card *next;   // the card that is on top of this card, or NULL
+	struct Card *next = nullptr;   // the card that is on top of this card
 };
 
 // creates a shuffled, linked list of 52 non-visible cards

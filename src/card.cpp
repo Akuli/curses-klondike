@@ -1,9 +1,9 @@
-#include "card.h"
+#include "card.hpp"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "misc.h"
+#include "misc.hpp"
 
 // handy_random(n) returns a random integer >= 0 and < n
 static unsigned int handy_random(unsigned int n)
@@ -37,7 +37,7 @@ struct Card *card_createallshuf(void)
 	int i = 0;
 	for (int s = 0; s < 4; s++) {
 		for (int n = 1; n <= 13; n++) {
-			struct Card *crd = malloc(sizeof(struct Card));
+			struct Card *crd = (struct Card *)malloc(sizeof(struct Card));
 			if (!crd)
 				fatal_error("malloc() failed");
 
@@ -67,7 +67,7 @@ void card_free(struct Card *crd)
 
 const char *card_numstr(struct Card crd)
 {
-	static char *nstrs[] = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
+	static const char *nstrs[] = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
 	assert(sizeof(nstrs)/sizeof(nstrs[0]) == 13);
 	assert(1 <= crd.num && crd.num <= 13);
 	return nstrs[crd.num - 1];

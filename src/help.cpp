@@ -1,16 +1,13 @@
-#include "help.h"
+#include "help.hpp"
 #include <assert.h>
-#include <curses.h>
+#include <cursesw.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
-#include "card.h"     // for SuitColor enum
-#include "misc.h"
-#include "scroll.h"
-
-// copy/pasted from man page, i don't know why i get warnings without this
-int mvwaddnwstr(WINDOW *win, int y, int x, const wchar_t *wstr, int n);
+#include "card.hpp"   // for SuitColor enum
+#include "misc.hpp"
+#include "scroll.hpp"
 
 static const char *picture[] = {
 	"╭──╮╭──╮    ╭──╮╭──╮╭──╮╭──╮",
@@ -65,7 +62,7 @@ static char *get_rules(const char *argv0)
 	int len = snprintf(NULL, 0, rules, argv0);
 	assert(len > 0);
 
-	char *buf = malloc(len+1);
+	char *buf = (char*)malloc(len+1);
 	if (!buf)
 		fatal_error("malloc() failed");
 
@@ -85,7 +82,7 @@ static int get_max_width(int w, int xoff, int yoff)
 static wchar_t *string_to_wstring(const char *s)
 {
 	size_t n = mbstowcs(NULL, s, 0) + 1;
-	wchar_t *ws = malloc(n * sizeof(wchar_t));
+	wchar_t *ws = (wchar_t *)malloc(n * sizeof(wchar_t));
 	if (!ws)
 		fatal_error("malloc() failed");
 

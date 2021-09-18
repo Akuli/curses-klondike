@@ -1,15 +1,15 @@
-#include "scroll.h"
+#include "scroll.hpp"
 #include <curses.h>
 #include <limits.h>
 #include <stdbool.h>
-#include "misc.h"
+#include "misc.hpp"
 
 #define BOTTOM_BAR_SIZE 1
 
 struct ScrollState {
 	WINDOW *const win;
 	WINDOW *const pad;
-	int firstlineno;   // 0 means first line
+	int firstlineno = 0;   // 0 means first line
 };
 
 // makes sure that it's not scrolled too far up or down
@@ -44,7 +44,7 @@ static void draw_pad_to_window(struct ScrollState *st)
 	// if this code is wrong, it either segfaults or does nothing
 	copywin(st->pad, st->win, st->firstlineno, 0, 0, 0, min(winh, padh)-1, min(winw, padw)-1, true);
 
-	char *msg;
+	const char *msg;
 	if (winh < padh)
 		msg = "Move with ↑ and ↓, or press q to quit.";
 	else
@@ -105,7 +105,7 @@ static bool handle_key(struct ScrollState *st, int k)
 // must wrefresh(win) after this, but not before
 void scroll_showpad(WINDOW *win, WINDOW *pad)
 {
-	struct ScrollState st = { .win = win, .pad = pad, .firstlineno = 0 };
+	struct ScrollState st = { win, pad };
 	do {
 		werase(win);
 		draw_pad_to_window(&st);

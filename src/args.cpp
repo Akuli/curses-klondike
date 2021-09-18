@@ -4,7 +4,7 @@ so i did it myself, why not :D
 doesn't support --, but nobody needs it for this program imo
 */
 
-#include "args.h"
+#include "args.hpp"
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
@@ -12,7 +12,7 @@ doesn't support --, but nobody needs it for this program imo
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "misc.h"
+#include "misc.hpp"
 
 enum OptType { TYPE_YESNO, TYPE_INT };
 
@@ -44,7 +44,7 @@ static void print_help_option(struct OptSpec opt)
 		pre = opt.name;
 		break;
 	default:
-		if (!( tofree = malloc(strlen(opt.name) + 1 + strlen(opt.metavar) + 1) ))
+		if (!( tofree = (char*)malloc(strlen(opt.name) + 1 + strlen(opt.metavar) + 1) ))
 			fatal_error("malloc() failed");
 
 		strcpy(tofree, opt.name);
@@ -114,7 +114,7 @@ static const struct OptSpec *find_from_option_specs(const char *argv0, const cha
 
 // returns number of args used, or -1 on error
 // argc and argv should point to remaining args, not always all the args
-static int tokenize(const char *argv0, struct Token *tok, int argc, char *const *argv)
+static int tokenize(const char *argv0, struct Token *tok, int argc, const char *const *argv)
 {
 	assert(argc >= 1);
 	if (argv[0][0] != '-' || argv[0][1] != '-' || !( 'a' <= argv[0][2] && argv[0][2] <= 'z' )) {
@@ -122,24 +122,24 @@ static int tokenize(const char *argv0, struct Token *tok, int argc, char *const 
 		return -1;
 	}
 
+	char *freeme = nullptr;
 	int nused;
-	char *nam, *val, *eq;
-	bool freenam = false;
+	const char *nam, *val, *eq;
 	if ( (eq = strchr(argv[0], '=')) ) {
 		nused = 1;
-		freenam = true;
-		nam = malloc(eq - argv[0] + 1);
-		if (!nam)
+		freeme = (char*)malloc(eq - argv[0] + 1);
+		if (!freeme)
 			fatal_error("malloc() failed");
 
-		memcpy(nam, argv[0], eq - argv[0]);
-		nam[ eq - argv[0] ] = 0;
+		memcpy(freeme, argv[0], eq - argv[0]);
+		freeme[ eq - argv[0] ] = 0;
+		nam = freeme;
 		val = eq+1;
 	} else {
-		nam = argv[0];
+		nam = (char*)argv[0];
 		if (argc >= 2 && argv[1][0] != '-') {  // TODO: handle negative numbers as arguments?
 			nused = 2;
-			val = argv[1];
+			val = (char*)argv[1];
 		} else {
 			nused = 1;
 			val = NULL;
@@ -158,8 +158,7 @@ err:
 	nused = -1;
 	// "fall through" to out
 out:
-	if (freenam)
-		free(nam);
+	free(freeme);
 	return nused;
 }
 
@@ -239,11 +238,7 @@ static int check_tokens(const char *argv0, const struct Token *toks, int ntoks)
 	return 0;
 }
 
-static const struct Args default_args = {
-	.color = true,
-	.pick = 3,
-	.discardhide = false
-};
+static const struct Args default_args = {};
 
 // returns true to keep running, or false to exit with status 0
 static bool tokens_to_struct_args(const char *argv0, const struct Token *toks, int ntoks, struct Args *ar)
@@ -272,35 +267,38 @@ static bool tokens_to_struct_args(const char *argv0, const struct Token *toks, i
 	return true;
 }
 
-int args_parse(struct Args *ar, int argc, char *const *argv)
+int args_parse(struct Args *ar, int argc, const char *const *argv)
 {
-	char *argv0 = *argv++;
+	const char *argv0 = *argv++;
 	argc--;
 
 	// a token comes from 1 or 2 args, so there are at most argc tokens
-	struct Token *toks = malloc(sizeof(struct Token) * argc);
+	struct Token *toks = (struct Token *) malloc(sizeof(struct Token) * argc);
 	if (!toks)
 		fatal_error("malloc() failed");
 	int ntoks = 0;
 
 	while (argc > 0) {
 		int n = tokenize(argv0, &toks[ntoks++], argc, argv);
-		if (n < 0)
-			goto err;
+		if (n < 0) {
+			// TODO: use some kind of smart pointer shit instead of copy/pasta
+			free(toks);
+			fprintf(args_errfile, "Run '%s --help' for help.\n", argv0);
+			return 2;
+		}
 		argc -= n;
 		argv += n;
 	}
 
-	if (check_tokens(argv0, toks, ntoks) < 0)
-		goto err;
+	if (check_tokens(argv0, toks, ntoks) < 0) {
+		// TODO: use some kind of smart pointer shit instead of copy/pasta
+		free(toks);
+		fprintf(args_errfile, "Run '%s --help' for help.\n", argv0);
+		return 2;
+	}
 
 	bool run = tokens_to_struct_args(argv0, toks, ntoks, ar);
 
 	free(toks);
 	return run ? -1 : 0;
-
-err:
-	free(toks);
-	fprintf(args_errfile, "Run '%s --help' for help.\n", argv0);
-	return 2;
 }

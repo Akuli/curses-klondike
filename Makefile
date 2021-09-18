@@ -1,11 +1,11 @@
-CFLAGS += -Wall -Wextra -Wpedantic -std=c99 -Wno-unused-parameter
+CFLAGS += -Wall -Wextra -Wpedantic -std=c++17 -Wno-unused-parameter
 LDFLAGS += -lncursesw     # needs cursesw instead of curses for unicodes
 IWYU ?= iwyu
 
-SRC := $(filter-out src/main.c, $(wildcard src/*.c))
-OBJ := $(SRC:src/%.c=obj/%.o)
-HEADERS := $(wildcard src/*.h)
-TESTS_SRC := $(wildcard tests/*.c)
+SRC := $(filter-out src/main.cpp, $(wildcard src/*.cpp))
+OBJ := $(SRC:src/%.cpp=obj/%.o)
+HEADERS := $(wildcard src/*.hpp)
+TESTS_SRC := $(wildcard tests/*.cpp)
 
 # valgrind is used in tests
 ifdef VALGRIND
@@ -15,23 +15,23 @@ endif
 
 all: test cursesklon
 
-cursesklon: src/main.c $(OBJ) $(HEADERS)
-	$(CC) $(CFLAGS) $< $(OBJ) -o $@ $(LDFLAGS)
+cursesklon: src/main.cpp $(OBJ) $(HEADERS)
+	$(CXX) $(CFLAGS) $< $(OBJ) -o $@ $(LDFLAGS)
 
 .PHONY: clean
 clean:
 	rm -vrf obj cursesklon testrunner
 
-obj/%.o: src/%.c $(HEADERS)
-	mkdir -p $(@D) && $(CC) -c -o $@ $< $(CFLAGS)
+obj/%.o: src/%.cpp $(HEADERS)
+	mkdir -p $(@D) && $(CXX) -c -o $@ $< $(CFLAGS)
 
 .PHONY: iwyu
 iwyu:
-	for file in $(SRC) src/main.c; do $(IWYU) $$file; done || true
+	for file in $(SRC) src/main.cpp; do $(IWYU) $$file; done || true
 	for file in $(TESTS_SRC); do $(IWYU) -I. $$file; done || true
 
 testrunner: $(TESTS_SRC) $(OBJ)
-	$(CC) -I. $(CFLAGS) $(TESTS_SRC) $(OBJ) -o testrunner $(LDFLAGS)
+	$(CXX) -I. $(CFLAGS) $(TESTS_SRC) $(OBJ) -o testrunner $(LDFLAGS)
 
 .PHONY: test
 test: testrunner

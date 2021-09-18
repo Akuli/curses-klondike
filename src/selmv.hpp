@@ -2,7 +2,7 @@
 #define SELMV_H
 
 #include <stdbool.h>
-#include "klon.h"
+#include "klon.hpp"
 
 /*
 represents the card pile or location that the user has selected

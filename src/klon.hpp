@@ -4,7 +4,7 @@
 #define KLON_H
 
 #include <stdbool.h>
-#include "card.h"   // IWYU pragma: keep
+#include "card.hpp" // IWYU pragma: keep
 
 struct Klon {
 	// https://www.denexa.com/wp-content/uploads/2015/11/klondike.png

@@ -9,13 +9,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "args.h"
-#include "card.h"
-#include "help.h"
-#include "misc.h"
-#include "selmv.h"
-#include "klon.h"
-#include "ui.h"
+#include "args.hpp"
+#include "card.hpp"
+#include "help.hpp"
+#include "misc.hpp"
+#include "selmv.hpp"
+#include "klon.hpp"
+#include "ui.hpp"
 
 
 static bool initscred = false;

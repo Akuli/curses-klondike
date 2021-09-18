@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <stdbool.h>
-#include <src/card.h>
 #include <string.h>
-#include "util.h"
+#include "util.hpp"
+#include "../src/card.hpp"
 
 TEST(card_suit_color)
 {
@@ -51,11 +51,11 @@ TEST(card_createallshuf_gives_all_52_cards)
 			assert(got[i][j] == 1);
 }
 
-struct CardStrTest { int num; char *numstr; };
+struct CardStrTest { unsigned int num; const char *numstr; };
 
 TEST(card_str)
 {
-	struct CardStrTest tests[] = {
+	CardStrTest tests[] = {
 		{1, "A"},
 		{2, "2"},
 		{3, "3"},
@@ -72,12 +72,7 @@ TEST(card_str)
 	for (int j=0; j < 4; j++)
 	for (int visible=0; visible < 2; visible++)
 	{
-		struct Card crd = {
-			.num = tests[i].num,
-			.suit = suits[j],
-			.visible = visible,
-			.next = NULL
-		};
+		struct Card crd = { tests[i].num, suits[j], visible };
 
 		// the unicode should be 3 bytes
 		// TODO: check that each suit has a unique suitstr?

@@ -5,9 +5,9 @@
 #include <stdio.h>
 
 struct Args {
-	bool color;
-	unsigned int pick;
-	bool discardhide;
+	bool color = true;
+	unsigned int pick = 3;
+	bool discardhide = false;
 };
 
 // main.c sets these to stdout and stderr, tests/test_args.c sets these to temporary files
@@ -15,6 +15,6 @@ extern FILE *args_outfile;
 extern FILE *args_errfile;
 
 // returns an exit status to return from main, or -1 to keep going
-int args_parse(struct Args *ar, int argc, char *const *argv);
+int args_parse(struct Args *ar, int argc, const char *const *argv);
 
 #endif   // ARGS_H

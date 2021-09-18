@@ -1,9 +1,9 @@
-#include "selmv.h"
+#include "selmv.hpp"
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include "card.h"
-#include "klon.h"
+#include "card.hpp"
+#include "klon.hpp"
 
 static int place_2_card_x(KlonCardPlace plc)
 {

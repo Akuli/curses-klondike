@@ -1,12 +1,12 @@
-#include "ui.h"
+#include "ui.hpp"
 #include <assert.h>
 #include <curses.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include "card.h"
-#include "klon.h"
-#include "misc.h"
+#include "card.hpp"
+#include "klon.hpp"
+#include "misc.hpp"
 
 #define CARD_WIDTH 7
 #define CARD_HEIGHT 5
@@ -47,7 +47,7 @@ static inline int ui_y(int ycnt, int h)
 // because i need 2 kind of borders, "normal" and "selected"
 struct Border {
 	// e.g. hrz = horizontal, ul = upper left
-	char *hrz, *vrt, *ul, *ur, *ll, *lr;
+	const char *hrz, *vrt, *ul, *ur, *ll, *lr;
 };
 
 // https://en.wikipedia.org/wiki/Box-drawing_character#Unicode
@@ -207,7 +207,7 @@ static void draw_the_klon(WINDOW *win, struct Klon kln, struct Sel sel, bool mov
 	}
 
 	if (klon_win(kln)) {
-		char *msg = "you win :)";
+		const char *msg = "you win :)";
 		mvwaddstr(win, h/2, (w - strlen(msg))/2, msg);
 	}
 }
@@ -234,7 +234,7 @@ void ui_drawklon(WINDOW *win, struct Klon kln, struct SelMv selmv, bool color, b
 
 	if (selmv.ismv) {
 		struct Klon tmpkln;
-		struct Sel tmpsel = { .card = klon_dup(kln, &tmpkln, selmv.mv.card), .place = selmv.mv.dst };
+		struct Sel tmpsel = { klon_dup(kln, &tmpkln, selmv.mv.card), selmv.mv.dst };
 
 		klon_move(&tmpkln, tmpsel.card, tmpsel.place, true);
 		draw_the_klon(win, tmpkln, tmpsel, true, color, dh, dscxoff);

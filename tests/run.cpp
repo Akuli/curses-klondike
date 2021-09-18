@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <src/help.h>
+#include <src/help.hpp>
 
 static void donothing(void) { }
 
-// externed in src/misc.h
+// externed in src/misc.hpp
 void (*onerrorexit)(void) = donothing;
 
-// externed in help.h
+// externed in help.hpp
 const struct HelpKey help_keys[] = { {NULL, NULL} };
 
 

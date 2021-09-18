@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "misc.h"
+#include "misc.hpp"
 
 void fatal_error(const char *msg)
 {

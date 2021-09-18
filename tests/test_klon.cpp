@@ -1,9 +1,9 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <src/card.h>
-#include <src/klon.h>
-#include "util.h"
+#include "../src/card.hpp"
+#include "../src/klon.hpp"
+#include "util.hpp"
 
 
 TEST(klon_cardplace)

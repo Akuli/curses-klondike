@@ -1,11 +1,11 @@
-#include "klon.h"
+#include "klon.hpp"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "card.h"
-#include "misc.h"
+#include "card.hpp"
+#include "misc.hpp"
 
 void klon_init(struct Klon *kln, struct Card *list)
 {
@@ -73,7 +73,7 @@ static void copy_cards(const struct Card *src, struct Card **dst, const struct C
 	struct Card *top = NULL;
 
 	for (; src; src = src->next) {
-		struct Card *dup = malloc(sizeof(struct Card));
+		struct Card *dup = (struct Card *) malloc(sizeof(struct Card));
 		if (!dup)
 			fatal_error("malloc() failed");
 		if (src == srccrd)
