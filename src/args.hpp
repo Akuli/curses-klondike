@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-#include <stdio.h>
+#include <cstdio>  // c++ io streams suck ass https://stackoverflow.com/a/15106194
 
 struct Args {
 	bool color = true;
@@ -11,11 +11,7 @@ struct Args {
 	bool discardhide = false;
 };
 
-// main.c sets these to stdout and stderr, tests/test_args.c sets these to temporary files
-extern FILE *args_outfile;
-extern FILE *args_errfile;
-
 // returns an exit status to return from main, or -1 to keep going
-int args_parse(Args& ar, std::vector<std::string> argvec);
+int args_parse(Args& ar, std::vector<std::string> argvec, FILE *out, FILE *err);
 
 #endif   // ARGS_H

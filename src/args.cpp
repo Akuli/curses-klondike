@@ -39,7 +39,13 @@ static const OptSpec option_specs[] = {
 };
 static std::string longest_option = "--discard-hide";   // TODO: replace this with a function that calculates length
 
-static void print_help_option(OptSpec opt)
+struct Printer {
+	FILE *out;
+	FILE *err;
+	std::string argv0;
+};
+
+static void print_help_option(Printer printer, OptSpec opt)
 {
 	std::string pre = opt.name;
 	if (opt.type == OptType::INT) {
@@ -47,24 +53,24 @@ static void print_help_option(OptSpec opt)
 		pre += opt.metavar;
 	}
 
-	std::fprintf(args_outfile, "  %-*s  %s\n", (int)longest_option.length(), pre.c_str(), opt.desc.c_str());
+	std::fprintf(printer.out, "  %-*s  %s\n", (int)longest_option.length(), pre.c_str(), opt.desc.c_str());
 }
 
-static void print_help(std::string argv0)
+static void print_help(Printer printer)
 {
-	std::fprintf(args_outfile, "Usage: %s", argv0.c_str());
+	std::fprintf(printer.out, "Usage: %s", printer.argv0.c_str());
 	for (OptSpec spec : option_specs) {
 		std::string s = spec.name;
 		if (spec.type == OptType::INT) {
 			s += " ";
 			s += spec.metavar;
 		}
-		std::fprintf(args_outfile, " [%s]", s.c_str());
+		std::fprintf(printer.out, " [%s]", s.c_str());
 	}
 
-	std::fprintf(args_outfile, "\n\nOptions:\n");
+	std::fprintf(printer.out, "\n\nOptions:\n");
 	for (OptSpec spec : option_specs)
-		print_help_option(spec);
+		print_help_option(printer, spec);
 }
 
 // represents an option and a value, if any
@@ -75,7 +81,7 @@ struct Token {
 	const char *value;  // TODO: figure out how to do string or null
 };
 
-static const OptSpec *find_from_option_specs(std::string argv0, const char *nam)
+static const OptSpec *find_from_option_specs(Printer printer, const char *nam)
 {
 	const OptSpec *res = nullptr;
 	for (unsigned int i = 0; i < sizeof(option_specs)/sizeof(option_specs[0]); i++) {
@@ -83,26 +89,26 @@ static const OptSpec *find_from_option_specs(std::string argv0, const char *nam)
 			continue;
 
 		if (res) {
-			std::fprintf(args_errfile, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
-					argv0.c_str(), nam, res->name.c_str(), option_specs[i].name.c_str());
+			std::fprintf(printer.err, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
+					printer.argv0.c_str(), nam, res->name.c_str(), option_specs[i].name.c_str());
 			return nullptr;
 		}
 		res = &option_specs[i];
 	}
 
 	if (!res)
-		std::fprintf(args_errfile, "%s: unknown option '%s'\n", argv0.c_str(), nam);
+		std::fprintf(printer.err, "%s: unknown option '%s'\n", printer.argv0.c_str(), nam);
 	return res;
 }
 
 // argc and argv should point to remaining args, not always all the args
-static bool tokenize(std::string argv0, Token& tok, std::deque<std::string>& argq)
+static bool tokenize(Printer printer, Token& tok, std::deque<std::string>& argq)
 {
 	std::string arg = argq[0];
 	argq.pop_front();
 
 	if (arg.length() < 3 || arg.find("--") != 0) {
-		std::fprintf(args_errfile, "%s: unexpected argument: '%s'\n", argv0.c_str(), arg.c_str());
+		std::fprintf(printer.err, "%s: unexpected argument: '%s'\n", printer.argv0.c_str(), arg.c_str());
 		return false;
 	}
 
@@ -131,7 +137,7 @@ static bool tokenize(std::string argv0, Token& tok, std::deque<std::string>& arg
 		}
 	}
 
-	const OptSpec *spec = find_from_option_specs(argv0, nam.c_str());
+	const OptSpec *spec = find_from_option_specs(printer, nam.c_str());
 	if (!spec)
 		return false;
 
@@ -151,26 +157,26 @@ static bool is_valid_integer(std::string str, int min, int max)
 }
 
 // returns 0 on success, negative on failure
-static int check_token_by_type(std::string argv0, Token tok)
+static int check_token_by_type(Printer printer, Token tok)
 {
 	switch(tok.spec->type) {
 	case OptType::YESNO:
 		if (tok.value) {
-			std::fprintf(args_errfile, "%s: use just '%s', not '%s=something' or '%s something'\n",
-					argv0.c_str(), tok.spec->name.c_str(), tok.spec->name.c_str(), tok.spec->name.c_str());
+			std::fprintf(printer.err, "%s: use just '%s', not '%s=something' or '%s something'\n",
+					printer.argv0.c_str(), tok.spec->name.c_str(), tok.spec->name.c_str(), tok.spec->name.c_str());
 			return -1;
 		}
 		break;
 
 	case OptType::INT:
 		if (!tok.value) {
-			std::fprintf(args_errfile, "%s: use '%s %s' or '%s=%s', not just '%s'\n",
-					argv0.c_str(), tok.spec->name.c_str(), tok.spec->metavar, tok.spec->name.c_str(), tok.spec->metavar, tok.spec->name.c_str());
+			std::fprintf(printer.err, "%s: use '%s %s' or '%s=%s', not just '%s'\n",
+					printer.argv0.c_str(), tok.spec->name.c_str(), tok.spec->metavar, tok.spec->name.c_str(), tok.spec->metavar, tok.spec->name.c_str());
 			return -1;
 		}
 		if (!is_valid_integer(tok.value, tok.spec->min, tok.spec->max)) {
-			std::fprintf(args_errfile, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
-					argv0.c_str(), tok.spec->name.c_str(), tok.spec->min, tok.spec->max, tok.value);
+			std::fprintf(printer.err, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
+					printer.argv0.c_str(), tok.spec->name.c_str(), tok.spec->min, tok.spec->max, tok.value);
 			return -1;
 		}
 		break;
@@ -180,7 +186,7 @@ static int check_token_by_type(std::string argv0, Token tok)
 }
 
 // returns 0 on success, negative on failure
-static bool check_tokens(std::string argv0, const Token *toks, int ntoks)
+static bool check_tokens(Printer printer, const Token *toks, int ntoks)
 {
 	// to detect duplicates
 	bool seen[sizeof(option_specs)/sizeof(option_specs[0])] = {0};
@@ -188,12 +194,12 @@ static bool check_tokens(std::string argv0, const Token *toks, int ntoks)
 	for (int i = 0; i < ntoks; i++) {
 		int j = toks[i].spec - &option_specs[0];
 		if (seen[j]) {
-			std::fprintf(args_errfile, "%s: repeated option '%s'\n", argv0.c_str(), toks[i].spec->name.c_str());
+			std::fprintf(printer.err, "%s: repeated option '%s'\n", printer.argv0.c_str(), toks[i].spec->name.c_str());
 			return false;
 		}
 		seen[j] = true;
 
-		if (check_token_by_type(argv0, toks[i]) < 0)
+		if (check_token_by_type(printer, toks[i]) < 0)
 			return false;
 	}
 
@@ -202,13 +208,13 @@ static bool check_tokens(std::string argv0, const Token *toks, int ntoks)
 
 
 // returns true to keep running, or false to exit with status 0
-static bool tokens_to_struct_args(const char *argv0, const Token *toks, int ntoks, Args& ar)
+static bool tokens_to_struct_args(Printer printer, const Token *toks, int ntoks, Args& ar)
 {
 	ar = {};
 	for (int i = 0; i < ntoks; i++) {
 
 		if (toks[i].spec->name == "--help") {
-			print_help(argv0);
+			print_help(printer);
 			return false;
 		}
 
@@ -225,8 +231,10 @@ static bool tokens_to_struct_args(const char *argv0, const Token *toks, int ntok
 	return true;
 }
 
-int args_parse(Args& ar, std::vector<std::string> argvec)
+int args_parse(Args& ar, std::vector<std::string> argvec, FILE *out, FILE *err)
 {
+	Printer printer = { out, err, argvec[0] };
+
 	std::deque<std::string> argq;
 	for (std::string v : argvec)
 		argq.push_back(v);
@@ -237,19 +245,19 @@ int args_parse(Args& ar, std::vector<std::string> argvec)
 	std::vector<Token> toks = {};
 	while (!argq.empty()) {
 		Token t;
-		if (!tokenize(argv0, t, argq)) {
+		if (!tokenize(printer, t, argq)) {
 			// TODO: use some kind of smart pointer shit instead of copy/pasta
-			std::fprintf(args_errfile, "Run '%s --help' for help.\n", argv0.c_str());
+			std::fprintf(printer.err, "Run '%s --help' for help.\n", printer.argv0.c_str());
 			return 2;
 		}
 		toks.push_back(t);
 	}
 
-	if (!check_tokens(argv0, toks.data(), toks.size())) {
+	if (!check_tokens(printer, toks.data(), toks.size())) {
 		// TODO: use some kind of smart pointer shit instead of copy/pasta
-		std::fprintf(args_errfile, "Run '%s --help' for help.\n", argv0.c_str());
+		std::fprintf(printer.err, "Run '%s --help' for help.\n", printer.argv0.c_str());
 		return 2;
 	}
 
-	return tokens_to_struct_args(argv0.c_str(), toks.data(), toks.size(), ar) ? -1 : 0;
+	return tokens_to_struct_args(printer, toks.data(), toks.size(), ar) ? -1 : 0;
 }

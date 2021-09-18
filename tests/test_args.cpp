@@ -6,22 +6,20 @@
 #include <string.h>
 #include "util.hpp"
 
-// these are externed in src/args.h
-FILE *args_outfile;
-FILE *args_errfile;
-
+FILE *args_test_out;
+FILE *args_test_err;
 
 void init_args_tests(void)
 {
-	args_outfile = tmpfile();
-	args_errfile = tmpfile();
-	assert(args_outfile && args_errfile);
+	args_test_out = tmpfile();
+	args_test_err = tmpfile();
+	assert(args_test_out && args_test_err);
 }
 
 void deinit_args_tests(void)
 {
-	fclose(args_outfile);
-	fclose(args_errfile);
+	fclose(args_test_out);
+	fclose(args_test_err);
 }
 
 static void escape_print(const char *s)
@@ -67,14 +65,16 @@ static void read_args_file(FILE *f, const char *val)
 }
 
 
-// creates 2 comma-separated things
-#define ARGS(...) (const char*[]){ __VA_ARGS__ }
+static int parse(Args& ar, std::vector<std::string> argvec)
+{
+	return args_parse(ar, argvec, args_test_out, args_test_err);
+}
 
 TEST(args_help)
 {
-	struct Args ar;
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd", "--help" }) == 0);
-	read_args_file(args_outfile,
+	Args ar;
+	assert(parse(ar, std::vector<std::string>{ "asdasd", "--help" }) == 0);
+	read_args_file(args_test_out,
 		"Usage: asdasd [--help] [--no-colors] [--pick n] [--discard-hide]\n\n"
 		"Options:\n"
 		"  --help          show this help message and exit\n"
@@ -86,8 +86,8 @@ TEST(args_help)
 
 TEST(args_defaults)
 {
-	struct Args ar;
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd" }) == -1);
+	Args ar;
+	assert(parse(ar, std::vector<std::string>{ "asdasd" }) == -1);
 	assert(ar.color);
 	assert(ar.pick == 3);
 	assert(!ar.discardhide);
@@ -95,8 +95,8 @@ TEST(args_defaults)
 
 TEST(args_no_defaults)
 {
-	struct Args ar;
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd", "--no-color", "--pick=2", "--discard-hide" }) == -1);
+	Args ar;
+	assert(parse(ar, std::vector<std::string>{ "asdasd", "--no-color", "--pick=2", "--discard-hide" }) == -1);
 	assert(!ar.color);
 	assert(ar.pick == 2);
 	assert(ar.discardhide);
@@ -106,49 +106,49 @@ TEST(args_no_defaults)
 
 TEST(args_errors)
 {
-	struct Args ar;
+	Args ar;
 
 	// TODO: test ambiguous option if there will ever be an ambiguous option
 
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd", "--wut" }) == 2);
-	read_args_file(args_errfile, "asdasd: unknown option '--wut'" HELP_STUFF);
+	assert(parse(ar, std::vector<std::string>{ "asdasd", "--wut" }) == 2);
+	read_args_file(args_test_err, "asdasd: unknown option '--wut'" HELP_STUFF);
 
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd", "wut" }) == 2);
-	read_args_file(args_errfile, "asdasd: unexpected argument: 'wut'" HELP_STUFF);
+	assert(parse(ar, std::vector<std::string>{ "asdasd", "wut" }) == 2);
+	read_args_file(args_test_err, "asdasd: unexpected argument: 'wut'" HELP_STUFF);
 
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd", "--no-colors", "lel" }) == 2);
-	read_args_file(args_errfile,
+	assert(parse(ar, std::vector<std::string>{ "asdasd", "--no-colors", "lel" }) == 2);
+	read_args_file(args_test_err,
 		"asdasd: use just '--no-colors', not '--no-colors=something' or '--no-colors something'" HELP_STUFF);
 
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd", "--no-colors", "--no-colors" }) == 2);
-	read_args_file(args_errfile, "asdasd: repeated option '--no-colors'" HELP_STUFF);
+	assert(parse(ar, std::vector<std::string>{ "asdasd", "--no-colors", "--no-colors" }) == 2);
+	read_args_file(args_test_err, "asdasd: repeated option '--no-colors'" HELP_STUFF);
 
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd", "--no-colors", "--no-colors", "--no-colors", "--no-colors" }) == 2);
-	read_args_file(args_errfile, "asdasd: repeated option '--no-colors'" HELP_STUFF);
+	assert(parse(ar, std::vector<std::string>{ "asdasd", "--no-colors", "--no-colors", "--no-colors", "--no-colors" }) == 2);
+	read_args_file(args_test_err, "asdasd: repeated option '--no-colors'" HELP_STUFF);
 
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd", "--pick" }) == 2);
-	read_args_file(args_errfile, "asdasd: use '--pick n' or '--pick=n', not just '--pick'" HELP_STUFF);
+	assert(parse(ar, std::vector<std::string>{ "asdasd", "--pick" }) == 2);
+	read_args_file(args_test_err, "asdasd: use '--pick n' or '--pick=n', not just '--pick'" HELP_STUFF);
 
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd", "--pick", "a" }) == 2);
-	read_args_file(args_errfile, "asdasd: '--pick' wants an integer between 1 and 24, not 'a'" HELP_STUFF);
+	assert(parse(ar, std::vector<std::string>{ "asdasd", "--pick", "a" }) == 2);
+	read_args_file(args_test_err, "asdasd: '--pick' wants an integer between 1 and 24, not 'a'" HELP_STUFF);
 
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd", "--pick", "1", "2" }) == 2);
-	read_args_file(args_errfile, "asdasd: unexpected argument: '2'" HELP_STUFF);
+	assert(parse(ar, std::vector<std::string>{ "asdasd", "--pick", "1", "2" }) == 2);
+	read_args_file(args_test_err, "asdasd: unexpected argument: '2'" HELP_STUFF);
 
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd", "--pick=a" }) == 2);
-	read_args_file(args_errfile, "asdasd: '--pick' wants an integer between 1 and 24, not 'a'" HELP_STUFF);
+	assert(parse(ar, std::vector<std::string>{ "asdasd", "--pick=a" }) == 2);
+	read_args_file(args_test_err, "asdasd: '--pick' wants an integer between 1 and 24, not 'a'" HELP_STUFF);
 
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd", "--pick=0" }) == 2);
-	read_args_file(args_errfile, "asdasd: '--pick' wants an integer between 1 and 24, not '0'" HELP_STUFF);
+	assert(parse(ar, std::vector<std::string>{ "asdasd", "--pick=0" }) == 2);
+	read_args_file(args_test_err, "asdasd: '--pick' wants an integer between 1 and 24, not '0'" HELP_STUFF);
 
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd", "--pick=1" }) == -1);
+	assert(parse(ar, std::vector<std::string>{ "asdasd", "--pick=1" }) == -1);
 	assert(ar.pick == 1);
 }
 
 TEST(args_nused_bug)
 {
-	struct Args ar;
-	assert(args_parse(ar, std::vector<std::string>{ "asdasd", "--pick=1", "--no-color" }) == -1);
+	Args ar;
+	assert(parse(ar, std::vector<std::string>{ "asdasd", "--pick=1", "--no-color" }) == -1);
 	assert(ar.pick == 1);
 	assert(!ar.color);  // the bug was that --no-color got ignored
 }

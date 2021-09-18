@@ -31,12 +31,6 @@ static void exitcb(void)
 }
 void (*onerrorexit)(void) = exitcb;
 
-// these are externed in args.h
-// these can't be const or even have initial values because stdout,stderr are not const
-FILE *args_outfile;
-FILE *args_errfile;
-
-
 static enum SelDirection curses_key_to_seldirection(int k)
 {
 	switch(k) {
@@ -175,14 +169,12 @@ int main(int argc, char **argv)
 	if (!setlocale(LC_ALL, ""))
 		fatal_error("setlocale() failed");
 
-	args_outfile = stdout;
-	args_errfile = stderr;
 	std::vector<std::string> argvec = {};
 	for (int i = 0; i < argc; i++)
 		argvec.push_back(argv[i]);
 
 	struct Args ar;
-	int sts = args_parse(ar, argvec);
+	int sts = args_parse(ar, argvec, stdout, stderr);
 	if (sts >= 0)
 		return sts;
 
