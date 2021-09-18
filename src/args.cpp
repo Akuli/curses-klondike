@@ -4,6 +4,7 @@ so i did it myself, why not :D
 doesn't support --, but nobody needs it for this program imo
 */
 
+#include <set>
 #include <deque>
 #include <string>
 #include <optional>
@@ -31,7 +32,7 @@ struct OptSpec {
 };
 
 // TODO: document env vars in --help
-static const OptSpec option_specs[] = {
+static const std::vector<OptSpec> option_specs = {
 	{ "--help", std::nullopt, OptType::YESNO, 0, 0, "show this help message and exit" },
 	{ "--no-colors", std::nullopt, OptType::YESNO, 0, 0, "don't use colors, even if the terminal supports colors" },
 	{ "--pick", "n", OptType::INT, 1, 13*4 - (1+2+3+4+5+6+7), "pick n cards from stock at a time, default is 3" },
@@ -73,26 +74,27 @@ static void print_help(Printer printer)
 // needed because one arg token can come from 2 argv items: --pick 3
 // or just 1: --no-colors, --pick=3
 struct Token {
-	const OptSpec *spec;  // pointer to an item of option_specs
+	OptSpec spec;
 	std::optional<std::string> value;
 };
 
-static const OptSpec *find_from_option_specs(Printer printer, std::string nam)
+static std::optional<OptSpec> find_from_option_specs(Printer printer, std::string nam)
 {
-	const OptSpec *res = nullptr;
-	for (unsigned int i = 0; i < sizeof(option_specs)/sizeof(option_specs[0]); i++) {
-		if (option_specs[i].name.find(nam) != 0)
+	std::optional<OptSpec> res = std::nullopt;
+
+	for (OptSpec spec : option_specs) {
+		if (spec.name.find(nam) != 0)
 			continue;
 
-		if (res) {
+		if (res.has_value()) {
 			std::fprintf(printer.err, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
-					printer.argv0.c_str(), nam.c_str(), res->name.c_str(), option_specs[i].name.c_str());
-			return nullptr;
+					printer.argv0.c_str(), nam.c_str(), res->name.c_str(), spec.name.c_str());
+			return std::nullopt;
 		}
-		res = &option_specs[i];
+		res = spec;
 	}
 
-	if (!res)
+	if (!res.has_value())
 		std::fprintf(printer.err, "%s: unknown option '%s'\n", printer.argv0.c_str(), nam.c_str());
 	return res;
 }
@@ -125,11 +127,11 @@ static bool tokenize(Printer printer, Token& tok, std::deque<std::string>& argq)
 		}
 	}
 
-	const OptSpec *spec = find_from_option_specs(printer, nam.c_str());
-	if (!spec)
+	std::optional<OptSpec> spec = find_from_option_specs(printer, nam.c_str());
+	if (!spec.has_value())
 		return false;
 
-	tok.spec = spec;
+	tok.spec = spec.value();
 	tok.value = val;
 	return true;
 }
@@ -147,11 +149,11 @@ static bool is_valid_integer(std::string str, int min, int max)
 // returns 0 on success, negative on failure
 static int check_token_by_type(Printer printer, Token tok)
 {
-	switch(tok.spec->type) {
+	switch(tok.spec.type) {
 	case OptType::YESNO:
 		if (tok.value) {
 			std::fprintf(printer.err, "%s: use just '%s', not '%s=something' or '%s something'\n",
-					printer.argv0.c_str(), tok.spec->name.c_str(), tok.spec->name.c_str(), tok.spec->name.c_str());
+					printer.argv0.c_str(), tok.spec.name.c_str(), tok.spec.name.c_str(), tok.spec.name.c_str());
 			return -1;
 		}
 		break;
@@ -160,14 +162,14 @@ static int check_token_by_type(Printer printer, Token tok)
 		if (!tok.value.has_value()) {
 			std::fprintf(printer.err, "%s: use '%s %s' or '%s=%s', not just '%s'\n",
 					printer.argv0.c_str(),
-					tok.spec->name.c_str(), tok.spec->metavar.value().c_str(),
-					tok.spec->name.c_str(), tok.spec->metavar.value().c_str(),
-					tok.spec->name.c_str());
+					tok.spec.name.c_str(), tok.spec.metavar.value().c_str(),
+					tok.spec.name.c_str(), tok.spec.metavar.value().c_str(),
+					tok.spec.name.c_str());
 			return -1;
 		}
-		if (!is_valid_integer(tok.value.value(), tok.spec->min, tok.spec->max)) {
+		if (!is_valid_integer(tok.value.value(), tok.spec.min, tok.spec.max)) {
 			std::fprintf(printer.err, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
-					printer.argv0.c_str(), tok.spec->name.c_str(), tok.spec->min, tok.spec->max, tok.value.value().c_str());
+					printer.argv0.c_str(), tok.spec.name.c_str(), tok.spec.min, tok.spec.max, tok.value.value().c_str());
 			return -1;
 		}
 		break;
@@ -177,20 +179,19 @@ static int check_token_by_type(Printer printer, Token tok)
 }
 
 // returns 0 on success, negative on failure
-static bool check_tokens(Printer printer, const Token *toks, int ntoks)
+static bool check_tokens(Printer printer, std::vector<Token> toks)
 {
 	// to detect duplicates
-	bool seen[sizeof(option_specs)/sizeof(option_specs[0])] = {0};
+	std::set<std::string> seen = {};
 
-	for (int i = 0; i < ntoks; i++) {
-		int j = toks[i].spec - &option_specs[0];
-		if (seen[j]) {
-			std::fprintf(printer.err, "%s: repeated option '%s'\n", printer.argv0.c_str(), toks[i].spec->name.c_str());
+	for (Token tok : toks) {
+		if (seen.count(tok.spec.name) > 0) {
+			std::fprintf(printer.err, "%s: repeated option '%s'\n", printer.argv0.c_str(), tok.spec.name.c_str());
 			return false;
 		}
-		seen[j] = true;
+		seen.insert(tok.spec.name);
 
-		if (check_token_by_type(printer, toks[i]) < 0)
+		if (check_token_by_type(printer, tok) < 0)
 			return false;
 	}
 
@@ -204,16 +205,16 @@ static bool tokens_to_struct_args(Printer printer, const Token *toks, int ntoks,
 	ar = {};
 	for (int i = 0; i < ntoks; i++) {
 
-		if (toks[i].spec->name == "--help") {
+		if (toks[i].spec.name == "--help") {
 			print_help(printer);
 			return false;
 		}
 
-		if (toks[i].spec->name == "--no-colors")
+		if (toks[i].spec.name == "--no-colors")
 			ar.color = false;
-		else if (toks[i].spec->name == "--pick")
+		else if (toks[i].spec.name == "--pick")
 			ar.pick = std::stoi(toks[i].value.value());  // already validated
-		else if (toks[i].spec->name == "--discard-hide")
+		else if (toks[i].spec.name == "--discard-hide")
 			ar.discardhide = true;
 		else
 			assert(0);
@@ -244,7 +245,7 @@ int args_parse(Args& ar, std::vector<std::string> argvec, FILE *out, FILE *err)
 		toks.push_back(t);
 	}
 
-	if (!tokenize_ok || !check_tokens(printer, toks.data(), toks.size())) {
+	if (!tokenize_ok || !check_tokens(printer, toks)) {
 		std::fprintf(printer.err, "Run '%s --help' for help.\n", printer.argv0.c_str());
 		return 2;
 	}
