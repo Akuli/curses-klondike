@@ -221,7 +221,7 @@ static bool tokens_to_struct_args(Printer printer, const Token *toks, int ntoks,
 		if (toks[i].spec->name == "--no-colors")
 			ar.color = false;
 		else if (toks[i].spec->name == "--pick")
-			ar.pick = atoi(toks[i].value);  // atoi won't fail, the value is already validated
+			ar.pick = std::stoi(toks[i].value);  // value already validated
 		else if (toks[i].spec->name == "--discard-hide")
 			ar.discardhide = true;
 		else
