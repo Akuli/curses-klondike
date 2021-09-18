@@ -74,10 +74,10 @@ static void print_help(Printer printer)
 // or just 1: --no-colors, --pick=3
 struct Token {
 	const OptSpec *spec;  // pointer to an item of option_specs
-	const char *value;  // TODO: figure out how to do string or null
+	std::optional<std::string> value;
 };
 
-static const OptSpec *find_from_option_specs(Printer printer, const char *nam)
+static const OptSpec *find_from_option_specs(Printer printer, std::string nam)
 {
 	const OptSpec *res = nullptr;
 	for (unsigned int i = 0; i < sizeof(option_specs)/sizeof(option_specs[0]); i++) {
@@ -86,14 +86,14 @@ static const OptSpec *find_from_option_specs(Printer printer, const char *nam)
 
 		if (res) {
 			std::fprintf(printer.err, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
-					printer.argv0.c_str(), nam, res->name.c_str(), option_specs[i].name.c_str());
+					printer.argv0.c_str(), nam.c_str(), res->name.c_str(), option_specs[i].name.c_str());
 			return nullptr;
 		}
 		res = &option_specs[i];
 	}
 
 	if (!res)
-		std::fprintf(printer.err, "%s: unknown option '%s'\n", printer.argv0.c_str(), nam);
+		std::fprintf(printer.err, "%s: unknown option '%s'\n", printer.argv0.c_str(), nam.c_str());
 	return res;
 }
 
@@ -109,27 +109,19 @@ static bool tokenize(Printer printer, Token& tok, std::deque<std::string>& argq)
 	}
 
 	std::string nam;
-	char *val;  // TODO: std::optional<std::string>
+	std::optional<std::string> val;
 
 	size_t i = arg.find("=");
 	if (i != std::string::npos) {
 		nam = arg.substr(0, i);
-		std::string valstring = arg.substr(i+1);
-		val = (char*)malloc(valstring.length() + 1);
-		assert(val);
-		strcpy(val, valstring.c_str());
+		val = arg.substr(i+1);
 	} else {
 		nam = arg;
 		if (argq.empty() || argq[0].c_str()[0] == '-') {
-			val = nullptr;
+			val = std::nullopt;
 		} else {
-			std::string valarg = argq[0];
+			val = argq[0];
 			argq.pop_front();
-
-			// TODO: handle negative numbers as arguments?
-			val = (char*)malloc(valarg.length() + 1);
-			assert(val);
-			strcpy(val, valarg.c_str());
 		}
 	}
 
@@ -165,7 +157,7 @@ static int check_token_by_type(Printer printer, Token tok)
 		break;
 
 	case OptType::INT:
-		if (!tok.value) {
+		if (!tok.value.has_value()) {
 			std::fprintf(printer.err, "%s: use '%s %s' or '%s=%s', not just '%s'\n",
 					printer.argv0.c_str(),
 					tok.spec->name.c_str(), tok.spec->metavar.value().c_str(),
@@ -173,9 +165,9 @@ static int check_token_by_type(Printer printer, Token tok)
 					tok.spec->name.c_str());
 			return -1;
 		}
-		if (!is_valid_integer(tok.value, tok.spec->min, tok.spec->max)) {
+		if (!is_valid_integer(tok.value.value(), tok.spec->min, tok.spec->max)) {
 			std::fprintf(printer.err, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
-					printer.argv0.c_str(), tok.spec->name.c_str(), tok.spec->min, tok.spec->max, tok.value);
+					printer.argv0.c_str(), tok.spec->name.c_str(), tok.spec->min, tok.spec->max, tok.value.value().c_str());
 			return -1;
 		}
 		break;
@@ -220,7 +212,7 @@ static bool tokens_to_struct_args(Printer printer, const Token *toks, int ntoks,
 		if (toks[i].spec->name == "--no-colors")
 			ar.color = false;
 		else if (toks[i].spec->name == "--pick")
-			ar.pick = std::stoi(toks[i].value);  // value already validated
+			ar.pick = std::stoi(toks[i].value.value());  // already validated
 		else if (toks[i].spec->name == "--discard-hide")
 			ar.discardhide = true;
 		else
