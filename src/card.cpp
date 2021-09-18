@@ -41,10 +41,7 @@ struct Card *card_createallshuf(void)
 			if (!crd)
 				fatal_error("malloc() failed");
 
-			crd->num = n;
-			crd->suit = s;
-			crd->visible = false;
-			// crd->next is initialized below
+			*crd = (struct Card){ n, s };
 			cards[i++] = crd;
 		}
 	}

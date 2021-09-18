@@ -41,7 +41,7 @@ TEST(card_createallshuf_gives_all_52_cards)
 			assert(got[i][j] == 1);
 }
 
-struct CardStrTest { unsigned int num; const char *numstr; };
+struct CardStrTest { int num; std::string numstr; };
 
 TEST(card_str)
 {
@@ -57,12 +57,12 @@ TEST(card_str)
 	};
 
 	// nested for loops without nested indentations or braces
-	for (unsigned int i=0; i < sizeof(tests)/sizeof(tests[0]); i++)
+	for (const CardStrTest& test : tests)
 	for (Suit s : std::vector<Suit>{ Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE })
 	for (int visible=0; visible < 2; visible++)
 	{
-		struct Card crd = { tests[i].num, s, (bool)visible };
-		assert(strcmp(card_numstr(crd).c_str(), tests[i].numstr) == 0);
+		struct Card crd = { test.num, s, (bool)visible };
+		assert(card_numstr(crd) == test.numstr);
 	}
 }
 

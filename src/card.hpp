@@ -52,9 +52,9 @@ private:
 };
 
 struct Card {
-	unsigned int num;  // 1 for A, 11 for J, 12 for Q, 13 for K, others the obvious way
+	int num;  // 1 for A, 11 for J, 12 for Q, 13 for K, others the obvious way
 	Suit suit;
-	bool visible;
+	bool visible = false;
 	struct Card *next = nullptr;   // the card that is on top of this card
 };
 
