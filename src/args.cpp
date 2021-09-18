@@ -233,19 +233,18 @@ int args_parse(Args& ar, std::vector<std::string> argvec, FILE *out, FILE *err)
 	std::string argv0 = argq[0];
 	argq.pop_front();
 
+	bool tokenize_ok = true;
 	std::vector<Token> toks = {};
 	while (!argq.empty()) {
 		Token t;
 		if (!tokenize(printer, t, argq)) {
-			// TODO: use some kind of smart pointer shit instead of copy/pasta
-			std::fprintf(printer.err, "Run '%s --help' for help.\n", printer.argv0.c_str());
-			return 2;
+			tokenize_ok = false;
+			break;
 		}
 		toks.push_back(t);
 	}
 
-	if (!check_tokens(printer, toks.data(), toks.size())) {
-		// TODO: use some kind of smart pointer shit instead of copy/pasta
+	if (!tokenize_ok || !check_tokens(printer, toks.data(), toks.size())) {
 		std::fprintf(printer.err, "Run '%s --help' for help.\n", printer.argv0.c_str());
 		return 2;
 	}
