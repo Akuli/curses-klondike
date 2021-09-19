@@ -28,10 +28,13 @@ static int print_cards(const Card *list)
 {
 	int n = 0;
 	for (; list; list = list->next) {
-		printf(" %c%s%s", list->visible ? 'v' : '?', list->suit.string().c_str(), list->numstring().c_str());
+		std::printf(" %c%s%s",
+				list->visible ? 'v' : '?',
+				list->suit.string().c_str(),
+				list->numstring().c_str());
 		n++;
 	}
-	printf(" (%d cards)\n", n);
+	std::printf(" (%d cards)\n", n);
 	return n;
 }
 
@@ -39,23 +42,23 @@ void Klon::debug_print() const
 {
 	int total = 0;
 
-	printf("stock:");
+	std::printf("stock:");
 	total += print_cards(this->stock);
 
-	printf("discard:");
+	std::printf("discard:");
 	total += print_cards(this->discard);
 
 	for (int i=0; i < 4; i++) {
-		printf("foundation %d:", i);
+		std::printf("foundation %d:", i);
 		total += print_cards(this->foundations[i]);
 	}
 
 	for (int i=0; i < 7; i++) {
-		printf("tableau %d:", i);
+		std::printf("tableau %d:", i);
 		total += print_cards(this->tableau[i]);
 	}
 
-	printf("total: %d cards\n", total);
+	std::printf("total: %d cards\n", total);
 }
 
 static void copy_cards(const Card *src, Card **dst, const Card *srccrd, Card **dstcrd, Card **list)
@@ -64,7 +67,6 @@ static void copy_cards(const Card *src, Card **dst, const Card *srccrd, Card **d
 	Card *top = nullptr;
 
 	for (; src; src = src->next) {
-		// FIXME: leaks mem
 		Card *dup = card_popbot(list);
 		assert(dup);
 		if (src == srccrd)
@@ -100,8 +102,8 @@ Card *Klon::dup(Klon& dst, const Card *srccrd) const
 
 static bool card_in_some_tableau(const Klon& kln, const Card *crd)
 {
-	for (int i=0; i < 7; i++)
-		for (Card *tabcrd = kln.tableau[i]; tabcrd; tabcrd = tabcrd->next)
+	for (Card *bot : kln.tableau)
+		for (Card *tabcrd = bot; tabcrd; tabcrd = tabcrd->next)
 			if (tabcrd == crd)
 				return true;
 	return false;
@@ -146,34 +148,31 @@ bool Klon::canmove(const Card *crd, KlonCardPlace dst) const
 // a double-linked list would make this easier but many other things harder
 Card *Klon::detachcard(const Card *crd)
 {
-	Card **look4[2+4+7];
-	Card ***look4ptr = look4;
-	*look4ptr++ = &this->discard;   // discard goes first, recall that when you see (*)
-	*look4ptr++ = &this->stock;
+	std::vector<Card**> look4 = { &this->discard, &this->stock };
 	for (int i=0; i < 4; i++)
-		*look4ptr++ = &this->foundations[i];
+		look4.push_back(&this->foundations[i]);
 	for (int i=0; i < 7; i++)
-		*look4ptr++ = &this->tableau[i];
+		look4.push_back(&this->tableau[i]);
 
-	for (unsigned i=0; i < sizeof(look4)/sizeof(look4[0]); i++) {
+	for (Card **ptr : look4) {
 		// special case: no card has crd as ->next
-		if (*look4[i] == crd) {
-			if (i == 0)  // (*)
+		if (*ptr == crd) {
+			if (ptr == &this->discard)
 				this->discardshow = 0;
-			*look4[i] = nullptr;
+			*ptr = nullptr;
 			return nullptr;
 		}
 
-		for (Card *prv = *look4[i]; prv && prv->next; prv = prv->next)
+		for (Card *prv = *ptr; prv && prv->next; prv = prv->next)
 			if (prv->next == crd) {
-				if (i == 0 && this->discardshow > 1)  // (*)
+				if (ptr == &this->discard && this->discardshow > 1)
 					this->discardshow--;
 				prv->next = nullptr;
 				return prv;
 			}
 	}
 
-	assert(0);
+	throw std::logic_error("card not found");
 }
 
 void Klon::move(Card *crd, KlonCardPlace dst, bool raw)
@@ -200,7 +199,7 @@ void Klon::move(Card *crd, KlonCardPlace dst, bool raw)
 	else if (KLON_IS_TABLEAU(dst))
 		dstp = &this->tableau[KLON_TABLEAU_NUM(dst)];
 	else
-		assert(0);
+		throw std::logic_error("bad card place");
 
 	card_pushtop(dstp, crd);
 }

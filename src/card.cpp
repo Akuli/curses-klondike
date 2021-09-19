@@ -32,9 +32,9 @@ std::string Card::numstring() const
 	return nstrs[this->num - 1];
 }
 
-void card_debug(Card crd)
+void Card::debug_print() const
 {
-	printf("%s%s\n", crd.suit.string().c_str(), crd.numstring().c_str());
+	printf("%s%s\n", this->suit.string().c_str(), this->numstring().c_str());
 }
 
 // crd can be NULL

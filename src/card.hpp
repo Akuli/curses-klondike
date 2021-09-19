@@ -60,13 +60,11 @@ struct Card {
 	Card *next = nullptr;   // the card that is on top of this card
 
 	std::string numstring() const;  // e.g. "A"
+	void debug_print() const;
 };
 
 // initialize and shuffle an array of cards, and build a linked list of them
 Card *card_init_list(Card (&arr)[13*4]);
-
-// prints card_str to stdout
-void card_debug(Card crd);
 
 // returns topmost card in a linked list of cards
 // special case to make some things easier: card_top(NULL) == NULL
