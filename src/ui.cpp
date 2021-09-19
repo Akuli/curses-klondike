@@ -207,7 +207,7 @@ static void draw_the_klon(WINDOW *win, Klon kln, Sel sel, bool moving, bool colo
 		}
 	}
 
-	if (klon_win(kln)) {
+	if (kln.win()) {
 		const char *msg = "you win :)";
 		mvwaddstr(win, h/2, (w - strlen(msg))/2, msg);
 	}
@@ -235,9 +235,9 @@ void ui_drawklon(WINDOW *win, Klon kln, SelMv selmv, bool color, bool discardhid
 
 	if (selmv.ismv) {
 		Klon tmpkln;
-		Sel tmpsel = { klon_dup(kln, &tmpkln, selmv.mv.card), selmv.mv.dst };
+		Sel tmpsel = { kln.dup(&tmpkln, selmv.mv.card), selmv.mv.dst };
 
-		klon_move(&tmpkln, tmpsel.card, tmpsel.place, true);
+		tmpkln.move(tmpsel.card, tmpsel.place, true);
 		draw_the_klon(win, tmpkln, tmpsel, true, color, dh, dscxoff);
 	} else
 		draw_the_klon(win, kln, selmv.sel, false, color, dh, dscxoff);

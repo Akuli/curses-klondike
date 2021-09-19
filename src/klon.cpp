@@ -7,21 +7,21 @@
 #include "card.hpp"
 #include "misc.hpp"
 
-void klon_init(Klon& klon)
+void Klon::init()
 {
-	Card *list = card_init_list(klon.allcards);
+	Card *list = card_init_list(this->allcards);
 	for (int i=0; i < 7; i++) {
-		klon.tableau[i] = NULL;
+		this->tableau[i] = nullptr;
 		for (int j=0; j < i+1; j++)
-			card_pushtop(&klon.tableau[i], card_popbot(&list));
-		card_top(klon.tableau[i])->visible = true;
+			card_pushtop(&this->tableau[i], card_popbot(&list));
+		card_top(this->tableau[i])->visible = true;
 	}
 
-	klon.stock = list;
-	klon.discard = NULL;
-	klon.discardshow = 0;
+	this->stock = list;
+	this->discard = nullptr;
+	this->discardshow = 0;
 	for (int i=0; i < 4; i++)
-		klon.foundations[i] = NULL;
+		this->foundations[i] = nullptr;
 }
 
 static int print_cards(const Card *list)
@@ -35,24 +35,24 @@ static int print_cards(const Card *list)
 	return n;
 }
 
-void klon_debug(Klon kln)
+void Klon::debug_print() const
 {
 	int total = 0;
 
 	printf("stock:");
-	total += print_cards(kln.stock);
+	total += print_cards(this->stock);
 
 	printf("discard:");
-	total += print_cards(kln.discard);
+	total += print_cards(this->discard);
 
 	for (int i=0; i < 4; i++) {
 		printf("foundation %d:", i);
-		total += print_cards(kln.foundations[i]);
+		total += print_cards(this->foundations[i]);
 	}
 
 	for (int i=0; i < 7; i++) {
 		printf("tableau %d:", i);
-		total += print_cards(kln.tableau[i]);
+		total += print_cards(this->tableau[i]);
 	}
 
 	printf("total: %d cards\n", total);
@@ -60,8 +60,8 @@ void klon_debug(Klon kln)
 
 static void copy_cards(const Card *src, Card **dst, const Card *srccrd, Card **dstcrd, Card **list)
 {
-	*dst = NULL;
-	Card *top = NULL;
+	*dst = nullptr;
+	Card *top = nullptr;
 
 	for (; src; src = src->next) {
 		// FIXME: leaks mem
@@ -71,7 +71,7 @@ static void copy_cards(const Card *src, Card **dst, const Card *srccrd, Card **d
 			*dstcrd = dup;
 
 		*dup = *src;
-		dup->next = NULL;
+		dup->next = nullptr;
 
 		if (top)
 			top->next = dup;
@@ -81,18 +81,18 @@ static void copy_cards(const Card *src, Card **dst, const Card *srccrd, Card **d
 	}
 }
 
-Card *klon_dup(Klon src, Klon *dst, const Card *srccrd)
+Card *Klon::dup(Klon *dst, const Card *srccrd) const
 {
-	Card *dstcrd = NULL;
+	Card *dstcrd = nullptr;
 
 	Card *list = card_init_list(dst->allcards);
-	copy_cards(src.stock, &dst->stock, srccrd, &dstcrd, &list);
-	copy_cards(src.discard, &dst->discard, srccrd, &dstcrd, &list);
-	dst->discardshow = src.discardshow;
+	copy_cards(this->stock, &dst->stock, srccrd, &dstcrd, &list);
+	copy_cards(this->discard, &dst->discard, srccrd, &dstcrd, &list);
+	dst->discardshow = this->discardshow;
 	for (int i=0; i < 4; i++)
-		copy_cards(src.foundations[i], &dst->foundations[i], srccrd, &dstcrd, &list);
+		copy_cards(this->foundations[i], &dst->foundations[i], srccrd, &dstcrd, &list);
 	for (int i=0; i < 7; i++)
-		copy_cards(src.tableau[i], &dst->tableau[i], srccrd, &dstcrd, &list);
+		copy_cards(this->tableau[i], &dst->tableau[i], srccrd, &dstcrd, &list);
 
 	assert(list == nullptr);
 	return dstcrd;
@@ -107,13 +107,13 @@ static bool card_in_some_tableau(Klon kln, const Card *crd)
 	return false;
 }
 
-bool klon_canmove(Klon kln, const Card *crd, KlonCardPlace dst)
+bool Klon::canmove(const Card *crd, KlonCardPlace dst) const
 {
 	// taking cards stock to discard is handled by klon_stactodiscard() and not allowed here
 	if (crd->next) {
 		// the only way how a stack of multiple cards is allowed to move is tableau -> tableau
 		// but for that, the bottommost moving card (crd) must be visible
-		if (card_in_some_tableau(kln, crd) && KLON_IS_TABLEAU(dst) && crd->visible)
+		if (card_in_some_tableau(*this, crd) && KLON_IS_TABLEAU(dst) && crd->visible)
 			goto tableau;
 		return false;
 	}
@@ -122,7 +122,7 @@ bool klon_canmove(Klon kln, const Card *crd, KlonCardPlace dst)
 		return false;
 
 	if (KLON_IS_FOUNDATION(dst)) {
-		Card *fnd = kln.foundations[KLON_FOUNDATION_NUM(dst)];
+		Card *fnd = this->foundations[KLON_FOUNDATION_NUM(dst)];
 		if (!fnd)
 			return (crd->num == 1);
 
@@ -132,7 +132,7 @@ bool klon_canmove(Klon kln, const Card *crd, KlonCardPlace dst)
 
 	tableau:
 	if (KLON_IS_TABLEAU(dst)) {
-		Card *tab = kln.tableau[KLON_TABLEAU_NUM(dst)];
+		Card *tab = this->tableau[KLON_TABLEAU_NUM(dst)];
 		if (!tab)
 			return (crd->num == 13);
 
@@ -144,31 +144,31 @@ bool klon_canmove(Klon kln, const Card *crd, KlonCardPlace dst)
 }
 
 // a double-linked list would make this easier but many other things harder
-Card *klon_detachcard(Klon *kln, const Card *crd)
+Card *Klon::detachcard(const Card *crd)
 {
 	Card **look4[2+4+7];
 	Card ***look4ptr = look4;
-	*look4ptr++ = &kln->discard;   // discard goes first, recall that when you see (*)
-	*look4ptr++ = &kln->stock;
+	*look4ptr++ = &this->discard;   // discard goes first, recall that when you see (*)
+	*look4ptr++ = &this->stock;
 	for (int i=0; i < 4; i++)
-		*look4ptr++ = &kln->foundations[i];
+		*look4ptr++ = &this->foundations[i];
 	for (int i=0; i < 7; i++)
-		*look4ptr++ = &kln->tableau[i];
+		*look4ptr++ = &this->tableau[i];
 
 	for (unsigned int i=0; i < sizeof(look4)/sizeof(look4[0]); i++) {
 		// special case: no card has crd as ->next
 		if (*look4[i] == crd) {
 			if (i == 0)  // (*)
-				kln->discardshow = 0;
-			*look4[i] = NULL;
-			return NULL;
+				this->discardshow = 0;
+			*look4[i] = nullptr;
+			return nullptr;
 		}
 
 		for (Card *prv = *look4[i]; prv && prv->next; prv = prv->next)
 			if (prv->next == crd) {
-				if (i == 0 && kln->discardshow > 1)  // (*)
-					kln->discardshow--;
-				prv->next = NULL;
+				if (i == 0 && this->discardshow > 1)  // (*)
+					this->discardshow--;
+				prv->next = nullptr;
 				return prv;
 			}
 	}
@@ -176,15 +176,15 @@ Card *klon_detachcard(Klon *kln, const Card *crd)
 	assert(0);
 }
 
-void klon_move(Klon *kln, Card *crd, KlonCardPlace dst, bool raw)
+void Klon::move(Card *crd, KlonCardPlace dst, bool raw)
 {
 	if (!raw)
-		assert(klon_canmove(*kln, crd, dst));
+		assert(this->canmove(crd, dst));
 
-	Card *prv = klon_detachcard(kln, crd);
+	Card *prv = this->detachcard(crd);
 
 	// prv:
-	//  * is NULL, if crd was the bottommost card
+	//  * is nullptr, if crd was the bottommost card
 	//  * has ->next==true, if moving only some of many visible cards on top of each other
 	//  * has ->next==false, if crd was the bottommost VISIBLE card in the tableau list
 	if (prv && !raw)
@@ -192,65 +192,65 @@ void klon_move(Klon *kln, Card *crd, KlonCardPlace dst, bool raw)
 
 	Card **dstp;
 	if (dst == KLON_STOCK)
-		dstp = &kln->stock;
+		dstp = &this->stock;
 	else if (dst == KLON_DISCARD)
-		dstp = &kln->discard;
+		dstp = &this->discard;
 	else if (KLON_IS_FOUNDATION(dst))
-		dstp = &kln->foundations[KLON_FOUNDATION_NUM(dst)];
+		dstp = &this->foundations[KLON_FOUNDATION_NUM(dst)];
 	else if (KLON_IS_TABLEAU(dst))
-		dstp = &kln->tableau[KLON_TABLEAU_NUM(dst)];
+		dstp = &this->tableau[KLON_TABLEAU_NUM(dst)];
 	else
 		assert(0);
 
 	card_pushtop(dstp, crd);
 }
 
-bool klon_move2foundation(Klon *kln, Card *card)
+bool Klon::move2foundation(Card *card)
 {
 	if (!card)
 		return false;
 
 	for (int i=0; i < 4; i++)
-		if (klon_canmove(*kln, card, KLON_FOUNDATION(i))) {
-			klon_move(kln, card, KLON_FOUNDATION(i), false);
+		if (this->canmove(card, KLON_FOUNDATION(i))) {
+			this->move(card, KLON_FOUNDATION(i), false);
 			return true;
 		}
 	return false;
 }
 
-void klon_stock2discard(Klon *kln, unsigned int pick)
+void Klon::stock2discard(int pick)
 {
 	assert(1 <= pick && pick <= 13*4 - (1+2+3+4+5+6+7));
-	if (!kln->stock) {
-		for (Card *crd = kln->discard; crd; crd = crd->next) {
+	if (!this->stock) {
+		for (Card *crd = this->discard; crd; crd = crd->next) {
 			assert(crd->visible);
 			crd->visible = false;
 		}
 
-		kln->stock = kln->discard;   // may be NULL when all stock cards have been used
-		kln->discard = NULL;
-		kln->discardshow = 0;
+		this->stock = this->discard;   // may be nullptr when all stock cards have been used
+		this->discard = nullptr;
+		this->discardshow = 0;
 		return;
 	}
 
-	unsigned int i;
-	for (i = 0; i < pick && kln->stock; i++) {
+	int i;
+	for (i = 0; i < pick && this->stock; i++) {
 		// the moved cards must be visible, but other stock cards aren't
-		Card *pop = card_popbot(&kln->stock);
+		Card *pop = card_popbot(&this->stock);
 		assert(!pop->visible);
 		pop->visible = true;
-		card_pushtop(&kln->discard, pop);
+		card_pushtop(&this->discard, pop);
 	}
 
 	// now there are i cards moved, and 0 <= i <= pick
-	kln->discardshow = i;
+	this->discardshow = i;
 }
 
-bool klon_win(Klon kln)
+bool Klon::win() const
 {
-	for (int i=0; i < 4; i++) {
+	for (Card *fnd : this->foundations) {
 		int n = 0;
-		for (Card *crd = kln.foundations[i]; crd; crd = crd->next)
+		for (Card *crd = fnd; crd; crd = crd->next)
 			n++;
 
 		// n can be >13 when cards are being moved

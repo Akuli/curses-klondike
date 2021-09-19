@@ -63,7 +63,7 @@ static const std::vector<HelpKey> help_keys = {
 
 static void new_game(Klon *kln, SelMv *selmv, std::unique_ptr<Card[]>& cardlist)
 {
-	klon_init(*kln);
+	kln->init();
 	selmv->ismv = false;
 	selmv->sel.place = KLON_STOCK;
 	selmv->sel.card = NULL;
@@ -84,7 +84,7 @@ static bool handle_key(Klon *kln, SelMv *selmv, int k, Args ar, const char *argv
 		new_game(kln, selmv, cardlist);
 
 	if (k == 's' && !selmv->ismv) {
-		klon_stock2discard(kln, ar.pick);
+		kln->stock2discard(ar.pick);
 
 		// if you change this, think about what if the discard card was selected?
 		// then the moved card ended up on top of the old discarded card
@@ -98,17 +98,17 @@ static bool handle_key(Klon *kln, SelMv *selmv, int k, Args ar, const char *argv
 		selmv_byplace(*kln, selmv, KLON_DISCARD);
 
 	if (k == 'f' && !selmv->ismv && selmv->sel.card) {
-		if (klon_move2foundation(kln, selmv->sel.card))
+		if (kln->move2foundation(selmv->sel.card))
 			selmv_byplace(*kln, selmv, selmv->sel.place);  // updates selmv->sel.card if needed
 		return true;
 	}
 
 	if (k == 'g' && !selmv->ismv) {
 		// inefficient, but not noticably inefficient
-		if (klon_move2foundation(kln, card_top(kln->discard)))
+		if (kln->move2foundation(card_top(kln->discard)))
 			goto moved;
 		for (int i = 0; i < 7; i++)
-			if (klon_move2foundation(kln, card_top(kln->tableau[i])))
+			if (kln->move2foundation(card_top(kln->tableau[i])))
 				goto moved;
 		return true;
 
@@ -146,7 +146,7 @@ static bool handle_key(Klon *kln, SelMv *selmv, int k, Args ar, const char *argv
 		if (selmv->ismv)
 			selmv_endmv(kln, selmv);
 		else if (selmv->sel.place == KLON_STOCK)
-			klon_stock2discard(kln, ar.pick);
+			kln->stock2discard(ar.pick);
 		else if (selmv->sel.card && selmv->sel.card->visible)
 			selmv_beginmv(selmv);
 		return true;

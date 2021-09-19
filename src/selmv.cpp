@@ -130,8 +130,8 @@ void selmv_endmv(Klon *kln, SelMv *selmv)
 {
 	assert(selmv->ismv);
 	assert(selmv->mv.card);
-	if (klon_canmove(*kln, selmv->mv.card, selmv->mv.dst))
-		klon_move(kln, selmv->mv.card, selmv->mv.dst, false);
+	if (kln->canmove(selmv->mv.card, selmv->mv.dst))
+		kln->move(selmv->mv.card, selmv->mv.dst, false);
 
 	selmv->ismv = false;
 	selmv_byplace(*kln, selmv, selmv->mv.dst);
