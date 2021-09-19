@@ -38,7 +38,7 @@ static enum SelDirection curses_key_to_seldirection(int k)
 	case KEY_RIGHT: return SEL_RIGHT;
 	case KEY_UP: return SEL_UP;
 	case KEY_DOWN: return SEL_DOWN;
-	default: assert(0);
+	default: throw std::logic_error("not arrow key");
 	}
 }
 

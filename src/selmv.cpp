@@ -15,7 +15,7 @@ static int place_2_card_x(KlonCardPlace plc)
 		return 0;
 	if (plc == KLON_DISCARD)
 		return 1;
-	assert(0);
+	throw std::logic_error("bad card place");
 }
 
 static KlonCardPlace card_x_2_top_place(int x)
@@ -113,9 +113,6 @@ void selmv_anothercard(Klon kln, SelMv *selmv, enum SelDirection dir)
 		if (selmv->ismv || !tab)
 			selmv_byplace(kln, selmv, KLON_TABLEAU(x));
 		break;
-
-	default:
-		assert(0);
 	}
 }
 

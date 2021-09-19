@@ -142,7 +142,7 @@ bool Klon::canmove(const Card *crd, KlonCardPlace dst) const
 		return (crd->suit.color() != tab->suit.color() && crd->num == tab->num - 1);
 	}
 
-	assert(0);
+	throw std::logic_error("bad destination");
 }
 
 // a double-linked list would make this easier but many other things harder
