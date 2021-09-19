@@ -111,7 +111,7 @@ static void print_colored(WINDOW *win, int y, int x, std::wstring s, bool color)
 	}
 }
 
-static void print_wrapped_colored(WINDOW *win, int w, const char *s, int xoff, int *yoff, bool color)
+static void print_wrapped_colored(WINDOW *win, int w, std::string s, int xoff, int& yoff, bool color)
 {
 	// unicode is easiest to do with wchars in this case
 	// wchars work because posix wchar_t is 4 bytes
@@ -120,17 +120,17 @@ static void print_wrapped_colored(WINDOW *win, int w, const char *s, int xoff, i
 	std::wstring ws = string_to_wstring(s);
 
 	while (!ws.empty()) {
-		int maxw = get_max_width(w, xoff, *yoff);
+		int maxw = get_max_width(w, xoff, yoff);
 		int end = std::min((int)ws.size(), maxw);
 
 		// can break at newline?
-		size_t brk = ws.substr(0, end+1).find(L'\n');
+		size_t brk = ws.substr(0, end).find(L'\n');
 
 		// can break at space?
 		if (brk == std::wstring::npos && end < (int)ws.size())
 			brk = ws.substr(0, end).find_last_of(L' ');
 
-		print_colored(win, (*yoff)++, xoff, ws.substr(0, brk), color);
+		print_colored(win, yoff++, xoff, ws.substr(0, brk), color);
 		if (brk == std::wstring::npos)
 			ws = ws.substr(end);
 		else
@@ -138,29 +138,29 @@ static void print_wrapped_colored(WINDOW *win, int w, const char *s, int xoff, i
 	}
 }
 
-static void print_help_item(WINDOW *win, int w, int keymax, const HelpKey& help, int *y)
+static void print_help_item(WINDOW *win, int w, int keymax, const HelpKey& help, int& y)
 {
 	int nspace = keymax - string_to_wstring(help.key).size();
 
 	if (win)
-		mvwprintw(win, *y, 0, "%*s%s:", nspace, "", help.key.c_str());
+		mvwprintw(win, y, 0, "%*s%s:", nspace, "", help.key.c_str());
 
-	print_wrapped_colored(win, w, help.desc.c_str(), keymax + 2, y, false);
+	print_wrapped_colored(win, w, help.desc, keymax + 2, y, false);
 }
 
-static void print_title(WINDOW *win, int w, std::string title, int *y)
+static void print_title(WINDOW *win, int w, std::string title, int& y)
 {
-	*y += 2;
+	y += 2;
 
 	if (win) {
 		int len = string_to_wstring(title).size();
 		int x = (w - len)/2;
-		mvwhline(win, *y, 0, 0, x-1);
-		mvwaddstr(win, *y, x, title.c_str());
-		mvwhline(win, *y, x+len+1, 0, w - (x+len+1));
+		mvwhline(win, y, 0, 0, x-1);
+		mvwaddstr(win, y, x, title.c_str());
+		mvwhline(win, y, x+len+1, 0, w - (x+len+1));
 	}
 
-	*y += 2;
+	y += 2;
 }
 
 // returns number of lines
@@ -176,10 +176,10 @@ static int print_all_help(WINDOW *win, int w, std::vector<HelpKey> hkeys, const 
 
 	int y = 0;
 	for (const HelpKey& k : hkeys)
-		print_help_item(win, w, keymax, k, &y);
+		print_help_item(win, w, keymax, k, y);
 
-	print_title(win, w, "Rules", &y);
-	print_wrapped_colored(win, w, get_rules(argv0).c_str(), 0, &y, color);
+	print_title(win, w, "Rules", y);
+	print_wrapped_colored(win, w, get_rules(argv0).c_str(), 0, y, color);
 
 	return std::max(y, (int)picture_lines.size());
 }
