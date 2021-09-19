@@ -163,7 +163,7 @@ static void draw_the_klon(WINDOW *win, Klon kln, Sel sel, bool moving, bool colo
 	// drawing just one card is enough for this
 	draw_card(win, kln.stock, ui_x(0, w), ui_y(0, h), sel.place == KLON_STOCK, color);
 
-	unsigned int nshowdis = kln.discardshow;
+	int nshowdis = kln.discardshow;
 	if (sel.place == KLON_DISCARD && moving)  // user is moving a detached card, and it's in the discard
 		nshowdis++;
 

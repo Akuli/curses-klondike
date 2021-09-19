@@ -7,7 +7,7 @@
 
 struct Args {
 	bool color = true;
-	unsigned int pick = 3;
+	int pick = 3;
 	bool discardhide = false;
 };
 

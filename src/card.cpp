@@ -38,14 +38,14 @@ void card_debug(Card crd)
 }
 
 // crd can be NULL
-static Card *next_n_times(Card *crd, unsigned int n)
+static Card *next_n_times(Card *crd, int n)
 {
-	for (unsigned int i=0; i<n && crd; i++)
+	for (int i=0; i<n && crd; i++)
 		crd = crd->next;
 	return crd;
 }
 
-Card *card_tops(Card *crd, unsigned int n)
+Card *card_tops(Card *crd, int n)
 {
 	while (next_n_times(crd, n))
 		crd = crd->next;

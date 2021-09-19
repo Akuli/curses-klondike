@@ -75,7 +75,7 @@ Card *card_top(Card *crd);
 
 // returns at most n topmost cards from a linked list of cards as another linked list
 // card_tops(NULL, n) == NULL
-Card *card_tops(Card *crd, unsigned int n);
+Card *card_tops(Card *crd, int n);
 
 // gets bottommost card from a linked list of cards
 // sets *bot to (*bot)->next (that can be NULL)

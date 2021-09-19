@@ -155,7 +155,7 @@ Card *Klon::detachcard(const Card *crd)
 	for (int i=0; i < 7; i++)
 		*look4ptr++ = &this->tableau[i];
 
-	for (unsigned int i=0; i < sizeof(look4)/sizeof(look4[0]); i++) {
+	for (unsigned i=0; i < sizeof(look4)/sizeof(look4[0]); i++) {
 		// special case: no card has crd as ->next
 		if (*look4[i] == crd) {
 			if (i == 0)  // (*)

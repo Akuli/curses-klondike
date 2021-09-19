@@ -10,7 +10,7 @@ static void read_file(FILE *f, const char *expected)
 {
 	char buf[1000];
 
-	unsigned int n = ftell(f);
+	size_t n = ftell(f);
 	assert(n <= sizeof(buf)-1);  // make buf bigger if this fails
 
 	rewind(f);

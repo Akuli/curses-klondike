@@ -25,7 +25,7 @@ struct Klon {
 	// these point to just one card, use ->next to access others
 	Card *stock;           // TOPMOST card or NULL
 	Card *discard;         // bottommost card or NULL
-	unsigned int discardshow;     // number of cards shown in discard, or 0 if discard is NULL
+	int discardshow;       // number of cards shown in discard, or 0 if discard is NULL
 	Card *foundations[4];  // bottommost cards or NULLs
 	Card *tableau[7];      // bottommost cards or NULLs
 	Card allcards[13*4];

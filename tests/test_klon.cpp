@@ -162,7 +162,7 @@ TEST(klon_move)
 	}
 }
 
-static void discard_check(Klon kln, int ndiscarded, unsigned int ds)
+static void discard_check(Klon kln, int ndiscarded, int ds)
 {
 	assert(kln.discardshow == ds);
 
