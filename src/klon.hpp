@@ -8,12 +8,12 @@
 struct Klon {
 	// https://www.denexa.com/wp-content/uploads/2015/11/klondike.png
 	// these point to just one card, use ->next to access others
-	struct Card *stock;           // TOPMOST card or NULL
-	struct Card *discard;         // bottommost card or NULL
+	Card *stock;           // TOPMOST card or NULL
+	Card *discard;         // bottommost card or NULL
 	unsigned int discardshow;     // number of cards shown in discard, or 0 if discard is NULL
-	struct Card *foundations[4];  // bottommost cards or NULLs
-	struct Card *tableau[7];      // bottommost cards or NULLs
-	struct Card allcards[13*4];
+	Card *foundations[4];  // bottommost cards or NULLs
+	Card *tableau[7];      // bottommost cards or NULLs
+	Card allcards[13*4];
 };
 
 // enumy values that represent places where cards can be moved to
@@ -34,38 +34,38 @@ typedef char KlonCardPlace;
 void klon_init(Klon& klon);
 
 // prints debug info about where cards are
-void klon_debug(struct Klon kln);
+void klon_debug(Klon kln);
 
 // copies everything from src to dst
 // also creates new cards
 // if srccrd is non-NULL, returns the corresponding card of dst
 // if srccrd is NULL, returns NULL
-struct Card *klon_dup(struct Klon src, struct Klon *dst, const struct Card *srccrd);
+Card *klon_dup(Klon src, Klon *dst, const Card *srccrd);
 
 // returns whether a card can be moved to on top of dst
 // use klon_stocktodiscard() instead for stock -> discard moves, this returns false for those
 // crd must be a card in kln
-bool klon_canmove(struct Klon kln, const struct Card *crd, KlonCardPlace dst);
+bool klon_canmove(Klon kln, const Card *crd, KlonCardPlace dst);
 
 // replaces crd with NULL in kln
 // if crd is someothercrd->next, someothercrd is returned
 // if kln->discard != NULL and crd == card_top(kln->discard), updates kln->discardshow
-struct Card *klon_detachcard(struct Klon *kln, const struct Card *crd);
+Card *klon_detachcard(Klon *kln, const Card *crd);
 
 // moves the src card and ->next cards (if any) to dst
 // the move must be valid, see klon_canmove()
 // if raw, accepts invalid moves (klon_canmove) and never sets ->visible
-void klon_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst, bool raw);
+void klon_move(Klon *kln, Card *crd, KlonCardPlace dst, bool raw);
 
 // convenience function for moving a card to any foundation
 // does nothing if card is NULL
-bool klon_move2foundation(struct Klon *kln, struct Card *card);
+bool klon_move2foundation(Klon *kln, Card *card);
 
 // takes cards stock --> discard, or if stock is empty, puts all discardeds to stock
 // pick is the value of the --pick option
-void klon_stock2discard(struct Klon *kln, unsigned int pick);
+void klon_stock2discard(Klon *kln, unsigned int pick);
 
 // check if the player has won
-bool klon_win(struct Klon kln);
+bool klon_win(Klon kln);
 
 #endif  // KLON_H

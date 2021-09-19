@@ -9,9 +9,9 @@ TEST(card_createallshuf_gives_all_52_cards)
 {
 	int got[4][13] = {0};
 
-	struct Card cards[13*4];
-	struct Card *fst = card_init_list(cards);
-	for (struct Card *crd = fst; crd; crd = crd->next)
+	Card cards[13*4];
+	Card *fst = card_init_list(cards);
+	for (Card *crd = fst; crd; crd = crd->next)
 		got[(int)crd->suit][crd->num-1]++;
 
 	for (int i=0; i < 4; i++)
@@ -39,12 +39,12 @@ TEST(card_str)
 	for (Suit s : std::vector<Suit>{ Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE })
 	for (int visible=0; visible < 2; visible++)
 	{
-		struct Card crd = { test.num, s, (bool)visible };
+		Card crd = { test.num, s, (bool)visible };
 		assert(crd.numstring() == test.numstr);
 	}
 }
 
-static void abccards(struct Card *a, struct Card *b, struct Card *c, bool link)
+static void abccards(Card *a, Card *b, Card *c, bool link)
 {
 	a->num = 1;
 	a->suit = Suit::SPADE;
@@ -64,7 +64,7 @@ static void abccards(struct Card *a, struct Card *b, struct Card *c, bool link)
 
 TEST(card_top)
 {
-	struct Card a, b, c;
+	Card a, b, c;
 	abccards(&a, &b, &c, true);
 
 	assert(card_top(&a) == &c);
@@ -73,19 +73,19 @@ TEST(card_top)
 
 TEST(card_popbot)
 {
-	struct Card a, b, c;
+	Card a, b, c;
 	abccards(&a, &b, &c, true);
 
-	struct Card *p = &a;
+	Card *p = &a;
 	assert(card_popbot(&p) == &a);
 	assert(p == &b);
 }
 
 TEST(card_pushtop)
 {
-	struct Card a, b, c;
+	Card a, b, c;
 	abccards(&a, &b, &c, false);
-	struct Card *p = NULL;
+	Card *p = NULL;
 
 	card_pushtop(&p, &a);
 	assert(p == &a);

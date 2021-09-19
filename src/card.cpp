@@ -32,43 +32,43 @@ std::string Card::numstring() const
 	return nstrs[this->num - 1];
 }
 
-void card_debug(struct Card crd)
+void card_debug(Card crd)
 {
 	printf("%s%s\n", crd.suit.string().c_str(), crd.numstring().c_str());
 }
 
 // crd can be NULL
-static struct Card *next_n_times(struct Card *crd, unsigned int n)
+static Card *next_n_times(Card *crd, unsigned int n)
 {
 	for (unsigned int i=0; i<n && crd; i++)
 		crd = crd->next;
 	return crd;
 }
 
-struct Card *card_tops(struct Card *crd, unsigned int n)
+Card *card_tops(Card *crd, unsigned int n)
 {
 	while (next_n_times(crd, n))
 		crd = crd->next;
 	return crd;
 }
 
-struct Card *card_top(struct Card *crd)
+Card *card_top(Card *crd)
 {
 	return card_tops(crd, 1);
 }
 
-struct Card *card_popbot(struct Card **bot)
+Card *card_popbot(Card **bot)
 {
-	struct Card *res = *bot;  // c funniness: res and bot are different types, but this is correct
+	Card *res = *bot;  // c funniness: res and bot are different types, but this is correct
 	*bot = res->next;
 	res->next = NULL;
 	return res;
 }
 
-void card_pushtop(struct Card **list, struct Card *newtop)
+void card_pushtop(Card **list, Card *newtop)
 {
 	if (*list) {
-		struct Card *top = card_top(*list);
+		Card *top = card_top(*list);
 		assert(!top->next);
 		top->next = newtop;
 	} else

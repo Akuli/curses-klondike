@@ -24,7 +24,7 @@ void klon_init(Klon& klon)
 		klon.foundations[i] = NULL;
 }
 
-static int print_cards(const struct Card *list)
+static int print_cards(const Card *list)
 {
 	int n = 0;
 	for (; list; list = list->next) {
@@ -35,7 +35,7 @@ static int print_cards(const struct Card *list)
 	return n;
 }
 
-void klon_debug(struct Klon kln)
+void klon_debug(Klon kln)
 {
 	int total = 0;
 
@@ -58,14 +58,14 @@ void klon_debug(struct Klon kln)
 	printf("total: %d cards\n", total);
 }
 
-static void copy_cards(const struct Card *src, struct Card **dst, const struct Card *srccrd, struct Card **dstcrd, struct Card **list)
+static void copy_cards(const Card *src, Card **dst, const Card *srccrd, Card **dstcrd, Card **list)
 {
 	*dst = NULL;
-	struct Card *top = NULL;
+	Card *top = NULL;
 
 	for (; src; src = src->next) {
 		// FIXME: leaks mem
-		struct Card *dup = card_popbot(list);
+		Card *dup = card_popbot(list);
 		assert(dup);
 		if (src == srccrd)
 			*dstcrd = dup;
@@ -81,9 +81,9 @@ static void copy_cards(const struct Card *src, struct Card **dst, const struct C
 	}
 }
 
-struct Card *klon_dup(struct Klon src, struct Klon *dst, const struct Card *srccrd)
+Card *klon_dup(Klon src, Klon *dst, const Card *srccrd)
 {
-	struct Card *dstcrd = NULL;
+	Card *dstcrd = NULL;
 
 	Card *list = card_init_list(dst->allcards);
 	copy_cards(src.stock, &dst->stock, srccrd, &dstcrd, &list);
@@ -98,16 +98,16 @@ struct Card *klon_dup(struct Klon src, struct Klon *dst, const struct Card *srcc
 	return dstcrd;
 }
 
-static bool card_in_some_tableau(struct Klon kln, const struct Card *crd)
+static bool card_in_some_tableau(Klon kln, const Card *crd)
 {
 	for (int i=0; i < 7; i++)
-		for (struct Card *tabcrd = kln.tableau[i]; tabcrd; tabcrd = tabcrd->next)
+		for (Card *tabcrd = kln.tableau[i]; tabcrd; tabcrd = tabcrd->next)
 			if (tabcrd == crd)
 				return true;
 	return false;
 }
 
-bool klon_canmove(struct Klon kln, const struct Card *crd, KlonCardPlace dst)
+bool klon_canmove(Klon kln, const Card *crd, KlonCardPlace dst)
 {
 	// taking cards stock to discard is handled by klon_stactodiscard() and not allowed here
 	if (crd->next) {
@@ -122,7 +122,7 @@ bool klon_canmove(struct Klon kln, const struct Card *crd, KlonCardPlace dst)
 		return false;
 
 	if (KLON_IS_FOUNDATION(dst)) {
-		struct Card *fnd = kln.foundations[KLON_FOUNDATION_NUM(dst)];
+		Card *fnd = kln.foundations[KLON_FOUNDATION_NUM(dst)];
 		if (!fnd)
 			return (crd->num == 1);
 
@@ -132,7 +132,7 @@ bool klon_canmove(struct Klon kln, const struct Card *crd, KlonCardPlace dst)
 
 	tableau:
 	if (KLON_IS_TABLEAU(dst)) {
-		struct Card *tab = kln.tableau[KLON_TABLEAU_NUM(dst)];
+		Card *tab = kln.tableau[KLON_TABLEAU_NUM(dst)];
 		if (!tab)
 			return (crd->num == 13);
 
@@ -144,10 +144,10 @@ bool klon_canmove(struct Klon kln, const struct Card *crd, KlonCardPlace dst)
 }
 
 // a double-linked list would make this easier but many other things harder
-struct Card *klon_detachcard(struct Klon *kln, const struct Card *crd)
+Card *klon_detachcard(Klon *kln, const Card *crd)
 {
-	struct Card **look4[2+4+7];
-	struct Card ***look4ptr = look4;
+	Card **look4[2+4+7];
+	Card ***look4ptr = look4;
 	*look4ptr++ = &kln->discard;   // discard goes first, recall that when you see (*)
 	*look4ptr++ = &kln->stock;
 	for (int i=0; i < 4; i++)
@@ -164,7 +164,7 @@ struct Card *klon_detachcard(struct Klon *kln, const struct Card *crd)
 			return NULL;
 		}
 
-		for (struct Card *prv = *look4[i]; prv && prv->next; prv = prv->next)
+		for (Card *prv = *look4[i]; prv && prv->next; prv = prv->next)
 			if (prv->next == crd) {
 				if (i == 0 && kln->discardshow > 1)  // (*)
 					kln->discardshow--;
@@ -176,12 +176,12 @@ struct Card *klon_detachcard(struct Klon *kln, const struct Card *crd)
 	assert(0);
 }
 
-void klon_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst, bool raw)
+void klon_move(Klon *kln, Card *crd, KlonCardPlace dst, bool raw)
 {
 	if (!raw)
 		assert(klon_canmove(*kln, crd, dst));
 
-	struct Card *prv = klon_detachcard(kln, crd);
+	Card *prv = klon_detachcard(kln, crd);
 
 	// prv:
 	//  * is NULL, if crd was the bottommost card
@@ -190,7 +190,7 @@ void klon_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst, bool raw)
 	if (prv && !raw)
 		prv->visible = true;
 
-	struct Card **dstp;
+	Card **dstp;
 	if (dst == KLON_STOCK)
 		dstp = &kln->stock;
 	else if (dst == KLON_DISCARD)
@@ -205,7 +205,7 @@ void klon_move(struct Klon *kln, struct Card *crd, KlonCardPlace dst, bool raw)
 	card_pushtop(dstp, crd);
 }
 
-bool klon_move2foundation(struct Klon *kln, struct Card *card)
+bool klon_move2foundation(Klon *kln, Card *card)
 {
 	if (!card)
 		return false;
@@ -218,11 +218,11 @@ bool klon_move2foundation(struct Klon *kln, struct Card *card)
 	return false;
 }
 
-void klon_stock2discard(struct Klon *kln, unsigned int pick)
+void klon_stock2discard(Klon *kln, unsigned int pick)
 {
 	assert(1 <= pick && pick <= 13*4 - (1+2+3+4+5+6+7));
 	if (!kln->stock) {
-		for (struct Card *crd = kln->discard; crd; crd = crd->next) {
+		for (Card *crd = kln->discard; crd; crd = crd->next) {
 			assert(crd->visible);
 			crd->visible = false;
 		}
@@ -236,7 +236,7 @@ void klon_stock2discard(struct Klon *kln, unsigned int pick)
 	unsigned int i;
 	for (i = 0; i < pick && kln->stock; i++) {
 		// the moved cards must be visible, but other stock cards aren't
-		struct Card *pop = card_popbot(&kln->stock);
+		Card *pop = card_popbot(&kln->stock);
 		assert(!pop->visible);
 		pop->visible = true;
 		card_pushtop(&kln->discard, pop);
@@ -246,11 +246,11 @@ void klon_stock2discard(struct Klon *kln, unsigned int pick)
 	kln->discardshow = i;
 }
 
-bool klon_win(struct Klon kln)
+bool klon_win(Klon kln)
 {
 	for (int i=0; i < 4; i++) {
 		int n = 0;
-		for (struct Card *crd = kln.foundations[i]; crd; crd = crd->next)
+		for (Card *crd = kln.foundations[i]; crd; crd = crd->next)
 			n++;
 
 		// n can be >13 when cards are being moved

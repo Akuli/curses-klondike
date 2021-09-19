@@ -31,7 +31,7 @@ static void read_file(FILE *f, const char *expected)
 class Tester {
 public:
 	FILE *out, *err;
-	struct Args args;
+	Args args;
 
 	Tester() {
 		out = tmpfile();

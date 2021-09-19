@@ -6,7 +6,7 @@
 
 /*
 represents the card pile or location that the user has selected
-a pointer to struct Card is not enough because it's possible to select a
+a pointer to Card is not enough because it's possible to select a
 place where cards can be put but currently contains no cards
 
 possible values:
@@ -30,40 +30,40 @@ possible values:
 		tableau n selected, but there are no cards in that tableau
 */
 struct Sel {
-	struct Card *card;
+	Card *card;
 	KlonCardPlace place;
 };
 
 // represents card being moved src --> dst
 struct Mv {
-	struct Card *card;
+	Card *card;
 	KlonCardPlace src;
 	KlonCardPlace dst;
 };
 
 struct SelMv {
-	struct Sel sel;
-	struct Mv mv;
+	Sel sel;
+	Mv mv;
 	bool ismv;
 };
 
 enum SelDirection { SEL_LEFT, SEL_RIGHT, SEL_UP, SEL_DOWN };
 
 // selects the topmost card at plc (or prepare to move there)
-void selmv_byplace(struct Klon kln, struct SelMv *selmv, KlonCardPlace plc);
+void selmv_byplace(Klon kln, SelMv *selmv, KlonCardPlace plc);
 
 // select another card at left, right, top or bottom, if possible
-void selmv_anothercard(struct Klon kln, struct SelMv *selmv, enum SelDirection dir);
+void selmv_anothercard(Klon kln, SelMv *selmv, enum SelDirection dir);
 
 // if sel is in tableau and possible to select more/less cards in that tableau item, do that
 // returns true if something was done, false otherwise
-bool sel_more(struct Klon kln, struct Sel *sel);
-bool sel_less(struct Klon kln, struct Sel *sel);
+bool sel_more(Klon kln, Sel *sel);
+bool sel_less(Klon kln, Sel *sel);
 
 // sets selmv->ismv to true and updates other things correctly
-void selmv_beginmv(struct SelMv *selmv);
+void selmv_beginmv(SelMv *selmv);
 
 // called when the user is done with dragging a card, moves the card if possible and resets sel
-void selmv_endmv(struct Klon *kln, struct SelMv *selmv);
+void selmv_endmv(Klon *kln, SelMv *selmv);
 
 #endif  // SELMV_H

@@ -14,7 +14,7 @@ struct ScrollState {
 };
 
 // makes sure that it's not scrolled too far up or down
-static void bounds_check(struct ScrollState *st)
+static void bounds_check(ScrollState *st)
 {
 	int winh, padh, w;
 	getmaxyx(st->win, winh, w);
@@ -30,7 +30,7 @@ static void bounds_check(struct ScrollState *st)
 		st->firstlineno = 0;
 }
 
-static void draw_pad_to_window(struct ScrollState *st)
+static void draw_pad_to_window(ScrollState *st)
 {
 	bounds_check(st);
 
@@ -58,7 +58,7 @@ static void draw_pad_to_window(struct ScrollState *st)
 	wrefresh(st->win);
 }
 
-static bool handle_key(struct ScrollState *st, int k)
+static bool handle_key(ScrollState *st, int k)
 {
 	int winw, winh;
 	getmaxyx(st->win, winh, winw);
@@ -106,7 +106,7 @@ static bool handle_key(struct ScrollState *st, int k)
 // must wrefresh(win) after this, but not before
 void scroll_showpad(WINDOW *win, WINDOW *pad)
 {
-	struct ScrollState st = { win, pad };
+	ScrollState st = { win, pad };
 	do {
 		werase(win);
 		draw_pad_to_window(&st);

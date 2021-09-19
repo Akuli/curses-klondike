@@ -27,10 +27,10 @@ TEST(klon_cardplace)
 	}
 }
 
-static int count_cards(struct Card *fst, int *total, int *visible)
+static int count_cards(Card *fst, int *total, int *visible)
 {
 	int n = 0;
-	for (struct Card *crd = fst; crd; crd = crd->next) {
+	for (Card *crd = fst; crd; crd = crd->next) {
 		if (visible)
 			*visible += !!crd->visible;
 		n++;
@@ -43,7 +43,7 @@ static int count_cards(struct Card *fst, int *total, int *visible)
 
 TEST(klon_init_free)
 {
-	struct Klon kln;
+	Klon kln;
 	klon_init(kln);
 	assert(kln.discardshow == 0);
 	int total = 0;
@@ -66,9 +66,9 @@ TEST(klon_init_free)
 	assert(total == 13*4);
 }
 
-static bool cards_match(struct Card *list1, struct Card *list2)
+static bool cards_match(Card *list1, Card *list2)
 {
-	struct Card *a, *b;
+	Card *a, *b;
 	for (a = list1, b = list2; a || b; a = a->next, b = b->next) {
 		assert(a != b);
 		if (a == NULL || b == NULL) {
@@ -85,9 +85,9 @@ static bool cards_match(struct Card *list1, struct Card *list2)
 
 TEST(klon_dup)
 {
-	struct Klon kln1, kln2;
+	Klon kln1, kln2;
 	klon_init(kln1);
-	struct Card *dupres = klon_dup(kln1, &kln2, kln1.tableau[2]->next);
+	Card *dupres = klon_dup(kln1, &kln2, kln1.tableau[2]->next);
 	assert(dupres == kln2.tableau[2]->next);
 
 	assert(cards_match(kln1.stock, kln2.stock));
@@ -100,7 +100,7 @@ TEST(klon_dup)
 
 TEST(klon_canmove)
 {
-	struct Klon kln;
+	Klon kln;
 	klon_init(kln);
 
 	// non-visible cards can never be moved
@@ -117,7 +117,7 @@ TEST(klon_canmove)
 }
 
 // creates a game where a move is possible, sets move data to mvcrd and mvdst
-static void init_movable_kln(struct Klon *kln, int *srctab, int *dsttab)
+static void init_movable_kln(Klon *kln, int *srctab, int *dsttab)
 {
 	while (true) {
 		klon_init(*kln);
@@ -127,7 +127,7 @@ static void init_movable_kln(struct Klon *kln, int *srctab, int *dsttab)
 				if (i == j)
 					continue;
 
-				struct Card *itop = card_top(kln->tableau[i]);
+				Card *itop = card_top(kln->tableau[i]);
 				if (klon_canmove( *kln, itop, KLON_TABLEAU(j) )) {
 					*srctab = i;
 					*dsttab = j;
@@ -140,7 +140,7 @@ static void init_movable_kln(struct Klon *kln, int *srctab, int *dsttab)
 
 TEST(klon_move)
 {
-	struct Klon kln;
+	Klon kln;
 	int srctab, dsttab;
 	init_movable_kln(&kln, &srctab, &dsttab);
 
@@ -162,7 +162,7 @@ TEST(klon_move)
 	}
 }
 
-static void discard_check(struct Klon kln, int ndiscarded, unsigned int ds)
+static void discard_check(Klon kln, int ndiscarded, unsigned int ds)
 {
 	assert(kln.discardshow == ds);
 
@@ -177,11 +177,11 @@ static void discard_check(struct Klon kln, int ndiscarded, unsigned int ds)
 
 TEST(klon_stock2discard)
 {
-	struct Klon kln;
+	Klon kln;
 	klon_init(kln);
 	discard_check(kln, 0, 0);
 
-	struct Card *savestock = kln.stock;
+	Card *savestock = kln.stock;
 
 	klon_stock2discard(&kln, 1);
 	discard_check(kln, 1, 1);

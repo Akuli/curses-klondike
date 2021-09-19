@@ -29,7 +29,7 @@ static KlonCardPlace card_x_2_top_place(int x)
 	return 0;
 }
 
-static struct Card *get_visible_top_card(struct Klon kln, KlonCardPlace plc)
+static Card *get_visible_top_card(Klon kln, KlonCardPlace plc)
 {
 	if (KLON_IS_FOUNDATION(plc))
 		return card_top(kln.foundations[KLON_FOUNDATION_NUM(plc)]);
@@ -40,7 +40,7 @@ static struct Card *get_visible_top_card(struct Klon kln, KlonCardPlace plc)
 	return NULL;
 }
 
-void selmv_byplace(struct Klon kln, struct SelMv *selmv, KlonCardPlace plc)
+void selmv_byplace(Klon kln, SelMv *selmv, KlonCardPlace plc)
 {
 	if (selmv->ismv) {
 		selmv->mv.dst = plc;
@@ -62,12 +62,12 @@ static bool change_x_left_right(int *x, enum SelDirection dir, bool tab, bool ta
 	return (0 <= *x && *x < 7);
 }
 
-bool sel_more(struct Klon kln, struct Sel *sel)
+bool sel_more(Klon kln, Sel *sel)
 {
 	if (!KLON_IS_TABLEAU(sel->place))
 		return false;
 
-	for (struct Card *crd = kln.tableau[KLON_TABLEAU_NUM(sel->place)]; crd && crd->next; crd = crd->next)
+	for (Card *crd = kln.tableau[KLON_TABLEAU_NUM(sel->place)]; crd && crd->next; crd = crd->next)
 		if (sel->card == crd->next && crd->visible) {
 			sel->card = crd;
 			return true;
@@ -75,7 +75,7 @@ bool sel_more(struct Klon kln, struct Sel *sel)
 	return false;
 }
 
-bool sel_less(struct Klon kln, struct Sel *sel)
+bool sel_less(Klon kln, Sel *sel)
 {
 	if (KLON_IS_TABLEAU(sel->place) && sel->card && sel->card->next) {
 		sel->card = sel->card->next;
@@ -84,7 +84,7 @@ bool sel_less(struct Klon kln, struct Sel *sel)
 	return false;
 }
 
-void selmv_anothercard(struct Klon kln, struct SelMv *selmv, enum SelDirection dir)
+void selmv_anothercard(Klon kln, SelMv *selmv, enum SelDirection dir)
 {
 	if (selmv->ismv)
 		assert(selmv->mv.card);
@@ -119,14 +119,14 @@ void selmv_anothercard(struct Klon kln, struct SelMv *selmv, enum SelDirection d
 	}
 }
 
-void selmv_beginmv(struct SelMv *selmv)
+void selmv_beginmv(SelMv *selmv)
 {
 	selmv->ismv = true;
 	selmv->mv.card = selmv->sel.card;
 	selmv->mv.src = selmv->mv.dst = selmv->sel.place;
 }
 
-void selmv_endmv(struct Klon *kln, struct SelMv *selmv)
+void selmv_endmv(Klon *kln, SelMv *selmv)
 {
 	assert(selmv->ismv);
 	assert(selmv->mv.card);
