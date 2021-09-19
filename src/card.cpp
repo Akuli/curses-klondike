@@ -8,22 +8,21 @@
 #include <stdlib.h>
 #include "misc.hpp"
 
-std::unique_ptr<Card[]> card_createallshuf()
+Card *card_init_list(Card (&arr)[13*4])
 {
-	std::unique_ptr<Card[]> arrptr = std::make_unique<Card[]>(13*4);
 	int i = 0;
 	for (Suit s : std::vector<Suit>{ Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE }) {
 		for (int n = 1; n <= 13; n++) {
-			arrptr[i++] = Card{ n, s };
+			arr[i++] = Card{ n, s };
 		}
 	}
 
-	std::random_shuffle(arrptr.get(), arrptr.get() + 13*4);
+	std::random_shuffle(std::begin(arr), std::end(arr));
 
-	arrptr[13*4 - 1].next = nullptr;
+	arr[13*4 - 1].next = nullptr;
 	for (int i = 13*4 - 2; i >= 0; i--)
-		arrptr[i].next = &arrptr.get()[i+1];
-	return arrptr;
+		arr[i].next = &arr[i+1];
+	return &arr[0];
 }
 
 std::string card_numstr(struct Card crd)

@@ -9,10 +9,10 @@ TEST(card_createallshuf_gives_all_52_cards)
 {
 	int got[4][13] = {0};
 
-	struct Card *fst = card_createallshuf();
+	struct Card cards[13*4];
+	struct Card *fst = card_init_list(cards);
 	for (struct Card *crd = fst; crd; crd = crd->next)
 		got[(int)crd->suit][crd->num-1]++;
-	card_free(fst);
 
 	for (int i=0; i < 4; i++)
 		for (int j=0; j < 7; j++)

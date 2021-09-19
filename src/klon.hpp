@@ -13,6 +13,7 @@ struct Klon {
 	unsigned int discardshow;     // number of cards shown in discard, or 0 if discard is NULL
 	struct Card *foundations[4];  // bottommost cards or NULLs
 	struct Card *tableau[7];      // bottommost cards or NULLs
+	struct Card allcards[13*4];
 };
 
 // enumy values that represent places where cards can be moved to
@@ -30,8 +31,7 @@ typedef char KlonCardPlace;
 #define KLON_FOUNDATION_NUM(fnd) (fnd - KLON_FOUNDATION(0))
 #define KLON_TABLEAU_NUM(tab)    (tab - KLON_TABLEAU(0))
 
-// list is the first card of a linked list from e.g. card_createallshuf()
-void klon_init(struct Klon *kln, struct Card *list);
+void klon_init(Klon& klon);
 
 // prints debug info about where cards are
 void klon_debug(struct Klon kln);

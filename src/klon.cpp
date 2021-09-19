@@ -7,20 +7,21 @@
 #include "card.hpp"
 #include "misc.hpp"
 
-void klon_init(struct Klon *kln, struct Card *list)
+void klon_init(Klon& klon)
 {
+	Card *list = card_init_list(klon.allcards);
 	for (int i=0; i < 7; i++) {
-		kln->tableau[i] = NULL;
+		klon.tableau[i] = NULL;
 		for (int j=0; j < i+1; j++)
-			card_pushtop(&kln->tableau[i], card_popbot(&list));
-		card_top(kln->tableau[i])->visible = true;
+			card_pushtop(&klon.tableau[i], card_popbot(&list));
+		card_top(klon.tableau[i])->visible = true;
 	}
 
-	kln->stock = list;
-	kln->discard = NULL;
-	kln->discardshow = 0;
+	klon.stock = list;
+	klon.discard = NULL;
+	klon.discardshow = 0;
 	for (int i=0; i < 4; i++)
-		kln->foundations[i] = NULL;
+		klon.foundations[i] = NULL;
 }
 
 static int print_cards(const struct Card *list)
@@ -57,20 +58,19 @@ void klon_debug(struct Klon kln)
 	printf("total: %d cards\n", total);
 }
 
-static void copy_cards(const struct Card *src, struct Card **dst, const struct Card *srccrd, struct Card **dstcrd)
+static void copy_cards(const struct Card *src, struct Card **dst, const struct Card *srccrd, struct Card **dstcrd, struct Card **list)
 {
 	*dst = NULL;
 	struct Card *top = NULL;
 
 	for (; src; src = src->next) {
 		// FIXME: leaks mem
-		struct Card *dup = (struct Card *) malloc(sizeof(struct Card));
-		if (!dup)
-			fatal_error("malloc() failed");
+		struct Card *dup = card_popbot(list);
+		assert(dup);
 		if (src == srccrd)
 			*dstcrd = dup;
 
-		memcpy(dup, src, sizeof(struct Card));
+		*dup = *src;
 		dup->next = NULL;
 
 		if (top)
@@ -85,14 +85,16 @@ struct Card *klon_dup(struct Klon src, struct Klon *dst, const struct Card *srcc
 {
 	struct Card *dstcrd = NULL;
 
-	copy_cards(src.stock, &dst->stock, srccrd, &dstcrd);
-	copy_cards(src.discard, &dst->discard, srccrd, &dstcrd);
+	Card *list = card_init_list(dst->allcards);
+	copy_cards(src.stock, &dst->stock, srccrd, &dstcrd, &list);
+	copy_cards(src.discard, &dst->discard, srccrd, &dstcrd, &list);
 	dst->discardshow = src.discardshow;
 	for (int i=0; i < 4; i++)
-		copy_cards(src.foundations[i], &dst->foundations[i], srccrd, &dstcrd);
+		copy_cards(src.foundations[i], &dst->foundations[i], srccrd, &dstcrd, &list);
 	for (int i=0; i < 7; i++)
-		copy_cards(src.tableau[i], &dst->tableau[i], srccrd, &dstcrd);
+		copy_cards(src.tableau[i], &dst->tableau[i], srccrd, &dstcrd, &list);
 
+	assert(list == nullptr);
 	return dstcrd;
 }
 

@@ -64,8 +64,7 @@ const struct HelpKey help_keys[] = {
 
 static void new_game(Klon *kln, SelMv *selmv, std::unique_ptr<Card[]>& cardlist)
 {
-	cardlist = card_createallshuf();
-	klon_init(kln, cardlist.get());
+	klon_init(*kln);
 	selmv->ismv = false;
 	selmv->sel.place = KLON_STOCK;
 	selmv->sel.card = NULL;

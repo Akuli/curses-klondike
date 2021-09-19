@@ -60,9 +60,8 @@ struct Card {
 	Card *next = nullptr;   // the card that is on top of this card
 };
 
-// creates a shuffled, linked list of 52 non-visible cards
-// use .get() to access bottommost card, others are available with ->next
-std::unique_ptr<Card[]> card_createallshuf();
+// initialize and shuffle an array of cards, and build a linked list of them
+Card *card_init_list(Card (&arr)[13*4]);
 
 std::string card_numstr(Card crd);
 

@@ -44,7 +44,7 @@ static int count_cards(struct Card *fst, int *total, int *visible)
 TEST(klon_init_free)
 {
 	struct Klon kln;
-	klon_init(&kln, card_createallshuf());
+	klon_init(kln);
 	assert(kln.discardshow == 0);
 	int total = 0;
 
@@ -64,7 +64,6 @@ TEST(klon_init_free)
 	}
 
 	assert(total == 13*4);
-	klon_free(kln);
 }
 
 static bool cards_match(struct Card *list1, struct Card *list2)
@@ -87,7 +86,7 @@ static bool cards_match(struct Card *list1, struct Card *list2)
 TEST(klon_dup)
 {
 	struct Klon kln1, kln2;
-	klon_init(&kln1, card_createallshuf());
+	klon_init(kln1);
 	struct Card *dupres = klon_dup(kln1, &kln2, kln1.tableau[2]->next);
 	assert(dupres == kln2.tableau[2]->next);
 
@@ -97,15 +96,12 @@ TEST(klon_dup)
 		assert(cards_match(kln1.foundations[f], kln2.foundations[f]));
 	for (int t=0; t < 7; t++)
 		assert(cards_match(kln1.tableau[t], kln2.tableau[t]));
-
-	klon_free(kln1);
-	klon_free(kln2);
 }
 
 TEST(klon_canmove)
 {
 	struct Klon kln;
-	klon_init(&kln, card_createallshuf());
+	klon_init(kln);
 
 	// non-visible cards can never be moved
 	assert(!kln.tableau[2]->visible);
@@ -118,17 +114,15 @@ TEST(klon_canmove)
 	assert(!klon_canmove(kln, kln.stock, KLON_DISCARD));
 
 	// TODO: test rest of the code? problem is, how do i find e.g. ♠A or ♥Q
-
-	klon_free(kln);
 }
 
 // creates a game where a move is possible, sets move data to mvcrd and mvdst
 static void init_movable_kln(struct Klon *kln, int *srctab, int *dsttab)
 {
 	while (true) {
-		klon_init(kln, card_createallshuf());
+		klon_init(*kln);
 
-		for (int i=0; i < 7; i++)
+		for (int i=0; i < 7; i++) {
 			for (int j=0; j < 7; j++) {
 				if (i == j)
 					continue;
@@ -140,8 +134,7 @@ static void init_movable_kln(struct Klon *kln, int *srctab, int *dsttab)
 					return;
 				}
 			}
-
-		klon_free(*kln);
+		}
 	}
 }
 
@@ -167,8 +160,6 @@ TEST(klon_move)
 		if (kln.tableau[i])
 			assert(card_top(kln.tableau[i])->visible);
 	}
-
-	klon_free(kln);
 }
 
 static void discard_check(struct Klon kln, int ndiscarded, unsigned int ds)
@@ -187,7 +178,7 @@ static void discard_check(struct Klon kln, int ndiscarded, unsigned int ds)
 TEST(klon_stock2discard)
 {
 	struct Klon kln;
-	klon_init(&kln, card_createallshuf());
+	klon_init(kln);
 	discard_check(kln, 0, 0);
 
 	struct Card *savestock = kln.stock;
@@ -213,6 +204,4 @@ TEST(klon_stock2discard)
 	assert(kln.stock == savestock);
 
 	// TODO: test with less than 13*4 - (1+2+3+4+5+6+7) stock cards? e.g. 0 stock cards
-
-	klon_free(kln);
 }
