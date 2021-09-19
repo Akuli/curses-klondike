@@ -14,7 +14,7 @@ VALGRINDOPTS ?= --leak-check=full --show-leak-kinds=all --error-exitcode=1 --err
 endif
 
 
-all: test cursesklon
+all: cursesklon test
 
 cursesklon: src/main.cpp $(OBJ) $(HEADERS)
 	$(CXX) $(CFLAGS) $< $(OBJ) -o $@ $(LDFLAGS)
