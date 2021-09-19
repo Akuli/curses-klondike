@@ -6,27 +6,6 @@
 #include "util.hpp"
 
 
-TEST(klon_cardplace)
-{
-	assert(sizeof(KlonCardPlace) == 1);
-	bool seen[256] = {false};
-
-	// make sure that there are no duplicate values
-#define dupcheck(val) do{ unsigned char u = (val); assert(!seen[u]); seen[u] = true; }while(0)
-	dupcheck(KLON_STOCK);
-	dupcheck(KLON_DISCARD);
-
-	for (int f=0; f < 4; f++) {
-		dupcheck(KLON_FOUNDATION(f));
-		assert(KLON_FOUNDATION_NUM(KLON_FOUNDATION(f)) == f);
-	}
-	for (int t=0; t < 7; t++) {
-		dupcheck(KLON_TABLEAU(t));
-#undef dupcheck
-		assert(KLON_TABLEAU_NUM(KLON_TABLEAU(t)) == t);
-	}
-}
-
 static int count_cards(Card *fst, int *total, int *visible)
 {
 	int n = 0;

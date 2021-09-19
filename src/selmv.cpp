@@ -1,4 +1,5 @@
 #include "selmv.hpp"
+#include <optional>
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -18,7 +19,7 @@ static int place_2_card_x(KlonCardPlace plc)
 	throw std::logic_error("bad card place");
 }
 
-static KlonCardPlace card_x_2_top_place(int x)
+static std::optional<KlonCardPlace> card_x_2_top_place(int x)
 {
 	if (x == 0)
 		return KLON_STOCK;
@@ -26,7 +27,7 @@ static KlonCardPlace card_x_2_top_place(int x)
 		return KLON_DISCARD;
 	if (KLON_IS_FOUNDATION(KLON_FOUNDATION(x-3)))
 		return KLON_FOUNDATION(x-3);
-	return 0;
+	return std::nullopt;
 }
 
 static Card *get_visible_top_card(Klon kln, KlonCardPlace plc)
@@ -57,7 +58,7 @@ static bool change_x_left_right(int *x, SelDirection dir, bool tab, bool tabfndo
 		*x += (dir == SelDirection::LEFT) ? -1 : 1;
 	while (0 <= *x && *x < 7 && !tab && !card_x_2_top_place(*x));
 
-	if (tabfndonly && !tab && !KLON_IS_FOUNDATION(card_x_2_top_place(*x)))
+	if (tabfndonly && !tab && !KLON_IS_FOUNDATION(card_x_2_top_place(*x).value()))
 		return false;
 	return (0 <= *x && *x < 7);
 }
@@ -90,23 +91,24 @@ void selmv_anothercard(Klon kln, SelMv *selmv, SelDirection dir)
 		assert(selmv->mv.card);
 
 	int x = place_2_card_x(selmv->ismv ? selmv->mv.dst : selmv->sel.place);
+	std::optional<KlonCardPlace> topplace = card_x_2_top_place(x);
 	bool tab = KLON_IS_TABLEAU(selmv->ismv ? selmv->mv.dst : selmv->sel.place);
 
 	switch(dir) {
 	case SelDirection::LEFT:
 	case SelDirection::RIGHT:
 		if (change_x_left_right(&x, dir, tab, selmv->ismv))
-			selmv_byplace(kln, selmv, tab ? KLON_TABLEAU(x) : card_x_2_top_place(x));
+			selmv_byplace(kln, selmv, tab ? KLON_TABLEAU(x) : card_x_2_top_place(x).value());
 		break;
 
 	case SelDirection::UP:
 		if (selmv->ismv) {
 			// can only move from table to foundations, but multiple cards not even there
-			if (tab && KLON_IS_FOUNDATION(card_x_2_top_place(x)) && !selmv->mv.card->next)
-				selmv_byplace(kln, selmv, card_x_2_top_place(x));
+			if (tab && topplace && KLON_IS_FOUNDATION(topplace.value()) && !selmv->mv.card->next)
+				selmv_byplace(kln, selmv, topplace.value());
 		} else
-			if (tab && card_x_2_top_place(x))
-				selmv_byplace(kln, selmv, card_x_2_top_place(x));
+			if (tab && topplace)
+				selmv_byplace(kln, selmv, topplace.value());
 		break;
 
 	case SelDirection::DOWN:

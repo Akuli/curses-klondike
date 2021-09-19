@@ -34,7 +34,6 @@ int main(void)
 	RUN_TEST(card_popbot);
 	RUN_TEST(card_pushtop);
 
-	RUN_TEST(klon_cardplace);
 	RUN_TEST(klon_init_free);
 	RUN_TEST(klon_dup);
 	RUN_TEST(klon_canmove);

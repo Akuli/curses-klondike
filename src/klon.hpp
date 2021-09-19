@@ -4,21 +4,39 @@
 #define KLON_H
 
 #include "card.hpp" // IWYU pragma: keep
+#include <cassert>
 
-// enumy values that represent places where cards can be moved to
-typedef char KlonCardPlace;
-#define KLON_STOCK 's'
-#define KLON_DISCARD 'd'
-#define KLON_FOUNDATION(n) ('F' + n)   // 0 <= n < 4
-#define KLON_TABLEAU(n) ('T' + n)      // 0 <= n < 7
+enum class CardPlaceKind : uint8_t { STOCK, DISCARD, FOUNDATION, TABLEAU };
+struct CardPlace {
+	CardPlaceKind kind;
+	int8_t num;
 
-// because "val == KLON_FOUNDATION" doesn't do the right thing
-#define KLON_IS_FOUNDATION(val) (KLON_FOUNDATION(0) <= (val) && (val) < KLON_FOUNDATION(4))
-#define KLON_IS_TABLEAU(val)    (KLON_TABLEAU(0)    <= (val) && (val) < KLON_TABLEAU(7))
+	CardPlace(CardPlaceKind kind) : kind(kind), num(-1) {
+		assert(kind == CardPlaceKind::STOCK || kind == CardPlaceKind::DISCARD);
+	}
 
-// KLON_FOUNDATION_NUM(KLON_FOUNDATION(n)) == n
-#define KLON_FOUNDATION_NUM(fnd) (fnd - KLON_FOUNDATION(0))
-#define KLON_TABLEAU_NUM(tab)    (tab - KLON_TABLEAU(0))
+	CardPlace(CardPlaceKind kind, int num) : kind(kind), num(num) {
+		assert(kind == CardPlaceKind::FOUNDATION || kind == CardPlaceKind::TABLEAU);
+	}
+
+	// deleting this causes weird errors
+	CardPlace() : kind(CardPlaceKind::STOCK), num(-1) {}
+
+	bool operator==(CardPlace other) {
+		return this->kind == other.kind && this->num == other.num;
+	}
+};
+
+// TODO: legacy shit, should remove
+typedef CardPlace KlonCardPlace;
+#define KLON_STOCK CardPlace(CardPlaceKind::STOCK)
+#define KLON_DISCARD CardPlace(CardPlaceKind::DISCARD)
+#define KLON_FOUNDATION(n) CardPlace(CardPlaceKind::FOUNDATION, (n))
+#define KLON_TABLEAU(n) CardPlace(CardPlaceKind::TABLEAU, (n))
+#define KLON_IS_FOUNDATION(val) ((val).kind == CardPlaceKind::FOUNDATION)
+#define KLON_IS_TABLEAU(val) ((val).kind == CardPlaceKind::TABLEAU)
+#define KLON_FOUNDATION_NUM(fnd) ((fnd).num)
+#define KLON_TABLEAU_NUM(tab)    ((tab).num)
 
 struct Klon {
 	// https://www.denexa.com/wp-content/uploads/2015/11/klondike.png
