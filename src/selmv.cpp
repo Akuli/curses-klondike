@@ -51,10 +51,10 @@ void selmv_byplace(Klon kln, SelMv *selmv, KlonCardPlace plc)
 }
 
 // if tabfndonly, only allows moving to tableau or foundations
-static bool change_x_left_right(int *x, enum SelDirection dir, bool tab, bool tabfndonly)
+static bool change_x_left_right(int *x, SelDirection dir, bool tab, bool tabfndonly)
 {
 	do
-		*x += (dir == SEL_LEFT) ? -1 : 1;
+		*x += (dir == SelDirection::LEFT) ? -1 : 1;
 	while (0 <= *x && *x < 7 && !tab && !card_x_2_top_place(*x));
 
 	if (tabfndonly && !tab && !KLON_IS_FOUNDATION(card_x_2_top_place(*x)))
@@ -84,7 +84,7 @@ bool sel_less(Klon kln, Sel *sel)
 	return false;
 }
 
-void selmv_anothercard(Klon kln, SelMv *selmv, enum SelDirection dir)
+void selmv_anothercard(Klon kln, SelMv *selmv, SelDirection dir)
 {
 	if (selmv->ismv)
 		assert(selmv->mv.card);
@@ -93,13 +93,13 @@ void selmv_anothercard(Klon kln, SelMv *selmv, enum SelDirection dir)
 	bool tab = KLON_IS_TABLEAU(selmv->ismv ? selmv->mv.dst : selmv->sel.place);
 
 	switch(dir) {
-	case SEL_LEFT:
-	case SEL_RIGHT:
+	case SelDirection::LEFT:
+	case SelDirection::RIGHT:
 		if (change_x_left_right(&x, dir, tab, selmv->ismv))
 			selmv_byplace(kln, selmv, tab ? KLON_TABLEAU(x) : card_x_2_top_place(x));
 		break;
 
-	case SEL_UP:
+	case SelDirection::UP:
 		if (selmv->ismv) {
 			// can only move from table to foundations, but multiple cards not even there
 			if (tab && KLON_IS_FOUNDATION(card_x_2_top_place(x)) && !selmv->mv.card->next)
@@ -109,7 +109,7 @@ void selmv_anothercard(Klon kln, SelMv *selmv, enum SelDirection dir)
 				selmv_byplace(kln, selmv, card_x_2_top_place(x));
 		break;
 
-	case SEL_DOWN:
+	case SelDirection::DOWN:
 		if (selmv->ismv || !tab)
 			selmv_byplace(kln, selmv, KLON_TABLEAU(x));
 		break;

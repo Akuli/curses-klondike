@@ -31,13 +31,13 @@ static void exitcb(void)
 }
 void (*onerrorexit)(void) = exitcb;
 
-static enum SelDirection curses_key_to_seldirection(int k)
+static SelDirection curses_key_to_seldirection(int k)
 {
 	switch(k) {
-	case KEY_LEFT: return SEL_LEFT;
-	case KEY_RIGHT: return SEL_RIGHT;
-	case KEY_UP: return SEL_UP;
-	case KEY_DOWN: return SEL_DOWN;
+	case KEY_LEFT: return SelDirection::LEFT;
+	case KEY_RIGHT: return SelDirection::RIGHT;
+	case KEY_UP: return SelDirection::UP;
+	case KEY_DOWN: return SelDirection::DOWN;
 	default: throw std::logic_error("not arrow key");
 	}
 }

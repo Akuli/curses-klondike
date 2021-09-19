@@ -150,10 +150,10 @@ static void draw_card_stack(WINDOW *win, const Card *botcrd, int xstart, int yst
 }
 
 // https://github.com/Akuli/curses-klondike/issues/2
-enum DiscardHide { DH_HIDE_ALL, DH_SHOW_LAST_ONLY, DH_SHOW_ALL };
+enum class DiscardHide { HIDE_ALL, SHOW_LAST_ONLY, SHOW_ALL };
 
 // TODO: this function is quite long, break it up
-static void draw_the_klon(WINDOW *win, Klon kln, Sel sel, bool moving, bool color, enum DiscardHide dh, int dscxoff)
+static void draw_the_klon(WINDOW *win, Klon kln, Sel sel, bool moving, bool color, DiscardHide dh, int dscxoff)
 {
 	werase(win);
 
@@ -172,9 +172,9 @@ static void draw_the_klon(WINDOW *win, Klon kln, Sel sel, bool moving, bool colo
 		Card crdval = *crd;
 
 		assert(crdval.visible);
-		if (dh == DH_HIDE_ALL)
+		if (dh == DiscardHide::HIDE_ALL)
 			crdval.visible = false;
-		if (dh == DH_SHOW_LAST_ONLY)
+		if (dh == DiscardHide::SHOW_LAST_ONLY)
 			crdval.visible = !crd->next;
 
 		draw_card(win, &crdval, x, ui_y(0, h), sel.place == KLON_DISCARD && !crd->next, color);
@@ -213,24 +213,24 @@ static void draw_the_klon(WINDOW *win, Klon kln, Sel sel, bool moving, bool colo
 	}
 }
 
-static enum DiscardHide decide_what_to_hide(SelMv selmv, bool cmdlnopt)
+static DiscardHide decide_what_to_hide(SelMv selmv, bool cmdlnopt)
 {
 	if (!cmdlnopt)
-		return DH_SHOW_ALL;
+		return DiscardHide::SHOW_ALL;
 
 	if (!selmv.ismv)
-		return DH_SHOW_LAST_ONLY;
+		return DiscardHide::SHOW_LAST_ONLY;
 
 	if (selmv.mv.src == KLON_DISCARD && selmv.mv.dst == KLON_DISCARD)
-		return DH_SHOW_LAST_ONLY;
+		return DiscardHide::SHOW_LAST_ONLY;
 	if (selmv.mv.src == KLON_DISCARD)
-		return DH_HIDE_ALL;
-	return DH_SHOW_LAST_ONLY;
+		return DiscardHide::HIDE_ALL;
+	return DiscardHide::SHOW_LAST_ONLY;
 }
 
 void ui_drawklon(WINDOW *win, Klon kln, SelMv selmv, bool color, bool discardhide)
 {
-	enum DiscardHide dh = decide_what_to_hide(selmv, discardhide);
+	DiscardHide dh = decide_what_to_hide(selmv, discardhide);
 	int dscxoff = discardhide ? 1 : X_OFFSET;
 
 	if (selmv.ismv) {

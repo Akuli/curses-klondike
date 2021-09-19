@@ -47,13 +47,13 @@ struct SelMv {
 	bool ismv;
 };
 
-enum SelDirection { SEL_LEFT, SEL_RIGHT, SEL_UP, SEL_DOWN };
+enum class SelDirection { LEFT, RIGHT, UP, DOWN };
 
 // selects the topmost card at plc (or prepare to move there)
 void selmv_byplace(Klon kln, SelMv *selmv, KlonCardPlace plc);
 
 // select another card at left, right, top or bottom, if possible
-void selmv_anothercard(Klon kln, SelMv *selmv, enum SelDirection dir);
+void selmv_anothercard(Klon kln, SelMv *selmv, SelDirection dir);
 
 // if sel is in tableau and possible to select more/less cards in that tableau item, do that
 // returns true if something was done, false otherwise
