@@ -58,12 +58,12 @@ struct Card {
 	Suit suit;
 	bool visible = false;
 	Card *next = nullptr;   // the card that is on top of this card
+
+	std::string numstring() const;  // e.g. "A"
 };
 
 // initialize and shuffle an array of cards, and build a linked list of them
 Card *card_init_list(Card (&arr)[13*4]);
-
-std::string card_numstr(Card crd);
 
 // prints card_str to stdout
 void card_debug(Card crd);

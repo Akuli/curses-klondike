@@ -25,17 +25,16 @@ Card *card_init_list(Card (&arr)[13*4])
 	return &arr[0];
 }
 
-std::string card_numstr(struct Card crd)
+std::string Card::numstring() const
 {
-	static const char *nstrs[] = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
-	assert(sizeof(nstrs)/sizeof(nstrs[0]) == 13);
-	assert(1 <= crd.num && crd.num <= 13);
-	return nstrs[crd.num - 1];
+	static const std::string nstrs[13] = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
+	assert(1 <= this->num && this->num <= 13);
+	return nstrs[this->num - 1];
 }
 
 void card_debug(struct Card crd)
 {
-	printf("%s%s\n", crd.suit.string().c_str(), card_numstr(crd).c_str());
+	printf("%s%s\n", crd.suit.string().c_str(), crd.numstring().c_str());
 }
 
 // crd can be NULL

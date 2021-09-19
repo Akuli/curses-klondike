@@ -40,7 +40,7 @@ TEST(card_str)
 	for (int visible=0; visible < 2; visible++)
 	{
 		struct Card crd = { test.num, s, (bool)visible };
-		assert(card_numstr(crd) == test.numstr);
+		assert(crd.numstring() == test.numstr);
 	}
 }
 
