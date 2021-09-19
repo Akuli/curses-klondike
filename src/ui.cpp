@@ -235,8 +235,7 @@ void ui_drawklon(WINDOW *win, Klon kln, SelMv selmv, bool color, bool discardhid
 
 	if (selmv.ismv) {
 		Klon tmpkln;
-		Sel tmpsel = { kln.dup(&tmpkln, selmv.mv.card), selmv.mv.dst };
-
+		Sel tmpsel = { kln.dup(tmpkln, selmv.mv.card), selmv.mv.dst };
 		tmpkln.move(tmpsel.card, tmpsel.place, true);
 		draw_the_klon(win, tmpkln, tmpsel, true, color, dh, dscxoff);
 	} else

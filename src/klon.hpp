@@ -39,7 +39,7 @@ struct Klon {
 	// also creates new cards
 	// if srccrd is non-NULL, returns the corresponding card of dst
 	// if srccrd is NULL, returns NULL
-	Card *dup(Klon *dst, const Card *srccrd) const;
+	Card *dup(Klon& dst, const Card *srccrd) const;
 
 	// returns whether a card can be moved to on top of dst
 	// use klon_stocktodiscard() instead for stock -> discard moves, this returns false for those

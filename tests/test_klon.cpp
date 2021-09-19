@@ -87,7 +87,7 @@ TEST(klon_dup)
 {
 	Klon kln1, kln2;
 	kln1.init();
-	Card *dupres = kln1.dup(&kln2, kln1.tableau[2]->next);
+	Card *dupres = kln1.dup(kln2, kln1.tableau[2]->next);
 	assert(dupres == kln2.tableau[2]->next);
 
 	assert(cards_match(kln1.stock, kln2.stock));

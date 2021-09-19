@@ -81,24 +81,24 @@ static void copy_cards(const Card *src, Card **dst, const Card *srccrd, Card **d
 	}
 }
 
-Card *Klon::dup(Klon *dst, const Card *srccrd) const
+Card *Klon::dup(Klon& dst, const Card *srccrd) const
 {
 	Card *dstcrd = nullptr;
 
-	Card *list = card_init_list(dst->allcards);
-	copy_cards(this->stock, &dst->stock, srccrd, &dstcrd, &list);
-	copy_cards(this->discard, &dst->discard, srccrd, &dstcrd, &list);
-	dst->discardshow = this->discardshow;
+	Card *list = card_init_list(dst.allcards);
+	copy_cards(this->stock, &dst.stock, srccrd, &dstcrd, &list);
+	copy_cards(this->discard, &dst.discard, srccrd, &dstcrd, &list);
+	dst.discardshow = this->discardshow;
 	for (int i=0; i < 4; i++)
-		copy_cards(this->foundations[i], &dst->foundations[i], srccrd, &dstcrd, &list);
+		copy_cards(this->foundations[i], &dst.foundations[i], srccrd, &dstcrd, &list);
 	for (int i=0; i < 7; i++)
-		copy_cards(this->tableau[i], &dst->tableau[i], srccrd, &dstcrd, &list);
+		copy_cards(this->tableau[i], &dst.tableau[i], srccrd, &dstcrd, &list);
 
 	assert(list == nullptr);
 	return dstcrd;
 }
 
-static bool card_in_some_tableau(Klon kln, const Card *crd)
+static bool card_in_some_tableau(const Klon& kln, const Card *crd)
 {
 	for (int i=0; i < 7; i++)
 		for (Card *tabcrd = kln.tableau[i]; tabcrd; tabcrd = tabcrd->next)
