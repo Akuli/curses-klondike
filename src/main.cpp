@@ -61,7 +61,7 @@ static const std::vector<HelpKey> help_keys = {
 	{ "1,2,…,7", "select tableau by number" },
 };
 
-static void new_game(Klon *kln, SelMv *selmv, std::unique_ptr<Card[]>& cardlist)
+static void new_game(Klon *kln, SelMv *selmv)
 {
 	kln->init();
 	selmv->ismv = false;
@@ -70,7 +70,7 @@ static void new_game(Klon *kln, SelMv *selmv, std::unique_ptr<Card[]>& cardlist)
 }
 
 // returns whether to continue playing
-static bool handle_key(Klon *kln, SelMv *selmv, int k, Args ar, const char *argv0, std::unique_ptr<Card[]>& cardlist)
+static bool handle_key(Klon *kln, SelMv *selmv, int k, Args ar, const char *argv0)
 {
 	if (k == 'h') {
 		help_show(stdscr, help_keys, argv0, ar.color);
@@ -81,7 +81,7 @@ static bool handle_key(Klon *kln, SelMv *selmv, int k, Args ar, const char *argv
 		return false;
 
 	if (k == 'n')
-		new_game(kln, selmv, cardlist);
+		new_game(kln, selmv);
 
 	if (k == 's' && !selmv->ismv) {
 		kln->stock2discard(ar.pick);
@@ -202,10 +202,9 @@ int main(int argc, char **argv)
 
 	refresh();   // yes, this is needed before drawing the cards for some reason
 
-	std::unique_ptr<Card[]> cardlist = nullptr;
 	Klon kln;
 	SelMv selmv;
-	new_game(&kln, &selmv, cardlist);
+	new_game(&kln, &selmv);
 
 	bool first = true;
 	do {
@@ -223,7 +222,7 @@ int main(int argc, char **argv)
 		}
 
 		refresh();
-	} while( handle_key(&kln, &selmv, getch(), ar, argv[0], cardlist) );  // TODO: too many args
+	} while( handle_key(&kln, &selmv, getch(), ar, argv[0]) );  // TODO: too many args
 
 	endwin();
 
