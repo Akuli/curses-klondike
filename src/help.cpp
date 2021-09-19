@@ -1,4 +1,5 @@
 #include "help.hpp"
+#include <algorithm>
 #include <assert.h>
 #include <cursesw.h>
 #include <stdbool.h>
@@ -9,7 +10,7 @@
 #include "misc.hpp"
 #include "scroll.hpp"
 
-static const char *picture[] = {
+static const std::vector<std::string> picture_lines = {
 	"╭──╮╭──╮    ╭──╮╭──╮╭──╮╭──╮",
 	"│  ││  │    │ foundations  │",
 	"╰──╯╰──╯    ╰──╯╰──╯╰──╯╰──╯",
@@ -20,11 +21,10 @@ static const char *picture[] = {
 	"╰──╯╰──╯╰──╯╰──╯╰──╯╰──╯╰──╯"
 };
 
-#define PICTURE_WIDTH (mbstowcs(NULL, picture[0], 0))
-#define PICTURE_HEIGHT (sizeof(picture)/sizeof(picture[0]))
+static const int picture_width = mbstowcs(NULL, picture_lines[0].c_str(), 0);
 
-// note: there's a %s in the rules, that should be substituted with argv[0]
-static const char rules[] =
+// note: there's a %s in the rule_format, that should be substituted with argv[0]
+static const char rule_format[] =
 	"Here the “suit” of a card means ♥, ♦, ♠ or ♣. "
 	"The “number” of a card means one of A,2,3,4,…,9,10,J,Q,K. "
 	"“Visible” cards are cards whose suit and number are visible to you, aka “face-up” cards.\n\n"
@@ -56,50 +56,41 @@ static const char rules[] =
 	"Quit this help and then the game by pressing q twice, and run “%s --help” to get a list of all supported options."
 	;
 
-// return value must be free()d
-static char *get_rules(const char *argv0)
+static std::string get_rules(const char *argv0)
 {
-	int len = snprintf(NULL, 0, rules, argv0);
-	assert(len > 0);
+	std::string out;
+	out.resize(snprintf(NULL, 0, rule_format, argv0) + 1);
+	sprintf(&out[0], rule_format, argv0);
+	return out;
+}
 
-	char *buf = (char*)malloc(len+1);
-	if (!buf)
-		fatal_error("malloc() failed");
+static std::wstring string_to_wstring(std::string s)
+{
+	size_t n = mbstowcs(NULL, s.c_str(), 0) + 1;
+	assert(n != (size_t)-1);
 
-	int n = snprintf(buf, len+1, rules, argv0);
-	assert(n == len);
-	return buf;
+	std::wstring out;
+	out.resize(n+1);
+	mbstowcs(out.data(), s.c_str(), n+1);
+	return out;
 }
 
 static int get_max_width(int w, int xoff, int yoff)
 {
-	if (yoff > (int)PICTURE_HEIGHT)
+	if (yoff > (int)picture_lines.size())
 		return w - xoff;
-	return w - xoff - PICTURE_WIDTH - 3;  // 3 is for more space between picture and helps
+	return w - xoff - string_to_wstring(picture_lines[0]).size() - 3;  // 3 is for more space between picture_lines and helps
 }
 
-// return value must be free()d
-static wchar_t *string_to_wstring(const char *s)
-{
-	size_t n = mbstowcs(NULL, s, 0) + 1;
-	wchar_t *ws = (wchar_t *)malloc(n * sizeof(wchar_t));
-	if (!ws)
-		fatal_error("malloc() failed");
-
-	size_t m = mbstowcs(ws, s, n);
-	assert(m == n-1);
-	return ws;
-}
-
-static void print_colored(WINDOW *win, int y, int x, const wchar_t *s, int n, bool color)
+static void print_colored(WINDOW *win, int y, int x, std::wstring s, bool color)
 {
 	if (!win)
 		return;
 
-	for (int i = 0; i < n; i++) {
+	for (wchar_t w : s) {
 		int attr = 0;
 		if (color)
-			switch(s[i]) {
+			switch(w) {
 			case L'♥':
 			case L'♦':
 				attr = COLOR_PAIR(SuitColor(SuitColor::RED).color_pair_number());
@@ -114,7 +105,7 @@ static void print_colored(WINDOW *win, int y, int x, const wchar_t *s, int n, bo
 
 		if (attr)
 			wattron(win, attr);
-		mvwaddnwstr(win, y, x+i, s+i, 1);
+		mvwaddnwstr(win, y, x++, &w, 1);
 		if (attr)
 			wattroff(win, attr);
 	}
@@ -125,47 +116,33 @@ static void print_wrapped_colored(WINDOW *win, int w, const char *s, int xoff, i
 	// unicode is easiest to do with wchars in this case
 	// wchars work because posix wchar_t is 4 bytes
 	// windows has two-byte wchars which is too small for some unicodes, lol
-	assert(sizeof(wchar_t) >= 4);
-	wchar_t *wsstart = string_to_wstring(s);
-	wchar_t *ws = wsstart;
+	static_assert(sizeof(wchar_t) >= 4);
+	std::wstring ws = string_to_wstring(s);
 
-	while (*ws) {
-		int slen = wcslen(ws);
+	while (!ws.empty()) {
 		int maxw = get_max_width(w, xoff, *yoff);
-		int end = min(slen, maxw);
-		wchar_t *brk;      // must be >=ws and <=ws+end
+		int end = std::min((int)ws.size(), maxw);
 
 		// can break at newline?
-		brk = wmemchr(ws, L'\n', end+1);   // +1 includes ws[end]
+		size_t brk = ws.substr(0, end+1).find(L'\n');
 
 		// can break at space?
-		if (!brk && end != slen) {
-			// can't use wcsrchr because could be: end != wcslen(ws)
-			for (brk = ws+end; brk > ws; brk--)
-				if (*brk == ' ')
-					break;
-			if (brk == ws)  // nothing found
-				brk = NULL;
-		}
+		if (brk == std::wstring::npos && end < (int)ws.size())
+			brk = ws.substr(0, end).find_last_of(L' ');
 
-		if (brk) {
-			print_colored(win, (*yoff)++, xoff, ws, brk - ws, color);
-			ws = brk+1;
-		} else {
-			print_colored(win, (*yoff)++, xoff, ws, end, color);
-			ws += end;
-		}
+		print_colored(win, (*yoff)++, xoff, ws.substr(0, brk), color);
+		if (brk == std::wstring::npos)
+			ws = ws.substr(end);
+		else
+			ws = ws.substr(brk+1);
 	}
-
-	free(wsstart);
 }
 
 static int get_longest_key_length(void)
 {
-	static unsigned int res = 0;
-	if (res == 0)
-		for (const struct HelpKey *k = help_keys; k->key && k->desc; k++)
-			res = max(res, mbstowcs(NULL, k->key, 0));
+	int res = 0;
+	for (const struct HelpKey *k = help_keys; k->key && k->desc; k++)
+		res = std::max(res, (int)string_to_wstring(k->key).size());
 	return res;
 }
 
@@ -178,7 +155,6 @@ static void print_help_item(WINDOW *win, int w, struct HelpKey help, int *y)
 		mvwprintw(win, *y, 0, "%*s%s:", nspace, "", help.key);
 
 	print_wrapped_colored(win, w, help.desc, keymax + 2, y, false);
-	//(*y)++;  // blank line
 }
 
 static void print_title(WINDOW *win, int w, const char *title, int *y)
@@ -199,22 +175,18 @@ static void print_title(WINDOW *win, int w, const char *title, int *y)
 // returns number of lines
 static int print_all_help(WINDOW *win, int w, const char *argv0, bool color)
 {
-	int picx = w - PICTURE_WIDTH;
-
 	if (win)
-		for (int y = 0; y < (int)PICTURE_HEIGHT; y++)
-			mvwaddstr(win, y, picx, picture[y]);
+		for (int y = 0; y < (int)picture_lines.size(); y++)
+			mvwaddstr(win, y, w - string_to_wstring(picture_lines[y]).size(), picture_lines[y].c_str());
 
 	int y = 0;
 	for (const struct HelpKey *k = help_keys; k->key && k->desc; k++)
 		print_help_item(win, w, *k, &y);
 
 	print_title(win, w, "Rules", &y);
-	char *s = get_rules(argv0);
-	print_wrapped_colored(win, w, s, 0, &y, color);
-	free(s);
+	print_wrapped_colored(win, w, get_rules(argv0).c_str(), 0, &y, color);
 
-	return max(y, (int)PICTURE_HEIGHT);
+	return std::max(y, (int)picture_lines.size());
 }
 
 void help_show(WINDOW *win, const char *argv0, bool color)

@@ -9,7 +9,7 @@ struct HelpKey {
 	const char *desc;
 };
 
-extern const struct HelpKey help_keys[];
+extern const HelpKey help_keys[];
 
 // screen must be erased after calling, but not before
 void help_show(WINDOW *win, const char *argv0, bool color);

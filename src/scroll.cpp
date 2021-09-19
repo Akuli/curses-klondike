@@ -1,4 +1,5 @@
 #include "scroll.hpp"
+#include <algorithm>
 #include <curses.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -42,7 +43,7 @@ static void draw_pad_to_window(struct ScrollState *st)
 
 	// min stuff and -1 are needed because curses is awesome
 	// if this code is wrong, it either segfaults or does nothing
-	copywin(st->pad, st->win, st->firstlineno, 0, 0, 0, min(winh, padh)-1, min(winw, padw)-1, true);
+	copywin(st->pad, st->win, st->firstlineno, 0, 0, 0, std::min(winh, padh)-1, std::min(winw, padw)-1, true);
 
 	const char *msg;
 	if (winh < padh)
