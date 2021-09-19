@@ -138,34 +138,25 @@ static void print_wrapped_colored(WINDOW *win, int w, const char *s, int xoff, i
 	}
 }
 
-static int get_longest_key_length(void)
+static void print_help_item(WINDOW *win, int w, int keymax, const HelpKey& help, int *y)
 {
-	int res = 0;
-	for (const struct HelpKey *k = help_keys; k->key && k->desc; k++)
-		res = std::max(res, (int)string_to_wstring(k->key).size());
-	return res;
-}
-
-static void print_help_item(WINDOW *win, int w, struct HelpKey help, int *y)
-{
-	int keymax = get_longest_key_length();
-	int nspace = keymax - mbstowcs(NULL, help.key, 0);
+	int nspace = keymax - string_to_wstring(help.key).size();
 
 	if (win)
-		mvwprintw(win, *y, 0, "%*s%s:", nspace, "", help.key);
+		mvwprintw(win, *y, 0, "%*s%s:", nspace, "", help.key.c_str());
 
-	print_wrapped_colored(win, w, help.desc, keymax + 2, y, false);
+	print_wrapped_colored(win, w, help.desc.c_str(), keymax + 2, y, false);
 }
 
-static void print_title(WINDOW *win, int w, const char *title, int *y)
+static void print_title(WINDOW *win, int w, std::string title, int *y)
 {
 	*y += 2;
 
 	if (win) {
-		int len = mbstowcs(NULL, title, 0);
+		int len = string_to_wstring(title).size();
 		int x = (w - len)/2;
 		mvwhline(win, *y, 0, 0, x-1);
-		mvwaddstr(win, *y, x, title);
+		mvwaddstr(win, *y, x, title.c_str());
 		mvwhline(win, *y, x+len+1, 0, w - (x+len+1));
 	}
 
@@ -173,15 +164,19 @@ static void print_title(WINDOW *win, int w, const char *title, int *y)
 }
 
 // returns number of lines
-static int print_all_help(WINDOW *win, int w, const char *argv0, bool color)
+static int print_all_help(WINDOW *win, int w, std::vector<HelpKey> hkeys, const char *argv0, bool color)
 {
 	if (win)
 		for (int y = 0; y < (int)picture_lines.size(); y++)
 			mvwaddstr(win, y, w - string_to_wstring(picture_lines[y]).size(), picture_lines[y].c_str());
 
+	int keymax = 0;
+	for (const HelpKey& k : hkeys)
+		keymax = std::max(keymax, (int)string_to_wstring(k.key).size());
+
 	int y = 0;
-	for (const struct HelpKey *k = help_keys; k->key && k->desc; k++)
-		print_help_item(win, w, *k, &y);
+	for (const HelpKey& k : hkeys)
+		print_help_item(win, w, keymax, k, &y);
 
 	print_title(win, w, "Rules", &y);
 	print_wrapped_colored(win, w, get_rules(argv0).c_str(), 0, &y, color);
@@ -189,16 +184,16 @@ static int print_all_help(WINDOW *win, int w, const char *argv0, bool color)
 	return std::max(y, (int)picture_lines.size());
 }
 
-void help_show(WINDOW *win, const char *argv0, bool color)
+void help_show(WINDOW *win, std::vector<HelpKey> hkeys, const char *argv0, bool color)
 {
 	int w, h;
 	getmaxyx(win, h, w);
 	(void) h;  // silence warning about unused var
 
-	WINDOW *pad = newpad(print_all_help(NULL, w, argv0, false), w);
+	WINDOW *pad = newpad(print_all_help(NULL, w, hkeys, argv0, false), w);
 	if (!pad)
 		fatal_error("newpad() failed");
-	print_all_help(pad, w, argv0, color);
+	print_all_help(pad, w, hkeys, argv0, color);
 
 	scroll_showpad(win, pad);
 }

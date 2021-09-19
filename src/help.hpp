@@ -2,16 +2,15 @@
 #define HELP_H
 
 #include <curses.h>
-#include <stdbool.h>
+#include <vector>
+#include <string>
 
 struct HelpKey {
-	const char *key;
-	const char *desc;
+	std::string key;
+	std::string desc;
 };
 
-extern const HelpKey help_keys[];
-
 // screen must be erased after calling, but not before
-void help_show(WINDOW *win, const char *argv0, bool color);
+void help_show(WINDOW *win, std::vector<HelpKey> hkeys, const char *argv0, bool color);
 
 #endif  // HELP_H

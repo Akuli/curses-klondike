@@ -44,7 +44,7 @@ static enum SelDirection curses_key_to_seldirection(int k)
 
 
 // help is externed in help.h
-const struct HelpKey help_keys[] = {
+static const std::vector<HelpKey> help_keys = {
 	{ "h", "show this help" },
 	{ "q", "quit" },
 	{ "n", "new game" },
@@ -59,7 +59,6 @@ const struct HelpKey help_keys[] = {
 	{ "PageUp", "select all tableau cards" },
 	{ "PageDown", "select only 1 tableau card" },
 	{ "1,2,…,7", "select tableau by number" },
-	{ NULL, NULL }
 };
 
 static void new_game(Klon *kln, SelMv *selmv, std::unique_ptr<Card[]>& cardlist)
@@ -74,7 +73,7 @@ static void new_game(Klon *kln, SelMv *selmv, std::unique_ptr<Card[]>& cardlist)
 static bool handle_key(Klon *kln, SelMv *selmv, int k, Args ar, const char *argv0, std::unique_ptr<Card[]>& cardlist)
 {
 	if (k == 'h') {
-		help_show(stdscr, argv0, ar.color);
+		help_show(stdscr, help_keys, argv0, ar.color);
 		return true;
 	}
 

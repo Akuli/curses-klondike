@@ -1,15 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <src/help.hpp>
+#include "../src/help.hpp"
 
 static void donothing(void) { }
 
 // externed in src/misc.hpp
 void (*onerrorexit)(void) = donothing;
-
-// externed in help.hpp
-const struct HelpKey help_keys[] = { {NULL, NULL} };
 
 
 static void run_test(const char *nam, void (*f)(void))
