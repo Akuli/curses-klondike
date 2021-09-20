@@ -73,17 +73,17 @@ static bool handle_key(Klon& kln, SelMv& selmv, int k, Args ar, const char *argv
 		// if you change this, think about what if the discard card was selected?
 		// then the moved card ended up on top of the old discarded card
 		// and we have 2 cards selected, so you need to handle that
-		selmv_byplace(kln, selmv, CardPlace::discard());
+		selmv.select_top_card_at_place(kln, CardPlace::discard());
 
 		return true;
 	}
 
 	if (k == 'd' && !selmv.ismv)
-		selmv_byplace(kln, selmv, CardPlace::discard());
+		selmv.select_top_card_at_place(kln, CardPlace::discard());
 
 	if (k == 'f' && !selmv.ismv && selmv.sel.card) {
 		if (kln.move2foundation(selmv.sel.card))
-			selmv_byplace(kln, selmv, selmv.sel.place);  // updates selmv.sel.card if needed
+			selmv.select_top_card_at_place(kln, selmv.sel.place);  // updates selmv.sel.card if needed
 		return true;
 	}
 
@@ -97,7 +97,7 @@ static bool handle_key(Klon& kln, SelMv& selmv, int k, Args ar, const char *argv
 		return true;
 
 	moved:
-		selmv_byplace(kln, selmv, selmv.sel.place);  // updates selmv.sel.card if needed
+		selmv.select_top_card_at_place(kln, selmv.sel.place);  // updates selmv.sel.card if needed
 		return true;
 	}
 
@@ -109,38 +109,38 @@ static bool handle_key(Klon& kln, SelMv& selmv, int k, Args ar, const char *argv
 
 	if (k == KEY_LEFT || k == KEY_RIGHT || k == KEY_UP || k == KEY_DOWN) {
 		if (!selmv.ismv) {
-			if (k == KEY_UP && sel_more(kln, &selmv.sel))
+			if (k == KEY_UP && selmv.sel.more(kln))
 				return true;
-			if (k == KEY_DOWN && sel_less(kln, &selmv.sel))
+			if (k == KEY_DOWN && selmv.sel.less(kln))
 				return true;
 		}
 
-		selmv_anothercard(kln, selmv, curses_key_to_seldirection(k));
+		selmv.select_another_card(kln, curses_key_to_seldirection(k));
 		return true;
 	}
 
 	if (k == KEY_PPAGE && !selmv.ismv) {
-		while (sel_more(kln, &selmv.sel)) {}
+		while (selmv.sel.more(kln)) {}
 		return true;
 	}
 
 	if (k == KEY_NPAGE && !selmv.ismv) {
-		while (sel_less(kln, &selmv.sel)) {}
+		while (selmv.sel.less(kln)) {}
 		return true;
 	}
 
 	if (k == '\n') {
 		if (selmv.ismv)
-			selmv_endmv(kln, selmv);
+			selmv.end_move(kln);
 		else if (selmv.sel.place == CardPlace::stock())
 			kln.stock2discard(ar.pick);
 		else if (selmv.sel.card && selmv.sel.card->visible)
-			selmv_beginmv(selmv);
+			selmv.begin_move();
 		return true;
 	}
 
 	if ('1' <= k && k <= '7') {
-		selmv_byplace(kln, selmv, CardPlace::tableau(k - '1'));
+		selmv.select_top_card_at_place(kln, CardPlace::tableau(k - '1'));
 		return true;
 	}
 

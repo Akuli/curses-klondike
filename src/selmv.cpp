@@ -47,12 +47,12 @@ static Card *get_visible_top_card(Klon kln, CardPlace plc)
 	throw std::logic_error("bad place kind");
 }
 
-void selmv_byplace(Klon kln, SelMv& selmv, CardPlace plc)
+void SelMv::select_top_card_at_place(const Klon& kln, CardPlace plc)
 {
-	if (selmv.ismv)
-		selmv.mv.dst = plc;
+	if (this->ismv)
+		this->mv.dst = plc;
 	else
-		selmv.sel = Sel{ get_visible_top_card(kln, plc), plc };
+		this->sel = Sel{ get_visible_top_card(kln, plc), plc };
 }
 
 // if tabfndonly, only allows moving to tableau or foundations
@@ -67,75 +67,76 @@ static bool change_x_left_right(int *x, SelDirection dir, bool tab, bool tabfndo
 	return (0 <= *x && *x < 7);
 }
 
-bool sel_more(Klon kln, Sel *sel)
+bool Sel::more(const Klon& kln)
 {
-	if (sel->place.kind != CardPlace::TABLEAU)
+	if (this->place.kind != CardPlace::TABLEAU)
 		return false;
 
-	for (Card *crd = kln.tableau[sel->place.num]; crd && crd->next; crd = crd->next)
-		if (sel->card == crd->next && crd->visible) {
-			sel->card = crd;
+	for (Card *crd = kln.tableau[this->place.num]; crd && crd->next; crd = crd->next)
+		if (this->card == crd->next && crd->visible) {
+			this->card = crd;
 			return true;
 		}
 	return false;
 }
 
-bool sel_less(Klon kln, Sel *sel)
+bool Sel::less(const Klon& kln)
 {
-	if (sel->place.kind == CardPlace::TABLEAU && sel->card && sel->card->next) {
-		sel->card = sel->card->next;
+	if (this->place.kind == CardPlace::TABLEAU && this->card && this->card->next) {
+		this->card = this->card->next;
 		return true;
 	}
 	return false;
 }
 
-void selmv_anothercard(Klon kln, SelMv& selmv, SelDirection dir)
+void SelMv::select_another_card(const Klon& kln, SelDirection dir)
 {
-	if (selmv.ismv)
-		assert(selmv.mv.card);
+	if (this->ismv)
+		assert(this->mv.card);
 
-	int x = place_2_card_x(selmv.ismv ? selmv.mv.dst : selmv.sel.place);
+	int x = place_2_card_x(this->ismv ? this->mv.dst : this->sel.place);
 	std::optional<CardPlace> topplace = card_x_2_top_place(x);
-	bool tab = (selmv.ismv ? selmv.mv.dst : selmv.sel.place).kind == CardPlace::TABLEAU;
+	bool tab = (this->ismv ? this->mv.dst : this->sel.place).kind == CardPlace::TABLEAU;
 
 	switch(dir) {
 	case SelDirection::LEFT:
 	case SelDirection::RIGHT:
-		if (change_x_left_right(&x, dir, tab, selmv.ismv))
-			selmv_byplace(kln, selmv, tab ? CardPlace::tableau(x) : card_x_2_top_place(x).value());
+		if (change_x_left_right(&x, dir, tab, this->ismv))
+			this->select_top_card_at_place(kln, tab ? CardPlace::tableau(x) : card_x_2_top_place(x).value());
 		break;
 
 	case SelDirection::UP:
-		if (selmv.ismv) {
+		if (this->ismv) {
 			// can only move from table to foundations, but multiple cards not even there
-			if (tab && topplace && topplace.value().kind == CardPlace::FOUNDATION && !selmv.mv.card->next)
-				selmv_byplace(kln, selmv, topplace.value());
-		} else
+			if (tab && topplace && topplace.value().kind == CardPlace::FOUNDATION && !this->mv.card->next)
+				this->select_top_card_at_place(kln, topplace.value());
+		} else {
 			if (tab && topplace)
-				selmv_byplace(kln, selmv, topplace.value());
+				this->select_top_card_at_place(kln, topplace.value());
+		}
 		break;
 
 	case SelDirection::DOWN:
-		if (selmv.ismv || !tab)
-			selmv_byplace(kln, selmv, CardPlace::tableau(x));
+		if (this->ismv || !tab)
+			this->select_top_card_at_place(kln, CardPlace::tableau(x));
 		break;
 	}
 }
 
-void selmv_beginmv(SelMv& selmv)
+void SelMv::begin_move()
 {
-	selmv.ismv = true;
-	selmv.mv.card = selmv.sel.card;
-	selmv.mv.src = selmv.mv.dst = selmv.sel.place;
+	this->ismv = true;
+	this->mv.card = this->sel.card;
+	this->mv.src = this->mv.dst = this->sel.place;
 }
 
-void selmv_endmv(Klon& kln, SelMv& selmv)
+void SelMv::end_move(Klon& kln)
 {
-	assert(selmv.ismv);
-	assert(selmv.mv.card);
-	if (kln.canmove(selmv.mv.card, selmv.mv.dst))
-		kln.move(selmv.mv.card, selmv.mv.dst, false);
+	assert(this->ismv);
+	assert(this->mv.card);
+	if (kln.canmove(this->mv.card, this->mv.dst))
+		kln.move(this->mv.card, this->mv.dst, false);
 
-	selmv.ismv = false;
-	selmv_byplace(kln, selmv, selmv.mv.dst);
+	this->ismv = false;
+	this->select_top_card_at_place(kln, this->mv.dst);
 }

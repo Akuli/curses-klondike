@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include "klon.hpp"
 
+enum class SelDirection { LEFT, RIGHT, UP, DOWN };
+
 /*
 represents the card pile or location that the user has selected
 a pointer to Card is not enough because it's possible to select a
@@ -32,6 +34,11 @@ possible values:
 struct Sel {
 	Card *card;
 	CardPlace place;
+
+	// if sel is in tableau and possible to select more/less cards in that tableau item, do that
+	// returns true if something was done, false otherwise
+	bool more(const Klon& kln);
+	bool less(const Klon& kln);
 };
 
 // represents card being moved src --> dst
@@ -45,25 +52,12 @@ struct SelMv {
 	Sel sel;
 	Mv mv;
 	bool ismv;
+
+	void select_top_card_at_place(const Klon& kln, CardPlace plc);
+	void select_another_card(const Klon& kln, SelDirection dir);
+	void begin_move();
+	void end_move(Klon& kln);  // moves card if possible
 };
 
-enum class SelDirection { LEFT, RIGHT, UP, DOWN };
-
-// selects the topmost card at plc (or prepare to move there)
-void selmv_byplace(Klon kln, SelMv& selmv, CardPlace plc);
-
-// select another card at left, right, top or bottom, if possible
-void selmv_anothercard(Klon kln, SelMv& selmv, SelDirection dir);
-
-// if sel is in tableau and possible to select more/less cards in that tableau item, do that
-// returns true if something was done, false otherwise
-bool sel_more(Klon kln, Sel *sel);
-bool sel_less(Klon kln, Sel *sel);
-
-// sets selmv->ismv to true and updates other things correctly
-void selmv_beginmv(SelMv& selmv);
-
-// called when the user is done with dragging a card, moves the card if possible and resets sel
-void selmv_endmv(Klon& kln, SelMv& selmv);
 
 #endif  // SELMV_H
