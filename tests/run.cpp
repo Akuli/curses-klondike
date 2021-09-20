@@ -5,10 +5,10 @@
 
 static void run_test(const char *nam, void (*f)(void))
 {
-	printf("%-50s  ", nam);
+	std::printf("%-50s  ", nam);
 	fflush(stdout);
 	f();
-	printf("ok\n");
+	std::printf("ok\n");
 }
 
 #define RUN_TEST(f) do { void test_##f(void); run_test("test_" #f, test_##f); } while(0)
@@ -19,7 +19,7 @@ void deinit_args_tests(void);
 int main(void)
 {
 	unsigned int s = time(nullptr);
-	printf("srand seed: %u\n", s);
+	std::printf("srand seed: %u\n", s);
 	srand(s);
 
 	RUN_TEST(card_createallshuf_gives_all_52_cards);

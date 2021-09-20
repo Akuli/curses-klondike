@@ -58,8 +58,8 @@ static const char rule_format[] =
 static std::string get_rules(const char *argv0)
 {
 	std::string out;
-	out.resize(snprintf(nullptr, 0, rule_format, argv0) + 1);
-	sprintf(&out[0], rule_format, argv0);
+	out.resize(std::snprintf(nullptr, 0, rule_format, argv0) + 1);
+	std::sprintf(&out[0], rule_format, argv0);
 	return out;
 }
 

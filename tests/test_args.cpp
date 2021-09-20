@@ -19,11 +19,11 @@ static void read_file(FILE *f, const char *expected)
 	rewind(f);
 
 	if (strcmp(buf, expected) != 0) {
-		printf("\n\noutputs differ\n");
-		printf("=== expected ===\n");
-		printf("%s\n", expected);
-		printf("=== actual ===\n");
-		printf("%s\n", buf);
+		std::printf("\n\noutputs differ\n");
+		std::printf("=== expected ===\n");
+		std::printf("%s\n", expected);
+		std::printf("=== actual ===\n");
+		std::printf("%s\n", buf);
 		abort();
 	}
 }

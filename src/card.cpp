@@ -33,7 +33,7 @@ std::string Card::numstring() const
 
 void Card::debug_print() const
 {
-	printf("%s%s\n", this->suit.string().c_str(), this->numstring().c_str());
+	std::printf("%s%s\n", this->suit.string().c_str(), this->numstring().c_str());
 }
 
 // crd can be nullptr
