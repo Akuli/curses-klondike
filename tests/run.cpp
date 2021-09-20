@@ -11,17 +11,13 @@ static void run_test(const char *nam, void (*f)())
 	std::printf("ok\n");
 }
 
-#define RUN_TEST(f) do { void f(); run_test(#f, f); } while(0)
-
-void init_args_tests();
-void deinit_args_tests();
-
 int main()
 {
 	unsigned int s = time(nullptr);
 	std::printf("srand seed: %u\n", s);
 	srand(s);
 
+	#define RUN_TEST(f) do { void f(); run_test(#f, f); } while(0)
 	RUN_TEST(test_card_init_list);
 	RUN_TEST(test_card_numstring);
 	RUN_TEST(test_card_top);

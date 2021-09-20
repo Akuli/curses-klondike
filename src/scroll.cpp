@@ -4,7 +4,7 @@
 #include <limits.h>
 #include <stdbool.h>
 
-#define BOTTOM_BAR_SIZE 1
+static constexpr int BOTTOM_BAR_SIZE = 1;
 
 struct Scroller {
 	WINDOW *const win;

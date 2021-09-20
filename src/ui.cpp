@@ -7,13 +7,13 @@
 #include "card.hpp"
 #include "klon.hpp"
 
-#define CARD_WIDTH 7
-#define CARD_HEIGHT 5
+static constexpr int CARD_WIDTH = 7;
+static constexpr int CARD_HEIGHT = 5;
 
 // offsets for laying out cards so that they overlap
-#define X_OFFSET 3
-#define Y_OFFSET_SMALL 1
-#define Y_OFFSET_BIG 2
+static constexpr int X_OFFSET = 3;
+static constexpr int Y_OFFSET_SMALL = 1;
+static constexpr int Y_OFFSET_BIG = 2;
 
 void ui_initcolors()
 {
@@ -47,7 +47,7 @@ static inline int ui_y(int ycnt, int h)
 // because i need 2 kind of borders, "normal" and "selected"
 struct Border {
 	// e.g. hrz = horizontal, ul = upper left
-	const char *hrz, *vrt, *ul, *ur, *ll, *lr;
+	const std::string hrz, vrt, ul, ur, ll, lr;
 };
 
 // https://en.wikipedia.org/wiki/Box-drawing_character#Unicode
@@ -59,22 +59,22 @@ static void draw_box(WINDOW *win, int xstart, int ystart, int w, int h, char bg,
 {
 	Border b = sel ? selected_border : normal_border;
 
-	mvwaddstr(win, ystart, xstart, b.ul);
+	mvwaddstr(win, ystart, xstart, b.ul.c_str());
 	for (int x=xstart+1; x < xstart+w-1; x++)
-		mvwaddstr(win, ystart, x, b.hrz);
-	mvwaddstr(win, ystart, xstart+w-1, b.ur);
+		mvwaddstr(win, ystart, x, b.hrz.c_str());
+	mvwaddstr(win, ystart, xstart+w-1, b.ur.c_str());
 
 	for (int y=ystart+1; y < ystart+h-1; y++) {
-		mvwaddstr(win, y, xstart, b.vrt);
+		mvwaddstr(win, y, xstart, b.vrt.c_str());
 		for (int x=xstart+1; x < xstart+w-1; x++)
 			mvwaddch(win, y, x, bg);
-		mvwaddstr(win, y, xstart+w-1, b.vrt);
+		mvwaddstr(win, y, xstart+w-1, b.vrt.c_str());
 	}
 
-	mvwaddstr(win, ystart+h-1, xstart, b.ll);
+	mvwaddstr(win, ystart+h-1, xstart, b.ll.c_str());
 	for (int x=xstart+1; x < xstart+w-1; x++)
-		mvwaddstr(win, ystart+h-1, x, b.hrz);
-	mvwaddstr(win, ystart+h-1, xstart+w-1, b.lr);
+		mvwaddstr(win, ystart+h-1, x, b.hrz.c_str());
+	mvwaddstr(win, ystart+h-1, xstart+w-1, b.lr.c_str());
 }
 
 // draws crd on win
@@ -152,7 +152,7 @@ static void draw_card_stack(WINDOW *win, const Card *botcrd, int xstart, int yst
 enum class DiscardHide { HIDE_ALL, SHOW_LAST_ONLY, SHOW_ALL };
 
 // TODO: this function is quite long, break it up
-static void draw_the_klon(WINDOW *win, Klon kln, Sel sel, bool moving, bool color, DiscardHide dh, int dscxoff)
+static void draw_the_klon(WINDOW *win, const Klon& kln, const Sel& sel, bool moving, bool color, DiscardHide dh, int dscxoff)
 {
 	werase(win);
 
@@ -212,7 +212,7 @@ static void draw_the_klon(WINDOW *win, Klon kln, Sel sel, bool moving, bool colo
 	}
 }
 
-static DiscardHide decide_what_to_hide(SelMv selmv, bool cmdlnopt)
+static DiscardHide decide_what_to_hide(const SelMv& selmv, bool cmdlnopt)
 {
 	if (!cmdlnopt)
 		return DiscardHide::SHOW_ALL;
@@ -227,7 +227,7 @@ static DiscardHide decide_what_to_hide(SelMv selmv, bool cmdlnopt)
 	return DiscardHide::SHOW_LAST_ONLY;
 }
 
-void ui_drawklon(WINDOW *win, Klon kln, SelMv selmv, bool color, bool discardhide)
+void ui_drawklon(WINDOW *win, const Klon& kln, const SelMv& selmv, bool color, bool discardhide)
 {
 	DiscardHide dh = decide_what_to_hide(selmv, discardhide);
 	int dscxoff = discardhide ? 1 : X_OFFSET;

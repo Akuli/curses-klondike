@@ -11,6 +11,6 @@ void ui_initcolors();
 
 // draws kln on win
 // color and discardhide correspond to similarly named command-line arguments
-void ui_drawklon(WINDOW *win, Klon kln, SelMv selmv, bool color, bool discardhide);
+void ui_drawklon(WINDOW *win, const Klon& kln, const SelMv& selmv, bool color, bool discardhide);
 
 #endif  // UI_H
