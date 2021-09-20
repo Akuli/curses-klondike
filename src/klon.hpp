@@ -17,9 +17,8 @@ struct CardPlace {
 	static CardPlace foundation(int n) { assert(0 <= n && n < 4); return CardPlace{ FOUNDATION, (int8_t)n }; }
 	static CardPlace tableau(int n) { assert(0 <= n && n < 7); return CardPlace{ TABLEAU, (int8_t)n }; }
 
-	bool operator==(CardPlace other) {
-		return this->kind == other.kind && this->num == other.num;
-	}
+	bool operator==(CardPlace other) { return this->kind == other.kind && this->num == other.num; }
+	bool operator!=(CardPlace other) { return !(*this == other); }
 };
 
 struct Klon {
