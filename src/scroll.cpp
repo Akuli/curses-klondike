@@ -3,7 +3,6 @@
 #include <curses.h>
 #include <limits.h>
 #include <stdbool.h>
-#include "misc.hpp"
 
 #define BOTTOM_BAR_SIZE 1
 

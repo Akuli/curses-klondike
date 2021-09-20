@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include "card.hpp"   // for SuitColor enum
-#include "misc.hpp"
 #include "scroll.hpp"
 
 static const std::vector<std::wstring> picture_lines = {
@@ -174,7 +173,7 @@ void help_show(WINDOW *win, std::vector<HelpKey> hkeys, const char *argv0, bool 
 
 	WINDOW *pad = newpad(print_all_help(NULL, w, hkeys, argv0, false), w);
 	if (!pad)
-		fatal_error("newpad() failed");
+		throw std::runtime_error("newpad() failed");
 	print_all_help(pad, w, hkeys, argv0, color);
 
 	scroll_showpad(win, pad);

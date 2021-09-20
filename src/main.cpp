@@ -13,7 +13,6 @@
 #include "args.hpp"
 #include "card.hpp"
 #include "help.hpp"
-#include "misc.hpp"
 #include "selmv.hpp"
 #include "klon.hpp"
 #include "ui.hpp"
@@ -166,7 +165,7 @@ static int main_internal(int argc, char **argv)
 {
 	// displaying unicodes correctly needs setlocale here AND cursesw instead of curses in makefile
 	if (!setlocale(LC_ALL, ""))
-		fatal_error("setlocale() failed");
+		throw std::runtime_error("setlocale() failed");
 
 	std::vector<std::string> argvec = {};
 	for (int i = 0; i < argc; i++)
@@ -182,11 +181,11 @@ static int main_internal(int argc, char **argv)
 	// setting to "0" works, but feels like a hack, so i used same as in stackoverflow
 	// TODO: add a configure script to allow compiling without setenv()?
 	if (setenv("ESCDELAY", "25", false) < 0)
-		fatal_error("setenv() failed");
+		throw std::runtime_error("setenv() failed");
 
 	time_t t = time(NULL);
 	if (t == (time_t)(-1))
-		fatal_error("time() failed");
+		throw std::runtime_error("time() failed");
 	srand(t);
 
 	CursesSession ses;
@@ -196,9 +195,9 @@ static int main_internal(int argc, char **argv)
 	if (ar.color)
 		ui_initcolors();
 
-	if (cbreak() == ERR) fatal_error("cbreak() failed");
-	if (curs_set(0) == ERR) fatal_error("curs_set() failed");
-	if (keypad(stdscr, true) == ERR) fatal_error("keypad() failed");
+	if (cbreak() == ERR) throw std::runtime_error("cbreak() failed");
+	if (curs_set(0) == ERR) throw std::runtime_error("curs_set() failed");
+	if (keypad(stdscr, true) == ERR) throw std::runtime_error("keypad() failed");
 
 	refresh();   // yes, this is needed before drawing the cards for some reason
 

@@ -12,7 +12,6 @@ doesn't support --, but nobody needs it for this program imo
 #include <stdexcept>
 #include "args.hpp"
 #include <stdio.h>
-#include "misc.hpp"
 
 enum class OptType { YESNO, INT };
 

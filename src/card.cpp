@@ -6,7 +6,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "misc.hpp"
 
 Card *card_init_list(Card (&arr)[13*4])
 {
