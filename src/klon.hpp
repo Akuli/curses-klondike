@@ -27,17 +27,6 @@ struct CardPlace {
 	}
 };
 
-// TODO: legacy shit, should remove
-typedef CardPlace KlonCardPlace;
-#define KLON_STOCK CardPlace(CardPlaceKind::STOCK)
-#define KLON_DISCARD CardPlace(CardPlaceKind::DISCARD)
-#define KLON_FOUNDATION(n) CardPlace(CardPlaceKind::FOUNDATION, (n))
-#define KLON_TABLEAU(n) CardPlace(CardPlaceKind::TABLEAU, (n))
-#define KLON_IS_FOUNDATION(val) ((val).kind == CardPlaceKind::FOUNDATION)
-#define KLON_IS_TABLEAU(val) ((val).kind == CardPlaceKind::TABLEAU)
-#define KLON_FOUNDATION_NUM(fnd) ((fnd).num)
-#define KLON_TABLEAU_NUM(tab)    ((tab).num)
-
 struct Klon {
 	// https://www.denexa.com/wp-content/uploads/2015/11/klondike.png
 	// these point to just one card, use ->next to access others
@@ -62,7 +51,7 @@ struct Klon {
 	// returns whether a card can be moved to on top of dst
 	// use klon_stocktodiscard() instead for stock -> discard moves, this returns false for those
 	// crd must be a card in kln
-	bool canmove(const Card *crd, KlonCardPlace dst) const;
+	bool canmove(const Card *crd, CardPlace dst) const;
 
 	// replaces crd with NULL
 	// if crd is someothercrd->next, someothercrd is returned
@@ -71,7 +60,7 @@ struct Klon {
 
 	// moves the src card and ->next cards (if any) to dst
 	// if raw, accepts invalid moves (canmove) and never sets ->visible
-	void move(Card *crd, KlonCardPlace dst, bool raw);
+	void move(Card *crd, CardPlace dst, bool raw);
 
 	// convenience function for moving a card to any foundation
 	// does nothing if card is NULL

@@ -84,13 +84,13 @@ TEST(klon_canmove)
 
 	// non-visible cards can never be moved
 	assert(!kln.tableau[2]->visible);
-	assert(!kln.canmove(kln.tableau[2], KLON_STOCK));
-	assert(!kln.canmove(kln.tableau[2], KLON_DISCARD));
-	assert(!kln.canmove(kln.tableau[2], KLON_FOUNDATION(3)));
-	assert(!kln.canmove(kln.tableau[2], KLON_TABLEAU(3)));
+	assert(!kln.canmove(kln.tableau[2], CardPlace(CardPlaceKind::STOCK)));
+	assert(!kln.canmove(kln.tableau[2], CardPlace(CardPlaceKind::DISCARD)));
+	assert(!kln.canmove(kln.tableau[2], CardPlace(CardPlaceKind::FOUNDATION, 3)));
+	assert(!kln.canmove(kln.tableau[2], CardPlace(CardPlaceKind::TABLEAU, 3)));
 
 	// discarding is implemented with klon_stocktodiscard(), not with klon_canmove()
-	assert(!kln.canmove(kln.stock, KLON_DISCARD));
+	assert(!kln.canmove(kln.stock, CardPlace(CardPlaceKind::DISCARD)));
 
 	// TODO: test rest of the code? problem is, how do i find e.g. ♠A or ♥Q
 }
@@ -107,7 +107,7 @@ static void init_movable_kln(Klon *kln, int *srctab, int *dsttab)
 					continue;
 
 				Card *itop = card_top(kln->tableau[i]);
-				if (kln->canmove(itop, KLON_TABLEAU(j))) {
+				if (kln->canmove(itop, CardPlace(CardPlaceKind::TABLEAU, j))) {
 					*srctab = i;
 					*dsttab = j;
 					return;
@@ -123,7 +123,7 @@ TEST(klon_move)
 	int srctab, dsttab;
 	init_movable_kln(&kln, &srctab, &dsttab);
 
-	kln.move(card_top(kln.tableau[srctab]), KLON_TABLEAU(dsttab), false);
+	kln.move(card_top(kln.tableau[srctab]), CardPlace(CardPlaceKind::TABLEAU, dsttab), false);
 	for (int i=0; i < 7; i++) {
 		int ncrd = i+1 - (i == srctab) + (i == dsttab);
 		int visible = 0;

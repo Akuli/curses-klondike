@@ -161,10 +161,10 @@ static void draw_the_klon(WINDOW *win, Klon kln, Sel sel, bool moving, bool colo
 	getmaxyx(win, h, w);
 
 	// drawing just one card is enough for this
-	draw_card(win, kln.stock, ui_x(0, w), ui_y(0, h), sel.place == KLON_STOCK, color);
+	draw_card(win, kln.stock, ui_x(0, w), ui_y(0, h), sel.place.kind == CardPlaceKind::STOCK, color);
 
 	int nshowdis = kln.discardshow;
-	if (sel.place == KLON_DISCARD && moving)  // user is moving a detached card, and it's in the discard
+	if (sel.place.kind == CardPlaceKind::DISCARD && moving)  // user is moving a detached card, and it's in the discard
 		nshowdis++;
 
 	int x = ui_x(1, w);
@@ -177,21 +177,21 @@ static void draw_the_klon(WINDOW *win, Klon kln, Sel sel, bool moving, bool colo
 		if (dh == DiscardHide::SHOW_LAST_ONLY)
 			crdval.visible = !crd->next;
 
-		draw_card(win, &crdval, x, ui_y(0, h), sel.place == KLON_DISCARD && !crd->next, color);
+		draw_card(win, &crdval, x, ui_y(0, h), sel.place.kind == CardPlaceKind::DISCARD && !crd->next, color);
 	}
 
 	if (!kln.discard)   // nothing was drawn, but if the discard is selected, at least draw that
-		draw_card(win, NULL, ui_x(1, w), ui_y(0, h), sel.place == KLON_DISCARD, color);
+		draw_card(win, NULL, ui_x(1, w), ui_y(0, h), sel.place.kind == CardPlaceKind::DISCARD, color);
 
 	// foundations are similar to discard
 	for (int i=0; i < 4; i++)
-		draw_card(win, card_top(kln.foundations[i]), ui_x(3+i, w), ui_y(0, h), sel.place == KLON_FOUNDATION(i), color);
+		draw_card(win, card_top(kln.foundations[i]), ui_x(3+i, w), ui_y(0, h), sel.place == CardPlace(CardPlaceKind::FOUNDATION, x), color);
 
 	// now the tableau... here we go
 	for (int x=0; x < 7; x++) {
 		if (!kln.tableau[x]) {
 			// draw a border if the tableau item is selected
-			draw_card(win, NULL, ui_x(x, w), ui_y(1, h), sel.place == KLON_TABLEAU(x), color);
+			draw_card(win, NULL, ui_x(x, w), ui_y(1, h), sel.place == CardPlace(CardPlaceKind::TABLEAU, x), color);
 			continue;
 		}
 
@@ -221,9 +221,9 @@ static DiscardHide decide_what_to_hide(SelMv selmv, bool cmdlnopt)
 	if (!selmv.ismv)
 		return DiscardHide::SHOW_LAST_ONLY;
 
-	if (selmv.mv.src == KLON_DISCARD && selmv.mv.dst == KLON_DISCARD)
+	if (selmv.mv.src.kind == CardPlaceKind::DISCARD && selmv.mv.dst.kind == CardPlaceKind::DISCARD)
 		return DiscardHide::SHOW_LAST_ONLY;
-	if (selmv.mv.src == KLON_DISCARD)
+	if (selmv.mv.src.kind == CardPlaceKind::DISCARD)
 		return DiscardHide::HIDE_ALL;
 	return DiscardHide::SHOW_LAST_ONLY;
 }

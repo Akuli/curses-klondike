@@ -109,22 +109,23 @@ static bool card_in_some_tableau(const Klon& kln, const Card *crd)
 	return false;
 }
 
-bool Klon::canmove(const Card *crd, KlonCardPlace dst) const
+// TODO: clean up with switch
+bool Klon::canmove(const Card *crd, CardPlace dst) const
 {
 	// taking cards stock to discard is handled by klon_stactodiscard() and not allowed here
 	if (crd->next) {
 		// the only way how a stack of multiple cards is allowed to move is tableau -> tableau
 		// but for that, the bottommost moving card (crd) must be visible
-		if (card_in_some_tableau(*this, crd) && KLON_IS_TABLEAU(dst) && crd->visible)
+		if (card_in_some_tableau(*this, crd) && dst.kind == CardPlaceKind::TABLEAU && crd->visible)
 			goto tableau;
 		return false;
 	}
 
-	if (crd->next || dst == KLON_STOCK || dst == KLON_DISCARD || !crd->visible)
+	if (crd->next || dst.kind == CardPlaceKind::STOCK || dst.kind == CardPlaceKind::DISCARD || !crd->visible)
 		return false;
 
-	if (KLON_IS_FOUNDATION(dst)) {
-		Card *fnd = this->foundations[KLON_FOUNDATION_NUM(dst)];
+	if (dst.kind == CardPlaceKind::FOUNDATION) {
+		Card *fnd = this->foundations[dst.num];
 		if (!fnd)
 			return (crd->num == 1);
 
@@ -133,8 +134,8 @@ bool Klon::canmove(const Card *crd, KlonCardPlace dst) const
 	}
 
 	tableau:
-	if (KLON_IS_TABLEAU(dst)) {
-		Card *tab = this->tableau[KLON_TABLEAU_NUM(dst)];
+	if (dst.kind == CardPlaceKind::TABLEAU) {
+		Card *tab = this->tableau[dst.num];
 		if (!tab)
 			return (crd->num == 13);
 
@@ -175,7 +176,7 @@ Card *Klon::detachcard(const Card *crd)
 	throw std::logic_error("card not found");
 }
 
-void Klon::move(Card *crd, KlonCardPlace dst, bool raw)
+void Klon::move(Card *crd, CardPlace dst, bool raw)
 {
 	if (!raw)
 		assert(this->canmove(crd, dst));
@@ -190,16 +191,20 @@ void Klon::move(Card *crd, KlonCardPlace dst, bool raw)
 		prv->visible = true;
 
 	Card **dstp;
-	if (dst == KLON_STOCK)
+	switch(dst.kind) {
+	case CardPlaceKind::STOCK:
 		dstp = &this->stock;
-	else if (dst == KLON_DISCARD)
+		break;
+	case CardPlaceKind::DISCARD:
 		dstp = &this->discard;
-	else if (KLON_IS_FOUNDATION(dst))
-		dstp = &this->foundations[KLON_FOUNDATION_NUM(dst)];
-	else if (KLON_IS_TABLEAU(dst))
-		dstp = &this->tableau[KLON_TABLEAU_NUM(dst)];
-	else
-		throw std::logic_error("bad card place");
+		break;
+	case CardPlaceKind::FOUNDATION:
+		dstp = &this->foundations[dst.num];
+		break;
+	case CardPlaceKind::TABLEAU:
+		dstp = &this->tableau[dst.num];
+		break;
+	}
 
 	card_pushtop(dstp, crd);
 }
@@ -210,8 +215,8 @@ bool Klon::move2foundation(Card *card)
 		return false;
 
 	for (int i=0; i < 4; i++)
-		if (this->canmove(card, KLON_FOUNDATION(i))) {
-			this->move(card, KLON_FOUNDATION(i), false);
+		if (this->canmove(card, CardPlace(CardPlaceKind::FOUNDATION, i))) {
+			this->move(card, CardPlace(CardPlaceKind::FOUNDATION, i), false);
 			return true;
 		}
 	return false;

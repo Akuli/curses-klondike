@@ -65,7 +65,7 @@ static void new_game(Klon *kln, SelMv *selmv)
 {
 	kln->init();
 	selmv->ismv = false;
-	selmv->sel.place = KLON_STOCK;
+	selmv->sel.place = CardPlace(CardPlaceKind::STOCK);
 	selmv->sel.card = NULL;
 }
 
@@ -89,13 +89,13 @@ static bool handle_key(Klon *kln, SelMv *selmv, int k, Args ar, const char *argv
 		// if you change this, think about what if the discard card was selected?
 		// then the moved card ended up on top of the old discarded card
 		// and we have 2 cards selected, so you need to handle that
-		selmv_byplace(*kln, selmv, KLON_DISCARD);
+		selmv_byplace(*kln, selmv, CardPlace(CardPlaceKind::DISCARD));
 
 		return true;
 	}
 
 	if (k == 'd' && !selmv->ismv)
-		selmv_byplace(*kln, selmv, KLON_DISCARD);
+		selmv_byplace(*kln, selmv, CardPlace(CardPlaceKind::DISCARD));
 
 	if (k == 'f' && !selmv->ismv && selmv->sel.card) {
 		if (kln->move2foundation(selmv->sel.card))
@@ -145,7 +145,7 @@ static bool handle_key(Klon *kln, SelMv *selmv, int k, Args ar, const char *argv
 	if (k == '\n') {
 		if (selmv->ismv)
 			selmv_endmv(kln, selmv);
-		else if (selmv->sel.place == KLON_STOCK)
+		else if (selmv->sel.place.kind == CardPlaceKind::STOCK)
 			kln->stock2discard(ar.pick);
 		else if (selmv->sel.card && selmv->sel.card->visible)
 			selmv_beginmv(selmv);
@@ -153,7 +153,7 @@ static bool handle_key(Klon *kln, SelMv *selmv, int k, Args ar, const char *argv
 	}
 
 	if ('1' <= k && k <= '7') {
-		selmv_byplace(*kln, selmv, KLON_TABLEAU(k - '1'));
+		selmv_byplace(*kln, selmv, CardPlace(CardPlaceKind::TABLEAU, k - '1'));
 		return true;
 	}
 

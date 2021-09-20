@@ -31,14 +31,14 @@ possible values:
 */
 struct Sel {
 	Card *card;
-	KlonCardPlace place;
+	CardPlace place;
 };
 
 // represents card being moved src --> dst
 struct Mv {
 	Card *card;
-	KlonCardPlace src;
-	KlonCardPlace dst;
+	CardPlace src;
+	CardPlace dst;
 };
 
 struct SelMv {
@@ -50,7 +50,7 @@ struct SelMv {
 enum class SelDirection { LEFT, RIGHT, UP, DOWN };
 
 // selects the topmost card at plc (or prepare to move there)
-void selmv_byplace(Klon kln, SelMv *selmv, KlonCardPlace plc);
+void selmv_byplace(Klon kln, SelMv *selmv, CardPlace plc);
 
 // select another card at left, right, top or bottom, if possible
 void selmv_anothercard(Klon kln, SelMv *selmv, SelDirection dir);
