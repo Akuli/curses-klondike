@@ -109,38 +109,50 @@ static bool card_in_some_tableau(const Klon& kln, const Card *crd)
 	return false;
 }
 
-// TODO: clean up with switch
 bool Klon::canmove(const Card *crd, CardPlace dst) const
 {
 	// taking cards stock to discard is handled by klon_stactodiscard() and not allowed here
-	if (crd->next) {
-		// the only way how a stack of multiple cards is allowed to move is tableau -> tableau
-		// but for that, the bottommost moving card (crd) must be visible
-		if (card_in_some_tableau(*this, crd) && dst.kind == CardPlaceKind::TABLEAU && crd->visible)
-			goto tableau;
+
+	// the only way how a stack of multiple cards is allowed to move is tableau -> tableau
+	// but for that, the bottommost moving card (crd) must be visible
+	if (crd->next && !(
+		dst.kind == CardPlaceKind::TABLEAU
+		&& card_in_some_tableau(*this, crd)
+		&& crd->visible))
+	{
 		return false;
 	}
 
-	if (crd->next || dst.kind == CardPlaceKind::STOCK || dst.kind == CardPlaceKind::DISCARD || !crd->visible)
+	switch(dst.kind) {
+	case CardPlaceKind::STOCK:
+	case CardPlaceKind::DISCARD:
 		return false;
+	case CardPlaceKind::FOUNDATION:
+		if (!crd->visible)
+			return false;
 
-	if (dst.kind == CardPlaceKind::FOUNDATION) {
-		Card *fnd = this->foundations[dst.num];
-		if (!fnd)
-			return (crd->num == 1);
+		{
+			Card *fnd = this->foundations[dst.num];
+			if (!fnd)
+				return (crd->num == 1);
 
-		fnd = card_top(fnd);
-		return (crd->suit == fnd->suit && crd->num == fnd->num + 1);
-	}
+			fnd = card_top(fnd);
+			return (crd->suit == fnd->suit && crd->num == fnd->num + 1);
+		}
 
-	tableau:
-	if (dst.kind == CardPlaceKind::TABLEAU) {
-		Card *tab = this->tableau[dst.num];
-		if (!tab)
-			return (crd->num == 13);
+	case CardPlaceKind::TABLEAU:
+		if (!crd->visible)
+			return false;
 
-		tab = card_top(tab);
-		return (crd->suit.color() != tab->suit.color() && crd->num == tab->num - 1);
+		if (dst.kind == CardPlaceKind::TABLEAU) {
+			Card *tab = this->tableau[dst.num];
+			if (!tab)
+				return (crd->num == 13);
+
+			tab = card_top(tab);
+			return (crd->suit.color() != tab->suit.color() && crd->num == tab->num - 1);
+		}
+		break;
 	}
 
 	throw std::logic_error("bad destination");
