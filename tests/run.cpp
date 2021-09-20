@@ -1,7 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include "../src/help.hpp"
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 
 static void run_test(const char *nam, void (*f)())
 {

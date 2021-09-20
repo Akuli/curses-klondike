@@ -1,9 +1,9 @@
 #ifndef HELP_H
 #define HELP_H
 
-#include <curses.h>
-#include <vector>
+#include <cursesw.h>
 #include <string>
+#include <vector>
 
 struct HelpKey {
 	std::string key;

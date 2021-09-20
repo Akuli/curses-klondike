@@ -4,6 +4,7 @@ so i did it myself, why not :D
 doesn't support --, but nobody needs it for this program imo
 */
 
+#include <memory>
 #include <set>
 #include <deque>
 #include <string>
@@ -11,7 +12,6 @@ doesn't support --, but nobody needs it for this program imo
 #include <vector>
 #include <stdexcept>
 #include "args.hpp"
-#include <stdio.h>
 
 enum class OptType { YESNO, INT };
 

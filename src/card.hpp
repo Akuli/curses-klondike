@@ -1,9 +1,8 @@
 #ifndef CARD_H
 #define CARD_H
 
-#include <memory>
-#include <vector>
 #include <stdexcept>
+#include <string>
 
 // https://stackoverflow.com/a/53284026
 

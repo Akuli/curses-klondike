@@ -28,8 +28,7 @@ obj/%.o: src/%.cpp $(HEADERS)
 
 .PHONY: iwyu
 iwyu:
-	for file in $(SRC) src/main.cpp; do $(IWYU) $$file; done || true
-	for file in $(TESTS_SRC); do $(IWYU) -I. $$file; done || true
+	for file in $(SRC) $(TESTS_SRC) src/main.cpp; do $(IWYU) $(shell cat compile_flags.txt) $$file; done || true
 
 testrunner: $(TESTS_SRC) $(OBJ)
 	$(CXX) -I. $(CXXFLAGS) $(TESTS_SRC) $(OBJ) -o testrunner $(LDFLAGS)

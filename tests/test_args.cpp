@@ -1,8 +1,10 @@
-#include <vector>
-#include <cassert>
-#include <iostream>
 #include "../src/args.hpp"
+#include <cassert>
 #include <cstdio>
+#include <cstdlib>
+#include <iostream>
+#include <string>
+#include <vector>
 
 static void read_file(FILE *f, std::string expected)
 {

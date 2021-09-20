@@ -5,6 +5,7 @@
 
 #include "card.hpp" // IWYU pragma: keep
 #include <cassert>
+#include <cstdint>
 
 struct CardPlace {
 	enum Kind : uint8_t { STOCK, DISCARD, FOUNDATION, TABLEAU };

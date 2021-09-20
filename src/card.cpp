@@ -1,11 +1,9 @@
 #include "card.hpp"
 #include <algorithm>
-#include <memory>
+#include <cassert>
+#include <cstdio>
+#include <iterator>
 #include <vector>
-#include <assert.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 Card *card_init_list(Card (&arr)[13*4])
 {

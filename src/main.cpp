@@ -1,20 +1,20 @@
 // TODO: noecho
 #define _POSIX_C_SOURCE 200112L  // for setenv(3)
 
-#include <stdexcept>
-#include <assert.h>
-#include <curses.h>
-#include <locale.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
 #include "args.hpp"
 #include "card.hpp"
 #include "help.hpp"
-#include "selmv.hpp"
 #include "klon.hpp"
+#include "selmv.hpp"
 #include "ui.hpp"
+#include <clocale>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+#include <cursesw.h>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 
 static SelDirection curses_key_to_seldirection(int k)

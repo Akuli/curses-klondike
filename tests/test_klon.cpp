@@ -1,8 +1,6 @@
-#include <assert.h>
-#include <stdbool.h>
-#include <stdlib.h>
 #include "../src/card.hpp"
 #include "../src/klon.hpp"
+#include <cassert>
 
 
 static int count_cards(Card *fst, int *total, int *visible)

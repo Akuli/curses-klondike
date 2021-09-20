@@ -1,11 +1,10 @@
-#include "ui.hpp"
-#include <assert.h>
-#include <curses.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
 #include "card.hpp"
 #include "klon.hpp"
+#include "ui.hpp"
+#include <cassert>
+#include <curses.h>
+#include <stdexcept>
+#include <string>
 
 static constexpr int CARD_WIDTH = 7;
 static constexpr int CARD_HEIGHT = 5;
@@ -207,8 +206,8 @@ static void draw_the_klon(WINDOW *win, const Klon& kln, const Sel& sel, bool mov
 	}
 
 	if (kln.win()) {
-		const char *msg = "you win :)";
-		mvwaddstr(win, h/2, (w - strlen(msg))/2, msg);
+		std::string msg = "you win :)";
+		mvwaddstr(win, h/2, (w - msg.length())/2, msg.c_str());
 	}
 }
 

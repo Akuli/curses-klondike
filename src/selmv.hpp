@@ -1,7 +1,7 @@
 #ifndef SELMV_H
 #define SELMV_H
 
-#include <stdbool.h>
+#include "card.hpp"  // IWYU pragma: keep
 #include "klon.hpp"
 
 enum class SelDirection { LEFT, RIGHT, UP, DOWN };

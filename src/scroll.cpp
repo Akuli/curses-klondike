@@ -1,8 +1,7 @@
 #include "scroll.hpp"
 #include <algorithm>
 #include <curses.h>
-#include <limits.h>
-#include <stdbool.h>
+#include <climits>
 
 static constexpr int BOTTOM_BAR_SIZE = 1;
 

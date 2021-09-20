@@ -1,10 +1,10 @@
-#include "klon.hpp"
-#include <assert.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "card.hpp"
+#include "klon.hpp"
+#include <cassert>
+#include <cstdio>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 void Klon::init()
 {

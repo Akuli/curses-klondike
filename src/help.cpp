@@ -1,13 +1,13 @@
-#include "help.hpp"
-#include <algorithm>
-#include <assert.h>
-#include <cursesw.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <wchar.h>
 #include "card.hpp"
+#include "help.hpp"
 #include "scroll.hpp"
+#include <algorithm>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <cursesw.h>
+#include <memory>
+#include <stdexcept>
 
 static const std::vector<std::string> picture_lines = {
 	"╭──╮╭──╮    ╭──╮╭──╮╭──╮╭──╮",

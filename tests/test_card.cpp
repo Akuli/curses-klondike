@@ -1,8 +1,7 @@
-#include <vector>
-#include <assert.h>
-#include <stdbool.h>
-#include <string.h>
 #include "../src/card.hpp"
+#include <cassert>
+#include <string>
+#include <vector>
 
 void test_card_init_list()
 {
