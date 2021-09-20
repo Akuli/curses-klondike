@@ -20,47 +20,43 @@ static const std::vector<std::string> picture_lines = {
 	"╰──╯╰──╯╰──╯╰──╯╰──╯╰──╯╰──╯"
 };
 
-static const int picture_width = mbstowcs(nullptr, picture_lines[0].c_str(), 0);
-
-// note: there's a %s in the rule_format, that should be substituted with argv[0]
-static const char rule_format[] =
-	"Here the “suit” of a card means ♥, ♦, ♠ or ♣. "
-	"The “number” of a card means one of A,2,3,4,…,9,10,J,Q,K. "
-	"“Visible” cards are cards whose suit and number are visible to you, aka “face-up” cards.\n\n"
-
-	"The goal is to move all cards to foundations. "
-	"Each foundation can contain cards of the same suit in increasing order, starting at A. "
-	"For example, if you see ♥A in tableau or discard, you can move it to an empty foundation, and when you see ♥2, you can move it on top of the ♥A and so on.\n\n"
-
-	"Visible cards on tableau must be in decreasing order with altering colors. "
-	"For example, ♥J ♣10 ♦9 is valid, because the colors are red-black-red and the numbers are 11-10-9.\n\n"
-
-	"If all visible cards are moved away from a tableau place, the topmost non-visible card is flipped, so that it becomes visible. "
-	"Usually getting all those cards to flip is the most challenging thing in a klondike game. "
-	"If there are no non-visible cards left, the place becomes empty, and a K card can be moved to it.\n\n"
-
-	"Moving one or more cards from one tableau place to another is allowed. "
-	"Tableau cards can also be moved to foundations, but only one at a time.\n\n"
-
-	"You can use stock and discard at any time to get more possible moves. "
-	"Cards can be moved from stock to discard, and the topmost card in discard can be moved to tableau or to a foundation. "
-	"By default, 3 cards are moved from stock to discard if the stock contains 3 or more cards; otherwise, all stock cards are moved to discard. "
-	"This can be customized with the --pick option; for example, --pick=1 moves 3 cards instead of 1, which makes the game a lot easier.\n\n"
-
-	"Moving the topmost card of a foundation to tableau is also allowed. "
-	"This can be useful in some cases.\n\n"
-
-	"If the game is too hard or too easy, you can customize it with command-line options. "
-	//                               this is a non-breaking space ----↓
-	"Quit this help and then the game by pressing q twice, and run “%s --help” to get a list of all supported options."
-	;
-
 static std::string get_rules(const char *argv0)
 {
-	std::string out;
-	out.resize(std::snprintf(nullptr, 0, rule_format, argv0) + 1);
-	std::sprintf(&out[0], rule_format, argv0);
-	return out;
+	std::string s =
+		"Here the “suit” of a card means ♥, ♦, ♠ or ♣. "
+		"The “number” of a card means one of A,2,3,4,…,9,10,J,Q,K. "
+		"“Visible” cards are cards whose suit and number are visible to you, aka “face-up” cards.\n\n"
+
+		"The goal is to move all cards to foundations. "
+		"Each foundation can contain cards of the same suit in increasing order, starting at A. "
+		"For example, if you see ♥A in tableau or discard, you can move it to an empty foundation, and when you see ♥2, you can move it on top of the ♥A and so on.\n\n"
+
+		"Visible cards on tableau must be in decreasing order with altering colors. "
+		"For example, ♥J ♣10 ♦9 is valid, because the colors are red-black-red and the numbers are 11-10-9.\n\n"
+
+		"If all visible cards are moved away from a tableau place, the topmost non-visible card is flipped, so that it becomes visible. "
+		"Usually getting all those cards to flip is the most challenging thing in a klondike game. "
+		"If there are no non-visible cards left, the place becomes empty, and a K card can be moved to it.\n\n"
+
+		"Moving one or more cards from one tableau place to another is allowed. "
+		"Tableau cards can also be moved to foundations, but only one at a time.\n\n"
+
+		"You can use stock and discard at any time to get more possible moves. "
+		"Cards can be moved from stock to discard, and the topmost card in discard can be moved to tableau or to a foundation. "
+		"By default, 3 cards are moved from stock to discard if the stock contains 3 or more cards; otherwise, all stock cards are moved to discard. "
+		"This can be customized with the --pick option; for example, --pick=1 moves 3 cards instead of 1, which makes the game a lot easier.\n\n"
+
+		"Moving the topmost card of a foundation to tableau is also allowed. "
+		"This can be useful in some cases.\n\n"
+
+		"If the game is too hard or too easy, you can customize it with command-line options. "
+		//                                    this is a non-breaking space ----↓
+		"Quit this help and then the game by pressing q twice, and run “PROGRAM --help” to get a list of all supported options."
+		;
+
+	std::string old = "PROGRAM";
+	s.replace(s.find(old), old.size(), argv0);
+	return s;
 }
 
 static std::wstring string_to_wstring(std::string s)
