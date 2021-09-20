@@ -185,7 +185,7 @@ static void draw_the_klon(WINDOW *win, Klon kln, Sel sel, bool moving, bool colo
 
 	// foundations are similar to discard
 	for (int i=0; i < 4; i++)
-		draw_card(win, card_top(kln.foundations[i]), ui_x(3+i, w), ui_y(0, h), sel.place == CardPlace(CardPlaceKind::FOUNDATION, x), color);
+		draw_card(win, card_top(kln.foundations[i]), ui_x(3+i, w), ui_y(0, h), sel.place == CardPlace(CardPlaceKind::FOUNDATION, i), color);
 
 	// now the tableau... here we go
 	for (int x=0; x < 7; x++) {
