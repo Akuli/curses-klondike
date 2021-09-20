@@ -6,12 +6,12 @@
 static void run_test(const char *nam, void (*f)())
 {
 	std::printf("%-50s  ", nam);
-	fflush(stdout);
+	std::fflush(stdout);
 	f();
 	std::printf("ok\n");
 }
 
-#define RUN_TEST(f) do { void test_##f(); run_test("test_" #f, test_##f); } while(0)
+#define RUN_TEST(f) do { void f(); run_test(#f, f); } while(0)
 
 void init_args_tests();
 void deinit_args_tests();
@@ -22,23 +22,23 @@ int main()
 	std::printf("srand seed: %u\n", s);
 	srand(s);
 
-	RUN_TEST(card_createallshuf_gives_all_52_cards);
-	RUN_TEST(card_str);
-	RUN_TEST(card_top);
-	RUN_TEST(card_popbot);
-	RUN_TEST(card_pushtop);
+	RUN_TEST(test_card_createallshuf_gives_all_52_cards);
+	RUN_TEST(test_card_str);
+	RUN_TEST(test_card_top);
+	RUN_TEST(test_card_popbot);
+	RUN_TEST(test_card_pushtop);
 
-	RUN_TEST(klon_init_free);
-	RUN_TEST(klon_dup);
-	RUN_TEST(klon_canmove);
-	RUN_TEST(klon_move);
-	RUN_TEST(klon_stock2discard);
+	RUN_TEST(test_klon_init_free);
+	RUN_TEST(test_klon_dup);
+	RUN_TEST(test_klon_canmove);
+	RUN_TEST(test_klon_move);
+	RUN_TEST(test_klon_stock2discard);
 
-	RUN_TEST(args_help);
-	RUN_TEST(args_defaults);
-	RUN_TEST(args_no_defaults);
-	RUN_TEST(args_errors);
-	RUN_TEST(args_nused_bug);
+	RUN_TEST(test_args_help);
+	RUN_TEST(test_args_defaults);
+	RUN_TEST(test_args_no_defaults);
+	RUN_TEST(test_args_errors);
+	RUN_TEST(test_args_nused_bug);
 
 	return 0;
 }

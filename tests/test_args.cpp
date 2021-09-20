@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "util.hpp"
 
 static void read_file(FILE *f, const char *expected)
 {
@@ -47,7 +46,7 @@ public:
 	}
 };
 
-TEST(args_help)
+void test_args_help()
 {
 	Tester t;
 	assert(t.parse(std::vector<std::string>{ "asdasd", "--help" }) == 0);
@@ -61,7 +60,7 @@ TEST(args_help)
 	);
 }
 
-TEST(args_defaults)
+void test_args_defaults()
 {
 	Tester t;
 	assert(t.parse(std::vector<std::string>{ "asdasd" }) == -1);
@@ -70,7 +69,7 @@ TEST(args_defaults)
 	assert(!t.args.discardhide);
 }
 
-TEST(args_no_defaults)
+void test_args_no_defaults()
 {
 	Tester t;
 	assert(t.parse(std::vector<std::string>{ "asdasd", "--no-color", "--pick=2", "--discard-hide" }) == -1);
@@ -81,7 +80,7 @@ TEST(args_no_defaults)
 
 #define HELP_STUFF "\nRun 'asdasd --help' for help.\n"
 
-TEST(args_errors)
+void test_args_errors()
 {
 	Tester t;
 
@@ -121,7 +120,7 @@ TEST(args_errors)
 	assert(t.args.pick == 1);
 }
 
-TEST(args_nused_bug)
+void test_args_nused_bug()
 {
 	Tester t;
 	assert(t.parse(std::vector<std::string>{ "asdasd", "--pick=1", "--no-color" }) == -1);

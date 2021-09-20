@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include "../src/card.hpp"
 #include "../src/klon.hpp"
-#include "util.hpp"
 
 
 static int count_cards(Card *fst, int *total, int *visible)
@@ -20,7 +19,7 @@ static int count_cards(Card *fst, int *total, int *visible)
 	return n;
 }
 
-TEST(klon_init_free)
+void test_klon_init_free()
 {
 	Klon kln;
 	kln.init();
@@ -62,7 +61,7 @@ static bool cards_match(Card *list1, Card *list2)
 	return true;
 }
 
-TEST(klon_dup)
+void test_klon_dup()
 {
 	Klon kln1, kln2;
 	kln1.init();
@@ -77,7 +76,7 @@ TEST(klon_dup)
 		assert(cards_match(kln1.tableau[t], kln2.tableau[t]));
 }
 
-TEST(klon_canmove)
+void test_klon_canmove()
 {
 	Klon kln;
 	kln.init();
@@ -117,7 +116,7 @@ static void init_movable_kln(Klon *kln, int *srctab, int *dsttab)
 	}
 }
 
-TEST(klon_move)
+void test_klon_move()
 {
 	Klon kln;
 	int srctab, dsttab;
@@ -154,7 +153,7 @@ static void discard_check(Klon kln, int ndiscarded, int ds)
 	assert(dvis == ndiscarded);
 }
 
-TEST(klon_stock2discard)
+void test_klon_stock2discard()
 {
 	Klon kln;
 	kln.init();

@@ -2,10 +2,9 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
-#include "util.hpp"
 #include "../src/card.hpp"
 
-TEST(card_createallshuf_gives_all_52_cards)
+void test_card_createallshuf_gives_all_52_cards()
 {
 	int got[4][13] = {0};
 
@@ -21,7 +20,7 @@ TEST(card_createallshuf_gives_all_52_cards)
 
 struct CardStrTest { int num; std::string numstr; };
 
-TEST(card_str)
+void test_card_str()
 {
 	CardStrTest tests[] = {
 		{1, "A"},
@@ -62,7 +61,7 @@ static void abccards(Card *a, Card *b, Card *c, bool link)
 	c->next = nullptr;
 }
 
-TEST(card_top)
+void test_card_top()
 {
 	Card a, b, c;
 	abccards(&a, &b, &c, true);
@@ -71,7 +70,7 @@ TEST(card_top)
 	assert(card_top(card_top(&a)) == &c);
 }
 
-TEST(card_popbot)
+void test_card_popbot()
 {
 	Card a, b, c;
 	abccards(&a, &b, &c, true);
@@ -81,7 +80,7 @@ TEST(card_popbot)
 	assert(p == &b);
 }
 
-TEST(card_pushtop)
+void test_card_pushtop()
 {
 	Card a, b, c;
 	abccards(&a, &b, &c, false);
