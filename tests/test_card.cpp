@@ -49,17 +49,17 @@ static void abccards(Card *a, Card *b, Card *c, bool link)
 	a->num = 1;
 	a->suit = Suit::SPADE;
 	a->visible = true;
-	a->next = link ? b : NULL;
+	a->next = link ? b : nullptr;
 
 	b->num = 2;
 	b->suit = Suit::DIAMOND;
 	b->visible = false;
-	b->next = link ? c : NULL;
+	b->next = link ? c : nullptr;
 
 	c->num = 3;
 	c->suit = Suit::HEART;
 	c->visible = true;
-	c->next = NULL;
+	c->next = nullptr;
 }
 
 TEST(card_top)
@@ -85,7 +85,7 @@ TEST(card_pushtop)
 {
 	Card a, b, c;
 	abccards(&a, &b, &c, false);
-	Card *p = NULL;
+	Card *p = nullptr;
 
 	card_pushtop(&p, &a);
 	assert(p == &a);

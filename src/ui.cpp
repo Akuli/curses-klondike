@@ -180,7 +180,7 @@ static void draw_the_klon(WINDOW *win, Klon kln, Sel sel, bool moving, bool colo
 	}
 
 	if (!kln.discard)   // nothing was drawn, but if the discard is selected, at least draw that
-		draw_card(win, NULL, ui_x(1, w), ui_y(0, h), sel.place == CardPlace::discard(), color);
+		draw_card(win, nullptr, ui_x(1, w), ui_y(0, h), sel.place == CardPlace::discard(), color);
 
 	// foundations are similar to discard
 	for (int i=0; i < 4; i++)
@@ -190,7 +190,7 @@ static void draw_the_klon(WINDOW *win, Klon kln, Sel sel, bool moving, bool colo
 	for (int x=0; x < 7; x++) {
 		if (!kln.tableau[x]) {
 			// draw a border if the tableau item is selected
-			draw_card(win, NULL, ui_x(x, w), ui_y(1, h), sel.place == CardPlace::tableau(x), color);
+			draw_card(win, nullptr, ui_x(x, w), ui_y(1, h), sel.place == CardPlace::tableau(x), color);
 			continue;
 		}
 

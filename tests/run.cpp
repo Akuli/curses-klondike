@@ -18,7 +18,7 @@ void deinit_args_tests(void);
 
 int main(void)
 {
-	unsigned int s = time(NULL);
+	unsigned int s = time(nullptr);
 	printf("srand seed: %u\n", s);
 	srand(s);
 

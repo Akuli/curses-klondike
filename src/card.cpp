@@ -36,7 +36,7 @@ void Card::debug_print() const
 	printf("%s%s\n", this->suit.string().c_str(), this->numstring().c_str());
 }
 
-// crd can be NULL
+// crd can be nullptr
 static Card *next_n_times(Card *crd, int n)
 {
 	for (int i=0; i<n && crd; i++)
@@ -60,7 +60,7 @@ Card *card_popbot(Card **bot)
 {
 	Card *res = *bot;  // c funniness: res and bot are different types, but this is correct
 	*bot = res->next;
-	res->next = NULL;
+	res->next = nullptr;
 	return res;
 }
 

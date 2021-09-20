@@ -24,11 +24,11 @@ struct CardPlace {
 struct Klon {
 	// https://www.denexa.com/wp-content/uploads/2015/11/klondike.png
 	// these point to just one card, use ->next to access others
-	Card *stock;           // TOPMOST card or NULL
-	Card *discard;         // bottommost card or NULL
-	int discardshow;       // number of cards shown in discard, or 0 if discard is NULL
-	Card *foundations[4];  // bottommost cards or NULLs
-	Card *tableau[7];      // bottommost cards or NULLs
+	Card *stock;           // TOPMOST card or nullptr
+	Card *discard;         // bottommost card or nullptr
+	int discardshow;       // number of cards shown in discard, or 0 if discard is nullptr
+	Card *foundations[4];  // bottommost cards or nullptrs
+	Card *tableau[7];      // bottommost cards or nullptrs
 	Card allcards[13*4];
 
 	void debug_print() const;
@@ -38,8 +38,8 @@ struct Klon {
 
 	// copies everything from src to dst
 	// also creates new cards
-	// if srccrd is non-NULL, returns the corresponding card of dst
-	// if srccrd is NULL, returns NULL
+	// if srccrd is non-nullptr, returns the corresponding card of dst
+	// if srccrd is nullptr, returns nullptr
 	Card *dup(Klon& dst, const Card *srccrd) const;
 
 	// returns whether a card can be moved to on top of dst
@@ -47,9 +47,9 @@ struct Klon {
 	// crd must be a card in kln
 	bool canmove(const Card *crd, CardPlace dst) const;
 
-	// replaces crd with NULL
+	// replaces crd with nullptr
 	// if crd is someothercrd->next, someothercrd is returned
-	// if discard != NULL and crd == card_top(discard), updates discardshow
+	// if discard != nullptr and crd == card_top(discard), updates discardshow
 	Card *detachcard(const Card *crd);
 
 	// moves the src card and ->next cards (if any) to dst
@@ -57,7 +57,7 @@ struct Klon {
 	void move(Card *crd, CardPlace dst, bool raw);
 
 	// convenience function for moving a card to any foundation
-	// does nothing if card is NULL
+	// does nothing if card is nullptr
 	bool move2foundation(Card *card);
 
 	// takes cards stock --> discard, or if stock is empty, puts all discardeds to stock

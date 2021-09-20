@@ -42,7 +42,7 @@ static Card *get_visible_top_card(Klon kln, CardPlace plc)
 		case CardPlace::DISCARD:
 			return card_top(kln.discard);
 		case CardPlace::STOCK:
-			return NULL;
+			return nullptr;
 	}
 	throw std::logic_error("bad place kind");
 }

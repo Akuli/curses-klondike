@@ -20,7 +20,7 @@ static const std::vector<std::string> picture_lines = {
 	"╰──╯╰──╯╰──╯╰──╯╰──╯╰──╯╰──╯"
 };
 
-static const int picture_width = mbstowcs(NULL, picture_lines[0].c_str(), 0);
+static const int picture_width = mbstowcs(nullptr, picture_lines[0].c_str(), 0);
 
 // note: there's a %s in the rule_format, that should be substituted with argv[0]
 static const char rule_format[] =
@@ -58,14 +58,14 @@ static const char rule_format[] =
 static std::string get_rules(const char *argv0)
 {
 	std::string out;
-	out.resize(snprintf(NULL, 0, rule_format, argv0) + 1);
+	out.resize(snprintf(nullptr, 0, rule_format, argv0) + 1);
 	sprintf(&out[0], rule_format, argv0);
 	return out;
 }
 
 static std::wstring string_to_wstring(std::string s)
 {
-	size_t n = mbstowcs(NULL, s.c_str(), 0) + 1;
+	size_t n = mbstowcs(nullptr, s.c_str(), 0) + 1;
 	assert(n != (size_t)-1);
 
 	std::wstring out;
@@ -189,7 +189,7 @@ void help_show(WINDOW *win, std::vector<HelpKey> hkeys, const char *argv0, bool 
 	getmaxyx(win, h, w);
 	(void) h;  // silence warning about unused var
 
-	WINDOW *pad = newpad(print_all_help(NULL, w, hkeys, argv0, false), w);
+	WINDOW *pad = newpad(print_all_help(nullptr, w, hkeys, argv0, false), w);
 	if (!pad)
 		throw std::runtime_error("newpad() failed");
 	print_all_help(pad, w, hkeys, argv0, color);

@@ -182,7 +182,7 @@ static int main_internal(int argc, char **argv)
 	if (setenv("ESCDELAY", "25", false) < 0)
 		throw std::runtime_error("setenv() failed");
 
-	time_t t = time(NULL);
+	time_t t = time(nullptr);
 	if (t == (time_t)(-1))
 		throw std::runtime_error("time() failed");
 	srand(t);

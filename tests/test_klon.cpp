@@ -31,10 +31,10 @@ TEST(klon_init_free)
 	assert(count_cards(kln.stock, &total, &svis) == 13*4 - (1+2+3+4+5+6+7));
 	assert(svis == 0);
 
-	assert(count_cards(kln.discard, &total, NULL) == 0);
+	assert(count_cards(kln.discard, &total, nullptr) == 0);
 
 	for (int f=0; f < 4; f++)
-		assert(count_cards(kln.foundations[f], &total, NULL) == 0);
+		assert(count_cards(kln.foundations[f], &total, nullptr) == 0);
 	for (int t=0; t < 7; t++) {
 		int tvis = 0;
 		assert(count_cards(kln.tableau[t], &total, &tvis) == t+1);
@@ -50,7 +50,7 @@ static bool cards_match(Card *list1, Card *list2)
 	Card *a, *b;
 	for (a = list1, b = list2; a || b; a = a->next, b = b->next) {
 		assert(a != b);
-		if (a == NULL || b == NULL) {
+		if (a == nullptr || b == nullptr) {
 			// list lengths differ, both can't be null because a != b
 			return false;
 		}
@@ -127,7 +127,7 @@ TEST(klon_move)
 	for (int i=0; i < 7; i++) {
 		int ncrd = i+1 - (i == srctab) + (i == dsttab);
 		int visible = 0;
-		assert(count_cards(kln.tableau[i], NULL, &visible) == ncrd);
+		assert(count_cards(kln.tableau[i], nullptr, &visible) == ncrd);
 
 		if (i == dsttab)
 			assert(visible == 2);
@@ -146,11 +146,11 @@ static void discard_check(Klon kln, int ndiscarded, int ds)
 	assert(kln.discardshow == ds);
 
 	int svis = 0;
-	assert(count_cards(kln.stock, NULL, &svis) == 13*4 - (1+2+3+4+5+6+7) - ndiscarded);
+	assert(count_cards(kln.stock, nullptr, &svis) == 13*4 - (1+2+3+4+5+6+7) - ndiscarded);
 	assert(svis == 0);
 
 	int dvis = 0;
-	assert(count_cards(kln.discard, NULL, &dvis) == ndiscarded);
+	assert(count_cards(kln.discard, nullptr, &dvis) == ndiscarded);
 	assert(dvis == ndiscarded);
 }
 

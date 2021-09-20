@@ -11,10 +11,10 @@ place where cards can be put but currently contains no cards
 
 possible values:
 
-	.card = NULL, .place = 0
+	.card = nullptr, .place = 0
 		nothing selected
 
-	.card = NULL, .place = KLON_STOCK
+	.card = nullptr, .place = KLON_STOCK
 		stock selected
 
 	.card = card_top(kln->discard), .place = KLON_DISCARD
@@ -26,7 +26,7 @@ possible values:
 	.card = kln->tableau[n] or some of its ->nexts, .card is visible, .place = KLON_TABLEAU(n)
 		nth tableau selected, including the specified card and all its ->nexts
 
-	.card = NULL, .place = KLON_TABLEAU(n)
+	.card = nullptr, .place = KLON_TABLEAU(n)
 		tableau n selected, but there are no cards in that tableau
 */
 struct Sel {
