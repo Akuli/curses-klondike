@@ -11,12 +11,12 @@ struct CardPlace {
 	CardPlaceKind kind;
 	int8_t num;
 
-	CardPlace(CardPlaceKind kind) : kind(kind), num(-1) {
-		assert(kind == CardPlaceKind::STOCK || kind == CardPlaceKind::DISCARD);
-	}
-
-	CardPlace(CardPlaceKind kind, int num) : kind(kind), num(num) {
-		assert(kind == CardPlaceKind::FOUNDATION || kind == CardPlaceKind::TABLEAU);
+	CardPlace(CardPlaceKind kind, int num = -1) : kind(kind), num(num) {
+		assert(
+			(kind == CardPlaceKind::STOCK && num == -1)
+			|| (kind == CardPlaceKind::DISCARD && num == -1)
+			|| (kind == CardPlaceKind::FOUNDATION && 0 <= num && num < 4)
+			|| (kind == CardPlaceKind::TABLEAU && 0 <= num && num < 7));
 	}
 
 	// deleting this causes weird errors
