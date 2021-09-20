@@ -122,8 +122,8 @@ bool Klon::canmove(const Card *crd, CardPlace dst) const
 			)
 		)
 		// taking cards stock to discard is handled by klon_stactodiscard() and not allowed here
-		|| dst.kind == CardPlace::STOCK
-		|| dst.kind == CardPlace::DISCARD
+		|| dst == CardPlace::stock()
+		|| dst == CardPlace::discard()
 		|| !crd->visible
 	)
 		return false;
@@ -212,8 +212,8 @@ bool Klon::move2foundation(Card *card)
 		return false;
 
 	for (int i=0; i < 4; i++)
-		if (this->canmove(card, CardPlace(CardPlace::FOUNDATION, i))) {
-			this->move(card, CardPlace(CardPlace::FOUNDATION, i), false);
+		if (this->canmove(card, CardPlace::foundation(i))) {
+			this->move(card, CardPlace::foundation(i), false);
 			return true;
 		}
 	return false;

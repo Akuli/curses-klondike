@@ -24,11 +24,11 @@ static int place_2_card_x(CardPlace plc)
 static std::optional<CardPlace> card_x_2_top_place(int x)
 {
 	if (x == 0)
-		return CardPlace(CardPlace::STOCK);
+		return CardPlace::stock();
 	if (x == 1)
-		return CardPlace(CardPlace::DISCARD);
+		return CardPlace::discard();
 	if (3 <= x && x < 7)
-		return CardPlace(CardPlace::FOUNDATION, x-3);
+		return CardPlace::foundation(x-3);
 	return std::nullopt;
 }
 
@@ -104,7 +104,7 @@ void selmv_anothercard(Klon kln, SelMv *selmv, SelDirection dir)
 	case SelDirection::LEFT:
 	case SelDirection::RIGHT:
 		if (change_x_left_right(&x, dir, tab, selmv->ismv))
-			selmv_byplace(kln, selmv, tab ? CardPlace(CardPlace::TABLEAU, x) : card_x_2_top_place(x).value());
+			selmv_byplace(kln, selmv, tab ? CardPlace::tableau(x) : card_x_2_top_place(x).value());
 		break;
 
 	case SelDirection::UP:
@@ -119,7 +119,7 @@ void selmv_anothercard(Klon kln, SelMv *selmv, SelDirection dir)
 
 	case SelDirection::DOWN:
 		if (selmv->ismv || !tab)
-			selmv_byplace(kln, selmv, CardPlace(CardPlace::TABLEAU, x));
+			selmv_byplace(kln, selmv, CardPlace::tableau(x));
 		break;
 	}
 }

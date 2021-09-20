@@ -12,16 +12,10 @@ struct CardPlace {
 	Kind kind;
 	int8_t num;
 
-	CardPlace(Kind kind, int num = -1) : kind(kind), num(num) {
-		assert(
-			(kind == CardPlace::STOCK && num == -1)
-			|| (kind == CardPlace::DISCARD && num == -1)
-			|| (kind == CardPlace::FOUNDATION && 0 <= num && num < 4)
-			|| (kind == CardPlace::TABLEAU && 0 <= num && num < 7));
-	}
-
-	// deleting this causes weird errors
-	CardPlace() : kind(CardPlace::STOCK), num(-1) {}
+	static CardPlace stock() { return CardPlace{ STOCK, -1 }; }
+	static CardPlace discard() { return CardPlace{ DISCARD, -1 }; }
+	static CardPlace foundation(int n) { assert(0 <= n && n < 4); return CardPlace{ FOUNDATION, (int8_t)n }; }
+	static CardPlace tableau(int n) { assert(0 <= n && n < 7); return CardPlace{ TABLEAU, (int8_t)n }; }
 
 	bool operator==(CardPlace other) {
 		return this->kind == other.kind && this->num == other.num;
