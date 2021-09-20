@@ -50,10 +50,10 @@ struct SelMv {
 enum class SelDirection { LEFT, RIGHT, UP, DOWN };
 
 // selects the topmost card at plc (or prepare to move there)
-void selmv_byplace(Klon kln, SelMv *selmv, CardPlace plc);
+void selmv_byplace(Klon kln, SelMv& selmv, CardPlace plc);
 
 // select another card at left, right, top or bottom, if possible
-void selmv_anothercard(Klon kln, SelMv *selmv, SelDirection dir);
+void selmv_anothercard(Klon kln, SelMv& selmv, SelDirection dir);
 
 // if sel is in tableau and possible to select more/less cards in that tableau item, do that
 // returns true if something was done, false otherwise
@@ -61,9 +61,9 @@ bool sel_more(Klon kln, Sel *sel);
 bool sel_less(Klon kln, Sel *sel);
 
 // sets selmv->ismv to true and updates other things correctly
-void selmv_beginmv(SelMv *selmv);
+void selmv_beginmv(SelMv& selmv);
 
 // called when the user is done with dragging a card, moves the card if possible and resets sel
-void selmv_endmv(Klon *kln, SelMv *selmv);
+void selmv_endmv(Klon& kln, SelMv& selmv);
 
 #endif  // SELMV_H

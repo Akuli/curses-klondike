@@ -47,14 +47,12 @@ static Card *get_visible_top_card(Klon kln, CardPlace plc)
 	throw std::logic_error("bad place kind");
 }
 
-void selmv_byplace(Klon kln, SelMv *selmv, CardPlace plc)
+void selmv_byplace(Klon kln, SelMv& selmv, CardPlace plc)
 {
-	if (selmv->ismv) {
-		selmv->mv.dst = plc;
-	} else {
-		selmv->sel.place = plc;
-		selmv->sel.card = get_visible_top_card(kln, plc);
-	}
+	if (selmv.ismv)
+		selmv.mv.dst = plc;
+	else
+		selmv.sel = Sel{ get_visible_top_card(kln, plc), plc };
 }
 
 // if tabfndonly, only allows moving to tableau or foundations
@@ -91,26 +89,26 @@ bool sel_less(Klon kln, Sel *sel)
 	return false;
 }
 
-void selmv_anothercard(Klon kln, SelMv *selmv, SelDirection dir)
+void selmv_anothercard(Klon kln, SelMv& selmv, SelDirection dir)
 {
-	if (selmv->ismv)
-		assert(selmv->mv.card);
+	if (selmv.ismv)
+		assert(selmv.mv.card);
 
-	int x = place_2_card_x(selmv->ismv ? selmv->mv.dst : selmv->sel.place);
+	int x = place_2_card_x(selmv.ismv ? selmv.mv.dst : selmv.sel.place);
 	std::optional<CardPlace> topplace = card_x_2_top_place(x);
-	bool tab = (selmv->ismv ? selmv->mv.dst : selmv->sel.place).kind == CardPlace::TABLEAU;
+	bool tab = (selmv.ismv ? selmv.mv.dst : selmv.sel.place).kind == CardPlace::TABLEAU;
 
 	switch(dir) {
 	case SelDirection::LEFT:
 	case SelDirection::RIGHT:
-		if (change_x_left_right(&x, dir, tab, selmv->ismv))
+		if (change_x_left_right(&x, dir, tab, selmv.ismv))
 			selmv_byplace(kln, selmv, tab ? CardPlace::tableau(x) : card_x_2_top_place(x).value());
 		break;
 
 	case SelDirection::UP:
-		if (selmv->ismv) {
+		if (selmv.ismv) {
 			// can only move from table to foundations, but multiple cards not even there
-			if (tab && topplace && topplace.value().kind == CardPlace::FOUNDATION && !selmv->mv.card->next)
+			if (tab && topplace && topplace.value().kind == CardPlace::FOUNDATION && !selmv.mv.card->next)
 				selmv_byplace(kln, selmv, topplace.value());
 		} else
 			if (tab && topplace)
@@ -118,26 +116,26 @@ void selmv_anothercard(Klon kln, SelMv *selmv, SelDirection dir)
 		break;
 
 	case SelDirection::DOWN:
-		if (selmv->ismv || !tab)
+		if (selmv.ismv || !tab)
 			selmv_byplace(kln, selmv, CardPlace::tableau(x));
 		break;
 	}
 }
 
-void selmv_beginmv(SelMv *selmv)
+void selmv_beginmv(SelMv& selmv)
 {
-	selmv->ismv = true;
-	selmv->mv.card = selmv->sel.card;
-	selmv->mv.src = selmv->mv.dst = selmv->sel.place;
+	selmv.ismv = true;
+	selmv.mv.card = selmv.sel.card;
+	selmv.mv.src = selmv.mv.dst = selmv.sel.place;
 }
 
-void selmv_endmv(Klon *kln, SelMv *selmv)
+void selmv_endmv(Klon& kln, SelMv& selmv)
 {
-	assert(selmv->ismv);
-	assert(selmv->mv.card);
-	if (kln->canmove(selmv->mv.card, selmv->mv.dst))
-		kln->move(selmv->mv.card, selmv->mv.dst, false);
+	assert(selmv.ismv);
+	assert(selmv.mv.card);
+	if (kln.canmove(selmv.mv.card, selmv.mv.dst))
+		kln.move(selmv.mv.card, selmv.mv.dst, false);
 
-	selmv->ismv = false;
-	selmv_byplace(*kln, selmv, selmv->mv.dst);
+	selmv.ismv = false;
+	selmv_byplace(kln, selmv, selmv.mv.dst);
 }

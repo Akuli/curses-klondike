@@ -48,16 +48,15 @@ static const std::vector<HelpKey> help_keys = {
 	{ L"1,2,…,7", L"select tableau by number" },
 };
 
-static void new_game(Klon *kln, SelMv *selmv)
+static void new_game(Klon &kln, SelMv &selmv)
 {
-	kln->init();
-	selmv->ismv = false;
-	selmv->sel.place = CardPlace::stock();
-	selmv->sel.card = NULL;
+	kln.init();
+	selmv.ismv = false;
+	selmv.sel = Sel{ nullptr, CardPlace::stock() };
 }
 
 // returns whether to continue playing
-static bool handle_key(Klon *kln, SelMv *selmv, int k, Args ar, const char *argv0)
+static bool handle_key(Klon& kln, SelMv& selmv, int k, Args ar, const char *argv0)
 {
 	if (k == 'h') {
 		help_show(stdscr, help_keys, argv0, ar.color);
@@ -70,77 +69,80 @@ static bool handle_key(Klon *kln, SelMv *selmv, int k, Args ar, const char *argv
 	if (k == 'n')
 		new_game(kln, selmv);
 
-	if (k == 's' && !selmv->ismv) {
-		kln->stock2discard(ar.pick);
+	if (k == 's' && !selmv.ismv) {
+		kln.stock2discard(ar.pick);
 
 		// if you change this, think about what if the discard card was selected?
 		// then the moved card ended up on top of the old discarded card
 		// and we have 2 cards selected, so you need to handle that
-		selmv_byplace(*kln, selmv, CardPlace::discard());
+		selmv_byplace(kln, selmv, CardPlace::discard());
 
 		return true;
 	}
 
-	if (k == 'd' && !selmv->ismv)
-		selmv_byplace(*kln, selmv, CardPlace::discard());
+	if (k == 'd' && !selmv.ismv)
+		selmv_byplace(kln, selmv, CardPlace::discard());
 
-	if (k == 'f' && !selmv->ismv && selmv->sel.card) {
-		if (kln->move2foundation(selmv->sel.card))
-			selmv_byplace(*kln, selmv, selmv->sel.place);  // updates selmv->sel.card if needed
+	if (k == 'f' && !selmv.ismv && selmv.sel.card) {
+		if (kln.move2foundation(selmv.sel.card))
+			selmv_byplace(kln, selmv, selmv.sel.place);  // updates selmv.sel.card if needed
 		return true;
 	}
 
-	if (k == 'g' && !selmv->ismv) {
+	if (k == 'g' && !selmv.ismv) {
 		// inefficient, but not noticably inefficient
-		if (kln->move2foundation(card_top(kln->discard)))
+		if (kln.move2foundation(card_top(kln.discard)))
 			goto moved;
 		for (int i = 0; i < 7; i++)
-			if (kln->move2foundation(card_top(kln->tableau[i])))
+			if (kln.move2foundation(card_top(kln.tableau[i])))
 				goto moved;
 		return true;
 
 	moved:
-		selmv_byplace(*kln, selmv, selmv->sel.place);  // updates selmv->sel.card if needed
+		selmv_byplace(kln, selmv, selmv.sel.place);  // updates selmv.sel.card if needed
 		return true;
 	}
 
 	if (k == 27) {   // esc key, didn't find a KEY_ constant for this
-		if (selmv->ismv)
-			selmv->ismv = false;
+		if (selmv.ismv)
+			selmv.ismv = false;
 		return true;
 	}
 
 	if (k == KEY_LEFT || k == KEY_RIGHT || k == KEY_UP || k == KEY_DOWN) {
-		if (!selmv->ismv) {
-			if (k == KEY_UP && sel_more(*kln, &selmv->sel))
+		if (!selmv.ismv) {
+			if (k == KEY_UP && sel_more(kln, &selmv.sel))
 				return true;
-			if (k == KEY_DOWN && sel_less(*kln, &selmv->sel))
+			if (k == KEY_DOWN && sel_less(kln, &selmv.sel))
 				return true;
 		}
 
-		selmv_anothercard(*kln, selmv, curses_key_to_seldirection(k));
+		selmv_anothercard(kln, selmv, curses_key_to_seldirection(k));
 		return true;
 	}
 
-	if ((k == KEY_PPAGE || k == KEY_NPAGE) && !selmv->ismv) {
-		bool (*func)(Klon, Sel *) = (k==KEY_PPAGE ? sel_more : sel_less);
-		while (func(*kln, &selmv->sel))
-			;
+	if (k == KEY_PPAGE && !selmv.ismv) {
+		while (sel_more(kln, &selmv.sel)) {}
+		return true;
+	}
+
+	if (k == KEY_NPAGE && !selmv.ismv) {
+		while (sel_less(kln, &selmv.sel)) {}
 		return true;
 	}
 
 	if (k == '\n') {
-		if (selmv->ismv)
+		if (selmv.ismv)
 			selmv_endmv(kln, selmv);
-		else if (selmv->sel.place == CardPlace::stock())
-			kln->stock2discard(ar.pick);
-		else if (selmv->sel.card && selmv->sel.card->visible)
+		else if (selmv.sel.place == CardPlace::stock())
+			kln.stock2discard(ar.pick);
+		else if (selmv.sel.card && selmv.sel.card->visible)
 			selmv_beginmv(selmv);
 		return true;
 	}
 
 	if ('1' <= k && k <= '7') {
-		selmv_byplace(*kln, selmv, CardPlace::tableau(k - '1'));
+		selmv_byplace(kln, selmv, CardPlace::tableau(k - '1'));
 		return true;
 	}
 
@@ -200,7 +202,7 @@ static int main_internal(int argc, char **argv)
 
 	Klon kln;
 	SelMv selmv;
-	new_game(&kln, &selmv);
+	new_game(kln, selmv);
 
 	bool first = true;
 	do {
@@ -218,7 +220,7 @@ static int main_internal(int argc, char **argv)
 		}
 
 		refresh();
-	} while( handle_key(&kln, &selmv, getch(), ar, argv[0]) );  // TODO: too many args
+	} while( handle_key(kln, selmv, getch(), ar, argv[0]) );  // TODO: too many args
 
 	endwin();
 
