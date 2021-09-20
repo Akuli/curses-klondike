@@ -45,20 +45,20 @@ static SelDirection curses_key_to_seldirection(int k)
 
 // help is externed in help.h
 static const std::vector<HelpKey> help_keys = {
-	{ "h", "show this help" },
-	{ "q", "quit" },
-	{ "n", "new game" },
-	{ "s", "move card(s) from stock to discard and select discard" },
-	{ "d", "select discard" },
-	{ "f", "move selected card to any foundation, if possible" },
-	{ "g", "move any card to any foundation, if possible" },
-	{ "Enter", "start moving the selected card(s), or complete the move if currently moving" },
-	{ "Esc", "if currently moving card(s), stop that" },
-	{ "←,→", "move selection left/right" },
-	{ "↑,↓", "move selection up/down or select more/less tableau cards" },
-	{ "PageUp", "select all tableau cards" },
-	{ "PageDown", "select only 1 tableau card" },
-	{ "1,2,…,7", "select tableau by number" },
+	{ L"h", L"show this help" },
+	{ L"q", L"quit" },
+	{ L"n", L"new game" },
+	{ L"s", L"move card(s) from stock to discard and select discard" },
+	{ L"d", L"select discard" },
+	{ L"f", L"move selected card to any foundation, if possible" },
+	{ L"g", L"move any card to any foundation, if possible" },
+	{ L"Enter", L"start moving the selected card(s), or complete the move if currently moving" },
+	{ L"Esc", L"if currently moving card(s), stop that" },
+	{ L"←,→", L"move selection left/right" },
+	{ L"↑,↓", L"move selection up/down or select more/less tableau cards" },
+	{ L"PageUp", L"select all tableau cards" },
+	{ L"PageDown", L"select only 1 tableau card" },
+	{ L"1,2,…,7", L"select tableau by number" },
 };
 
 static void new_game(Klon *kln, SelMv *selmv)

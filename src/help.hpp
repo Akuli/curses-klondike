@@ -2,12 +2,16 @@
 #define HELP_H
 
 #include <curses.h>
+#include <cassert>
 #include <vector>
 #include <string>
 
+// wstrings because ♥ is one character, not 3 characters
+static_assert(sizeof(wchar_t) >= 4);
+
 struct HelpKey {
-	std::string key;
-	std::string desc;
+	std::wstring key;
+	std::wstring desc;
 };
 
 // screen must be erased after calling, but not before
