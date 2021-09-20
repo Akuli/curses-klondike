@@ -16,9 +16,10 @@ static constexpr int Y_OFFSET_BIG = 2;
 
 void ui_initcolors()
 {
-	// underlying values of SuitColor are valid color pair numbers
-	if (init_pair(SuitColor(SuitColor::RED).color_pair_number(), COLOR_RED, COLOR_BLACK) == ERR) throw std::runtime_error("init_color() failed");
-	if (init_pair(SuitColor(SuitColor::BLACK).color_pair_number(), COLOR_WHITE, COLOR_BLACK) == ERR) throw std::runtime_error("init_color() failed");
+	if (init_pair(SuitColor(SuitColor::RED).color_pair_number(), COLOR_RED, COLOR_BLACK) == ERR)
+		throw std::runtime_error("init_color() failed");
+	if (init_pair(SuitColor(SuitColor::BLACK).color_pair_number(), COLOR_WHITE, COLOR_BLACK) == ERR)
+		throw std::runtime_error("init_color() failed");
 }
 
 // ui_x() and ui_y() convert coordinates from card counts to curses coordinates
