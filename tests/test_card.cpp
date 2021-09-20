@@ -4,24 +4,23 @@
 #include <string.h>
 #include "../src/card.hpp"
 
-void test_card_createallshuf_gives_all_52_cards()
+void test_card_init_list()
 {
 	int got[4][13] = {0};
 
 	Card cards[13*4];
 	Card *fst = card_init_list(cards);
 	for (Card *crd = fst; crd; crd = crd->next)
-		got[(int)crd->suit][crd->num-1]++;
+		got[crd->suit][crd->num-1]++;
 
 	for (int i=0; i < 4; i++)
 		for (int j=0; j < 7; j++)
 			assert(got[i][j] == 1);
 }
 
-struct CardStrTest { int num; std::string numstr; };
-
-void test_card_str()
+void test_card_numstring()
 {
+	struct CardStrTest { int num; std::string numstr; };
 	CardStrTest tests[] = {
 		{1, "A"},
 		{2, "2"},
@@ -33,13 +32,12 @@ void test_card_str()
 		{13, "K"}
 	};
 
-	// nested for loops without nested indentations or braces
-	for (const CardStrTest& test : tests)
-	for (Suit s : std::vector<Suit>{ Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE })
-	for (int visible=0; visible < 2; visible++)
-	{
-		Card crd = { test.num, s, (bool)visible };
-		assert(crd.numstring() == test.numstr);
+	for (const CardStrTest& test : tests) {
+		for (Suit s : std::vector<Suit>{ Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE }) {
+			for (bool visible : std::vector<bool>{ true, false }) {
+				assert(( Card{ test.num, s, visible }.numstring() == test.numstr ));
+			}
+		}
 	}
 }
 

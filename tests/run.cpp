@@ -22,8 +22,8 @@ int main()
 	std::printf("srand seed: %u\n", s);
 	srand(s);
 
-	RUN_TEST(test_card_createallshuf_gives_all_52_cards);
-	RUN_TEST(test_card_str);
+	RUN_TEST(test_card_init_list);
+	RUN_TEST(test_card_numstring);
 	RUN_TEST(test_card_top);
 	RUN_TEST(test_card_popbot);
 	RUN_TEST(test_card_pushtop);
