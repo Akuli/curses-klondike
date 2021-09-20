@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
-#include "card.hpp"   // for SuitColor enum
+#include "card.hpp"
 #include "scroll.hpp"
 
 static const std::vector<std::string> picture_lines = {

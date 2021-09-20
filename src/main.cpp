@@ -1,6 +1,5 @@
 // TODO: noecho
-// for setenv(3)
-#define _POSIX_C_SOURCE 200112L
+#define _POSIX_C_SOURCE 200112L  // for setenv(3)
 
 #include <stdexcept>
 #include <assert.h>
@@ -28,7 +27,6 @@ static SelDirection curses_key_to_seldirection(int k)
 		default: throw std::logic_error("not arrow key");
 	}
 }
-
 
 // help is externed in help.h
 static const std::vector<HelpKey> help_keys = {
@@ -178,7 +176,6 @@ static int main_internal(int argc, char **argv)
 	// https://stackoverflow.com/a/28020568
 	// see also ESCDELAY in a man page named "ncurses"
 	// setting to "0" works, but feels like a hack, so i used same as in stackoverflow
-	// TODO: add a configure script to allow compiling without setenv()?
 	if (setenv("ESCDELAY", "25", false) < 0)
 		throw std::runtime_error("setenv() failed");
 

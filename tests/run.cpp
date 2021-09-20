@@ -16,7 +16,7 @@ static void run_test(const char *nam, void (*f)(void))
 void init_args_tests(void);
 void deinit_args_tests(void);
 
-int main(void)
+int main()
 {
 	unsigned int s = time(nullptr);
 	std::printf("srand seed: %u\n", s);

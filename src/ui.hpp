@@ -7,7 +7,7 @@
 #include "selmv.hpp" // IWYU pragma: keep
 
 // sets up curses color pairs for SuitColor from card.h
-void ui_initcolors(void);
+void ui_initcolors();
 
 // draws kln on win
 // color and discardhide correspond to similarly named command-line arguments
