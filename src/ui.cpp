@@ -15,7 +15,7 @@
 #define Y_OFFSET_SMALL 1
 #define Y_OFFSET_BIG 2
 
-void ui_initcolors(void)
+void ui_initcolors()
 {
 	// underlying values of SuitColor are valid color pair numbers
 	if (init_pair(SuitColor(SuitColor::RED).color_pair_number(), COLOR_RED, COLOR_BLACK) == ERR) throw std::runtime_error("init_color() failed");

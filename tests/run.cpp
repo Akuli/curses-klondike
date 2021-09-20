@@ -3,7 +3,7 @@
 #include <time.h>
 #include "../src/help.hpp"
 
-static void run_test(const char *nam, void (*f)(void))
+static void run_test(const char *nam, void (*f)())
 {
 	std::printf("%-50s  ", nam);
 	fflush(stdout);
@@ -11,10 +11,10 @@ static void run_test(const char *nam, void (*f)(void))
 	std::printf("ok\n");
 }
 
-#define RUN_TEST(f) do { void test_##f(void); run_test("test_" #f, test_##f); } while(0)
+#define RUN_TEST(f) do { void test_##f(); run_test("test_" #f, test_##f); } while(0)
 
-void init_args_tests(void);
-void deinit_args_tests(void);
+void init_args_tests();
+void deinit_args_tests();
 
 int main()
 {
