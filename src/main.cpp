@@ -154,9 +154,6 @@ public:
 			throw std::runtime_error("initscr() failed");
 	}
 	~CursesSession() {
-		FILE *f = fopen("/tmp/asd", "a");
-		fprintf(f, "CALLED\n");
-		fclose(f);
 		endwin();
 	}
 };
