@@ -9,13 +9,13 @@
 static int place_2_card_x(CardPlace plc)
 {
 	switch(plc.kind) {
-	case CardPlaceKind::TABLEAU:
+	case CardPlace::TABLEAU:
 		return plc.num;
-	case CardPlaceKind::FOUNDATION:
+	case CardPlace::FOUNDATION:
 		return 3 + plc.num;
-	case CardPlaceKind::STOCK:
+	case CardPlace::STOCK:
 		return 0;
-	case CardPlaceKind::DISCARD:
+	case CardPlace::DISCARD:
 		return 1;
 	}
 	throw std::logic_error("bad place kind");
@@ -24,24 +24,24 @@ static int place_2_card_x(CardPlace plc)
 static std::optional<CardPlace> card_x_2_top_place(int x)
 {
 	if (x == 0)
-		return CardPlace(CardPlaceKind::STOCK);
+		return CardPlace(CardPlace::STOCK);
 	if (x == 1)
-		return CardPlace(CardPlaceKind::DISCARD);
+		return CardPlace(CardPlace::DISCARD);
 	if (3 <= x && x < 7)
-		return CardPlace(CardPlaceKind::FOUNDATION, x-3);
+		return CardPlace(CardPlace::FOUNDATION, x-3);
 	return std::nullopt;
 }
 
 static Card *get_visible_top_card(Klon kln, CardPlace plc)
 {
 	switch(plc.kind) {
-		case CardPlaceKind::FOUNDATION:
+		case CardPlace::FOUNDATION:
 			return card_top(kln.foundations[plc.num]);
-		case CardPlaceKind::TABLEAU:
+		case CardPlace::TABLEAU:
 			return card_top(kln.tableau[plc.num]);
-		case CardPlaceKind::DISCARD:
+		case CardPlace::DISCARD:
 			return card_top(kln.discard);
-		case CardPlaceKind::STOCK:
+		case CardPlace::STOCK:
 			return NULL;
 	}
 	throw std::logic_error("bad place kind");
@@ -64,14 +64,14 @@ static bool change_x_left_right(int *x, SelDirection dir, bool tab, bool tabfndo
 		*x += (dir == SelDirection::LEFT) ? -1 : 1;
 	while (0 <= *x && *x < 7 && !tab && !card_x_2_top_place(*x));
 
-	if (tabfndonly && !tab && card_x_2_top_place(*x).value().kind != CardPlaceKind::FOUNDATION)
+	if (tabfndonly && !tab && card_x_2_top_place(*x).value().kind != CardPlace::FOUNDATION)
 		return false;
 	return (0 <= *x && *x < 7);
 }
 
 bool sel_more(Klon kln, Sel *sel)
 {
-	if (sel->place.kind != CardPlaceKind::TABLEAU)
+	if (sel->place.kind != CardPlace::TABLEAU)
 		return false;
 
 	for (Card *crd = kln.tableau[sel->place.num]; crd && crd->next; crd = crd->next)
@@ -84,7 +84,7 @@ bool sel_more(Klon kln, Sel *sel)
 
 bool sel_less(Klon kln, Sel *sel)
 {
-	if (sel->place.kind == CardPlaceKind::TABLEAU && sel->card && sel->card->next) {
+	if (sel->place.kind == CardPlace::TABLEAU && sel->card && sel->card->next) {
 		sel->card = sel->card->next;
 		return true;
 	}
@@ -98,19 +98,19 @@ void selmv_anothercard(Klon kln, SelMv *selmv, SelDirection dir)
 
 	int x = place_2_card_x(selmv->ismv ? selmv->mv.dst : selmv->sel.place);
 	std::optional<CardPlace> topplace = card_x_2_top_place(x);
-	bool tab = (selmv->ismv ? selmv->mv.dst : selmv->sel.place).kind == CardPlaceKind::TABLEAU;
+	bool tab = (selmv->ismv ? selmv->mv.dst : selmv->sel.place).kind == CardPlace::TABLEAU;
 
 	switch(dir) {
 	case SelDirection::LEFT:
 	case SelDirection::RIGHT:
 		if (change_x_left_right(&x, dir, tab, selmv->ismv))
-			selmv_byplace(kln, selmv, tab ? CardPlace(CardPlaceKind::TABLEAU, x) : card_x_2_top_place(x).value());
+			selmv_byplace(kln, selmv, tab ? CardPlace(CardPlace::TABLEAU, x) : card_x_2_top_place(x).value());
 		break;
 
 	case SelDirection::UP:
 		if (selmv->ismv) {
 			// can only move from table to foundations, but multiple cards not even there
-			if (tab && topplace && topplace.value().kind == CardPlaceKind::FOUNDATION && !selmv->mv.card->next)
+			if (tab && topplace && topplace.value().kind == CardPlace::FOUNDATION && !selmv->mv.card->next)
 				selmv_byplace(kln, selmv, topplace.value());
 		} else
 			if (tab && topplace)
@@ -119,7 +119,7 @@ void selmv_anothercard(Klon kln, SelMv *selmv, SelDirection dir)
 
 	case SelDirection::DOWN:
 		if (selmv->ismv || !tab)
-			selmv_byplace(kln, selmv, CardPlace(CardPlaceKind::TABLEAU, x));
+			selmv_byplace(kln, selmv, CardPlace(CardPlace::TABLEAU, x));
 		break;
 	}
 }

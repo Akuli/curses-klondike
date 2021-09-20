@@ -6,21 +6,22 @@
 #include "card.hpp" // IWYU pragma: keep
 #include <cassert>
 
-enum class CardPlaceKind : uint8_t { STOCK, DISCARD, FOUNDATION, TABLEAU };
 struct CardPlace {
-	CardPlaceKind kind;
+	enum Kind : uint8_t { STOCK, DISCARD, FOUNDATION, TABLEAU };
+
+	Kind kind;
 	int8_t num;
 
-	CardPlace(CardPlaceKind kind, int num = -1) : kind(kind), num(num) {
+	CardPlace(Kind kind, int num = -1) : kind(kind), num(num) {
 		assert(
-			(kind == CardPlaceKind::STOCK && num == -1)
-			|| (kind == CardPlaceKind::DISCARD && num == -1)
-			|| (kind == CardPlaceKind::FOUNDATION && 0 <= num && num < 4)
-			|| (kind == CardPlaceKind::TABLEAU && 0 <= num && num < 7));
+			(kind == CardPlace::STOCK && num == -1)
+			|| (kind == CardPlace::DISCARD && num == -1)
+			|| (kind == CardPlace::FOUNDATION && 0 <= num && num < 4)
+			|| (kind == CardPlace::TABLEAU && 0 <= num && num < 7));
 	}
 
 	// deleting this causes weird errors
-	CardPlace() : kind(CardPlaceKind::STOCK), num(-1) {}
+	CardPlace() : kind(CardPlace::STOCK), num(-1) {}
 
 	bool operator==(CardPlace other) {
 		return this->kind == other.kind && this->num == other.num;

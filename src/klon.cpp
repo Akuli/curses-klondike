@@ -116,21 +116,21 @@ bool Klon::canmove(const Card *crd, CardPlace dst) const
 		(
 			// the only way how a stack of multiple cards is allowed to move is tableau -> tableau
 			crd->next && !(
-				dst.kind == CardPlaceKind::TABLEAU &&
+				dst.kind == CardPlace::TABLEAU &&
 				card_in_some_tableau(*this, crd) &&
 				crd->visible
 			)
 		)
 		// taking cards stock to discard is handled by klon_stactodiscard() and not allowed here
-		|| dst.kind == CardPlaceKind::STOCK
-		|| dst.kind == CardPlaceKind::DISCARD
+		|| dst.kind == CardPlace::STOCK
+		|| dst.kind == CardPlace::DISCARD
 		|| !crd->visible
 	)
 		return false;
 
 	Card *fnd, *tab;
 	switch(dst.kind) {
-	case CardPlaceKind::FOUNDATION:
+	case CardPlace::FOUNDATION:
 		fnd = this->foundations[dst.num];
 		if (!fnd)
 			return (crd->num == 1);
@@ -138,7 +138,7 @@ bool Klon::canmove(const Card *crd, CardPlace dst) const
 		fnd = card_top(fnd);
 		return (crd->suit == fnd->suit && crd->num == fnd->num + 1);
 
-	case CardPlaceKind::TABLEAU:
+	case CardPlace::TABLEAU:
 		tab = this->tableau[dst.num];
 		if (!tab)
 			return (crd->num == 13);
@@ -197,18 +197,10 @@ void Klon::move(Card *crd, CardPlace dst, bool raw)
 
 	Card **dstp;
 	switch(dst.kind) {
-	case CardPlaceKind::STOCK:
-		dstp = &this->stock;
-		break;
-	case CardPlaceKind::DISCARD:
-		dstp = &this->discard;
-		break;
-	case CardPlaceKind::FOUNDATION:
-		dstp = &this->foundations[dst.num];
-		break;
-	case CardPlaceKind::TABLEAU:
-		dstp = &this->tableau[dst.num];
-		break;
+		case CardPlace::STOCK: dstp = &this->stock; break;
+		case CardPlace::DISCARD: dstp = &this->discard; break;
+		case CardPlace::FOUNDATION: dstp = &this->foundations[dst.num]; break;
+		case CardPlace::TABLEAU: dstp = &this->tableau[dst.num]; break;
 	}
 
 	card_pushtop(dstp, crd);
@@ -220,8 +212,8 @@ bool Klon::move2foundation(Card *card)
 		return false;
 
 	for (int i=0; i < 4; i++)
-		if (this->canmove(card, CardPlace(CardPlaceKind::FOUNDATION, i))) {
-			this->move(card, CardPlace(CardPlaceKind::FOUNDATION, i), false);
+		if (this->canmove(card, CardPlace(CardPlace::FOUNDATION, i))) {
+			this->move(card, CardPlace(CardPlace::FOUNDATION, i), false);
 			return true;
 		}
 	return false;
