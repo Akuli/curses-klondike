@@ -2,6 +2,7 @@
 // for setenv(3)
 #define _POSIX_C_SOURCE 200112L
 
+#include <stdexcept>
 #include <assert.h>
 #include <curses.h>
 #include <locale.h>
@@ -18,27 +19,14 @@
 #include "ui.hpp"
 
 
-static bool initscred = false;
-
-// https://stackoverflow.com/a/8562768
-// onerrorexit is externed in misc.h
-static void exitcb(void)
-{
-	if (initscred) {
-		endwin();
-		initscred = false;
-	}
-}
-void (*onerrorexit)(void) = exitcb;
-
 static SelDirection curses_key_to_seldirection(int k)
 {
 	switch(k) {
-	case KEY_LEFT: return SelDirection::LEFT;
-	case KEY_RIGHT: return SelDirection::RIGHT;
-	case KEY_UP: return SelDirection::UP;
-	case KEY_DOWN: return SelDirection::DOWN;
-	default: throw std::logic_error("not arrow key");
+		case KEY_LEFT: return SelDirection::LEFT;
+		case KEY_RIGHT: return SelDirection::RIGHT;
+		case KEY_UP: return SelDirection::UP;
+		case KEY_DOWN: return SelDirection::DOWN;
+		default: throw std::logic_error("not arrow key");
 	}
 }
 
@@ -160,7 +148,21 @@ static bool handle_key(Klon *kln, SelMv *selmv, int k, Args ar, const char *argv
 	return true;
 }
 
-int main(int argc, char **argv)
+class CursesSession {
+public:
+	CursesSession() {
+		if (!initscr())
+			throw std::runtime_error("initscr() failed");
+	}
+	~CursesSession() {
+		FILE *f = fopen("/tmp/asd", "a");
+		fprintf(f, "CALLED\n");
+		fclose(f);
+		endwin();
+	}
+};
+
+static int main_internal(int argc, char **argv)
 {
 	// displaying unicodes correctly needs setlocale here AND cursesw instead of curses in makefile
 	if (!setlocale(LC_ALL, ""))
@@ -187,9 +189,7 @@ int main(int argc, char **argv)
 		fatal_error("time() failed");
 	srand(t);
 
-	if (!initscr())
-		fatal_error("initscr() failed");
-	initscred = true;
+	CursesSession ses;
 
 	// changing ar.color here makes things easier
 	ar.color = (ar.color && has_colors() && start_color() != ERR);
@@ -227,4 +227,14 @@ int main(int argc, char **argv)
 	endwin();
 
 	return 0;
+}
+
+int main(int argc, char **argv)
+{
+	// https://stackoverflow.com/q/222175
+	try {
+		return main_internal(argc, argv);
+	} catch(...) {
+		throw;
+	}
 }

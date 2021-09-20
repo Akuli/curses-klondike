@@ -3,12 +3,6 @@
 #include <time.h>
 #include "../src/help.hpp"
 
-static void donothing(void) { }
-
-// externed in src/misc.hpp
-void (*onerrorexit)(void) = donothing;
-
-
 static void run_test(const char *nam, void (*f)(void))
 {
 	printf("%-50s  ", nam);
