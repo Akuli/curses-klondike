@@ -18,7 +18,8 @@ static void read_file(FILE *f, std::string expected)
 	if (expected != actual) {
 		std::cout << "\n\noutputs differ\n";
 		std::cout << "=== expected ===\n" << expected << "\n";
-		std::cout << "=== actual   ===\n" << actual   << "\n";
+		std::cout << "===  actual  ===\n" << actual   << "\n";
+		std::cout.flush();
 		abort();
 	}
 }
