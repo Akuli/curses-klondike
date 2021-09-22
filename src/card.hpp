@@ -62,26 +62,28 @@ struct Card {
 	void debug_print() const;
 };
 
-// initialize and shuffle an array of cards, and build a linked list of them
-Card *card_init_list(Card (&arr)[13*4]);
+namespace cardlist {
+	// initialize and shuffle an array of cards, and build a linked list of them
+	Card *init(Card (&arr)[13*4]);
 
-// returns topmost card in a linked list of cards
-// special case to make some things easier: card_top(nullptr) == nullptr
-// card_top(nonnull)->next is always nullptr
-Card *card_top(Card *crd);
+	// returns topmost card in a linked list of cards
+	// special case to make some things easier: top(nullptr) == nullptr
+	// top(nonnull)->next is always nullptr
+	Card *top(Card *crd);
 
-// returns at most n topmost cards from a linked list of cards as another linked list
-// card_tops(nullptr, n) == nullptr
-Card *card_tops(Card *crd, int n);
+	// returns at most n topmost cards from a linked list of cards as another linked list
+	// tops(nullptr, n) == nullptr
+	Card *tops(Card *crd, int n);
 
-// gets bottommost card from a linked list of cards
-// sets *bot to (*bot)->next (that can be nullptr)
-// bad things happen if *bot is nullptr
-Card *card_popbot(Card **bot);
+	// gets bottommost card from a linked list of cards
+	// sets *bot to (*bot)->next (that can be nullptr)
+	// bad things happen if *bot is nullptr
+	Card *pop_bottom(Card **bot);
 
-// adds a card to top of a linked list of cards
-// if *list is nullptr, sets *list to newtop
-// if *list is non-nullptr, sets card_top(*list)->next to newtop
-void card_pushtop(Card **list, Card *newtop);
+	// adds a card to top of a linked list of cards
+	// if *list is nullptr, sets *list to newtop
+	// if *list is non-nullptr, sets top(*list)->next to newtop
+	void push_top(Card **list, Card *newtop);
+}
 
 #endif  // CARD_H

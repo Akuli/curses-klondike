@@ -50,7 +50,7 @@ struct Klon {
 
 	// replaces crd with nullptr
 	// if crd is someothercrd->next, someothercrd is returned
-	// if discard != nullptr and crd == card_top(discard), updates discardshow
+	// if discard != nullptr and crd == top(discard), updates discardshow
 	Card *detachcard(const Card *crd);
 
 	// moves the src card and ->next cards (if any) to dst

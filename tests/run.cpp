@@ -17,13 +17,14 @@ int main()
 	srand(s);
 
 	#define RUN_TEST(f) do { void f(); run_test(#f, f); } while(0)
-	RUN_TEST(test_card_init_list);
-	RUN_TEST(test_card_numstring);
-	RUN_TEST(test_card_top);
-	RUN_TEST(test_card_popbot);
-	RUN_TEST(test_card_pushtop);
 
-	RUN_TEST(test_klon_init_free);
+	RUN_TEST(test_card_numstring);
+	RUN_TEST(test_cardlist_init);
+	RUN_TEST(test_cardlist_top);
+	RUN_TEST(test_cardlist_pop);
+	RUN_TEST(test_cardlist_push);
+
+	RUN_TEST(test_klon_init);
 	RUN_TEST(test_klon_dup);
 	RUN_TEST(test_klon_canmove);
 	RUN_TEST(test_klon_move);

@@ -35,11 +35,11 @@ static Card *get_visible_top_card(Klon kln, CardPlace plc)
 {
 	switch(plc.kind) {
 		case CardPlace::FOUNDATION:
-			return card_top(kln.foundations[plc.num]);
+			return cardlist::top(kln.foundations[plc.num]);
 		case CardPlace::TABLEAU:
-			return card_top(kln.tableau[plc.num]);
+			return cardlist::top(kln.tableau[plc.num]);
 		case CardPlace::DISCARD:
-			return card_top(kln.discard);
+			return cardlist::top(kln.discard);
 		case CardPlace::STOCK:
 			return nullptr;
 	}

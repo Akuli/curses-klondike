@@ -19,10 +19,10 @@ possible values:
 	.card = nullptr, .place = KLON_STOCK
 		stock selected
 
-	.card = card_top(kln->discard), .place = KLON_DISCARD
+	.card = top(kln->discard), .place = KLON_DISCARD
 		discard selected
 
-	.card = card_top(kln->foundations[n]), .place = KLON_FOUNDATION(n)
+	.card = top(kln->foundations[n]), .place = KLON_FOUNDATION(n)
 		nth foundation selected
 
 	.card = kln->tableau[n] or some of its ->nexts, .card is visible, .place = KLON_TABLEAU(n)

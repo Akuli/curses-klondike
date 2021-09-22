@@ -17,7 +17,7 @@ static int count_cards(Card *fst, int *total, int *visible)
 	return n;
 }
 
-void test_klon_init_free()
+void test_klon_init()
 {
 	Klon kln;
 	kln.init();
@@ -36,7 +36,7 @@ void test_klon_init_free()
 		int tvis = 0;
 		assert(count_cards(kln.tableau[t], &total, &tvis) == t+1);
 		assert(tvis == 1);
-		assert(card_top(kln.tableau[t])->visible);
+		assert(cardlist::top(kln.tableau[t])->visible);
 	}
 
 	assert(total == 13*4);
@@ -103,7 +103,7 @@ static void init_movable_kln(Klon *kln, int *srctab, int *dsttab)
 				if (i == j)
 					continue;
 
-				Card *itop = card_top(kln->tableau[i]);
+				Card *itop = cardlist::top(kln->tableau[i]);
 				if (kln->canmove(itop, CardPlace::tableau(j))) {
 					*srctab = i;
 					*dsttab = j;
@@ -120,7 +120,7 @@ void test_klon_move()
 	int srctab, dsttab;
 	init_movable_kln(&kln, &srctab, &dsttab);
 
-	kln.move(card_top(kln.tableau[srctab]), CardPlace::tableau(dsttab), false);
+	kln.move(cardlist::top(kln.tableau[srctab]), CardPlace::tableau(dsttab), false);
 	for (int i=0; i < 7; i++) {
 		int ncrd = i+1 - (i == srctab) + (i == dsttab);
 		int visible = 0;
@@ -134,7 +134,7 @@ void test_klon_move()
 			assert(visible == 1);
 
 		if (kln.tableau[i])
-			assert(card_top(kln.tableau[i])->visible);
+			assert(cardlist::top(kln.tableau[i])->visible);
 	}
 }
 

@@ -167,7 +167,7 @@ static void draw_the_klon(WINDOW *win, const Klon& kln, const Sel& sel, bool mov
 		nshowdis++;
 
 	int x = ui_x(1, w);
-	for (Card *crd = card_tops(kln.discard, nshowdis); crd; (crd = crd->next), (x += dscxoff)) {
+	for (Card *crd = cardlist::tops(kln.discard, nshowdis); crd; (crd = crd->next), (x += dscxoff)) {
 		Card crdval = *crd;
 
 		assert(crdval.visible);
@@ -184,7 +184,7 @@ static void draw_the_klon(WINDOW *win, const Klon& kln, const Sel& sel, bool mov
 
 	// foundations are similar to discard
 	for (int i=0; i < 4; i++)
-		draw_card(win, card_top(kln.foundations[i]), ui_x(3+i, w), ui_y(0, h), sel.place == CardPlace::foundation(i), color);
+		draw_card(win, cardlist::top(kln.foundations[i]), ui_x(3+i, w), ui_y(0, h), sel.place == CardPlace::foundation(i), color);
 
 	// now the tableau... here we go
 	for (int x=0; x < 7; x++) {

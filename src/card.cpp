@@ -5,7 +5,7 @@
 #include <iterator>
 #include <vector>
 
-Card *card_init_list(Card (&arr)[13*4])
+Card *cardlist::init(Card (&arr)[13*4])
 {
 	int i = 0;
 	for (Suit s : std::vector<Suit>{ Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE }) {
@@ -42,19 +42,19 @@ static Card *next_n_times(Card *crd, int n)
 	return crd;
 }
 
-Card *card_tops(Card *crd, int n)
+Card *cardlist::tops(Card *crd, int n)
 {
 	while (next_n_times(crd, n))
 		crd = crd->next;
 	return crd;
 }
 
-Card *card_top(Card *crd)
+Card *cardlist::top(Card *crd)
 {
-	return card_tops(crd, 1);
+	return cardlist::tops(crd, 1);
 }
 
-Card *card_popbot(Card **bot)
+Card *cardlist::pop_bottom(Card **bot)
 {
 	Card *res = *bot;  // c funniness: res and bot are different types, but this is correct
 	*bot = res->next;
@@ -62,10 +62,10 @@ Card *card_popbot(Card **bot)
 	return res;
 }
 
-void card_pushtop(Card **list, Card *newtop)
+void cardlist::push_top(Card **list, Card *newtop)
 {
 	if (*list) {
-		Card *top = card_top(*list);
+		Card *top = cardlist::top(*list);
 		assert(!top->next);
 		top->next = newtop;
 	} else

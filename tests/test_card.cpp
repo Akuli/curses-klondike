@@ -3,20 +3,6 @@
 #include <string>
 #include <vector>
 
-void test_card_init_list()
-{
-	int got[4][13] = {0};
-
-	Card cards[13*4];
-	Card *fst = card_init_list(cards);
-	for (Card *crd = fst; crd; crd = crd->next)
-		got[crd->suit][crd->num-1]++;
-
-	for (int i=0; i < 4; i++)
-		for (int j=0; j < 7; j++)
-			assert(got[i][j] == 1);
-}
-
 void test_card_numstring()
 {
 	struct CardStrTest { int num; std::string numstr; };
@@ -40,6 +26,20 @@ void test_card_numstring()
 	}
 }
 
+void test_cardlist_init()
+{
+	int got[4][13] = {0};
+
+	Card cards[13*4];
+	Card *fst = cardlist::init(cards);
+	for (Card *crd = fst; crd; crd = crd->next)
+		got[crd->suit][crd->num-1]++;
+
+	for (int i=0; i < 4; i++)
+		for (int j=0; j < 7; j++)
+			assert(got[i][j] == 1);
+}
+
 static void abccards(Card *a, Card *b, Card *c, bool link)
 {
 	a->num = 1;
@@ -58,36 +58,36 @@ static void abccards(Card *a, Card *b, Card *c, bool link)
 	c->next = nullptr;
 }
 
-void test_card_top()
+void test_cardlist_top()
 {
 	Card a, b, c;
 	abccards(&a, &b, &c, true);
 
-	assert(card_top(&a) == &c);
-	assert(card_top(card_top(&a)) == &c);
+	assert(cardlist::top(&a) == &c);
+	assert(cardlist::top(cardlist::top(&a)) == &c);
 }
 
-void test_card_popbot()
+void test_cardlist_pop()
 {
 	Card a, b, c;
 	abccards(&a, &b, &c, true);
 
 	Card *p = &a;
-	assert(card_popbot(&p) == &a);
+	assert(cardlist::pop_bottom(&p) == &a);
 	assert(p == &b);
 }
 
-void test_card_pushtop()
+void test_cardlist_push()
 {
 	Card a, b, c;
 	abccards(&a, &b, &c, false);
 	Card *p = nullptr;
 
-	card_pushtop(&p, &a);
+	cardlist::push_top(&p, &a);
 	assert(p == &a);
 	assert(!p->next);
 
-	card_pushtop(&p, &b);
+	cardlist::push_top(&p, &b);
 	assert(p == &a);
 	assert(p->next == &b);
 	assert(!p->next->next);

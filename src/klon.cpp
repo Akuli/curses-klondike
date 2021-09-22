@@ -8,12 +8,12 @@
 
 void Klon::init()
 {
-	Card *list = card_init_list(this->allcards);
+	Card *list = cardlist::init(this->allcards);
 	for (int i=0; i < 7; i++) {
 		this->tableau[i] = nullptr;
 		for (int j=0; j < i+1; j++)
-			card_pushtop(&this->tableau[i], card_popbot(&list));
-		card_top(this->tableau[i])->visible = true;
+			cardlist::push_top(&this->tableau[i], cardlist::pop_bottom(&list));
+		cardlist::top(this->tableau[i])->visible = true;
 	}
 
 	this->stock = list;
@@ -66,7 +66,7 @@ static void copy_cards(const Card *src, Card **dst, const Card *srccrd, Card **d
 	Card *top = nullptr;
 
 	for (; src; src = src->next) {
-		Card *dup = card_popbot(list);
+		Card *dup = cardlist::pop_bottom(list);
 		assert(dup);
 		if (src == srccrd)
 			*dstcrd = dup;
@@ -86,7 +86,7 @@ Card *Klon::dup(Klon& dst, const Card *srccrd) const
 {
 	Card *dstcrd = nullptr;
 
-	Card *list = card_init_list(dst.allcards);
+	Card *list = cardlist::init(dst.allcards);
 	copy_cards(this->stock, &dst.stock, srccrd, &dstcrd, &list);
 	copy_cards(this->discard, &dst.discard, srccrd, &dstcrd, &list);
 	dst.discardshow = this->discardshow;
@@ -134,7 +134,7 @@ bool Klon::canmove(const Card *crd, CardPlace dst) const
 		if (!fnd)
 			return (crd->num == 1);
 
-		fnd = card_top(fnd);
+		fnd = cardlist::top(fnd);
 		return (crd->suit == fnd->suit && crd->num == fnd->num + 1);
 
 	case CardPlace::TABLEAU:
@@ -142,7 +142,7 @@ bool Klon::canmove(const Card *crd, CardPlace dst) const
 		if (!tab)
 			return (crd->num == 13);
 
-		tab = card_top(tab);
+		tab = cardlist::top(tab);
 		return (crd->suit.color() != tab->suit.color() && crd->num == tab->num - 1);
 
 	default:
@@ -202,7 +202,7 @@ void Klon::move(Card *crd, CardPlace dst, bool raw)
 		case CardPlace::TABLEAU: dstp = &this->tableau[dst.num]; break;
 	}
 
-	card_pushtop(dstp, crd);
+	cardlist::push_top(dstp, crd);
 }
 
 bool Klon::move2foundation(Card *card)
@@ -236,10 +236,10 @@ void Klon::stock2discard(int pick)
 	int i;
 	for (i = 0; i < pick && this->stock; i++) {
 		// the moved cards must be visible, but other stock cards aren't
-		Card *pop = card_popbot(&this->stock);
+		Card *pop = cardlist::pop_bottom(&this->stock);
 		assert(!pop->visible);
 		pop->visible = true;
-		card_pushtop(&this->discard, pop);
+		cardlist::push_top(&this->discard, pop);
 	}
 
 	// now there are i cards moved, and 0 <= i <= pick

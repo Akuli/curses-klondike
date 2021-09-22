@@ -89,10 +89,10 @@ static bool handle_key(Klon& kln, SelMv& selmv, int k, Args ar, const char *argv
 
 	if (k == 'g' && !selmv.ismv) {
 		// inefficient, but not noticably inefficient
-		if (kln.move2foundation(card_top(kln.discard)))
+		if (kln.move2foundation(cardlist::top(kln.discard)))
 			goto moved;
 		for (int i = 0; i < 7; i++)
-			if (kln.move2foundation(card_top(kln.tableau[i])))
+			if (kln.move2foundation(cardlist::top(kln.tableau[i])))
 				goto moved;
 		return true;
 
