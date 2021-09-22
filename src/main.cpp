@@ -224,10 +224,8 @@ static int main_internal(int argc, char **argv)
 
 		refresh();
 		int k = getch();
-		if (k == 'q') {
-			endwin();
+		if (k == 'q')
 			return 0;
-		}
 		handle_key(kln, selmv, k, ar, argv[0]);  // TODO: too many args
 	}
 }
