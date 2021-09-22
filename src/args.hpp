@@ -12,6 +12,7 @@ struct Args {
 };
 
 // returns an exit status to return from main, or -1 to keep going
-int args_parse(Args& ar, std::vector<std::string> argvec, FILE *out, FILE *err);
+// using FILE* because printf
+int args_parse(Args& ar, const std::vector<std::string>& argvec, FILE *out, FILE *err);
 
 #endif   // ARGS_H

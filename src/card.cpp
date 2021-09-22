@@ -1,13 +1,15 @@
 #include "card.hpp"
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <iterator>
 #include <vector>
 
 Card *cardlist::init(Card (&arr)[13*4])
 {
+	constexpr std::array<Suit, 4> suits = { Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE };
 	int i = 0;
-	for (Suit s : std::vector<Suit>{ Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE }) {
+	for (const Suit& s : suits) {
 		for (int n = 1; n <= 13; n++) {
 			arr[i++] = Card{ n, s };
 		}
@@ -24,9 +26,9 @@ Card *cardlist::init(Card (&arr)[13*4])
 
 std::string Card::numstring() const
 {
-	static const std::string nstrs[13] = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
+	static constexpr std::array<std::string_view, 13> nstrs = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
 	assert(1 <= this->num && this->num <= 13);
-	return nstrs[this->num - 1];
+	return std::string(nstrs[this->num - 1]);
 }
 
 // crd can be nullptr
