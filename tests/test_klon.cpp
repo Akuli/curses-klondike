@@ -30,8 +30,8 @@ void test_klon_init()
 
 	assert(count_cards(kln.discard, &total, nullptr) == 0);
 
-	for (int f=0; f < 4; f++)
-		assert(count_cards(kln.foundations[f], &total, nullptr) == 0);
+	for (Card *fnd : kln.foundations)
+		assert(count_cards(fnd, &total, nullptr) == 0);
 	for (int t=0; t < 7; t++) {
 		int tvis = 0;
 		assert(count_cards(kln.tableau[t], &total, &tvis) == t+1);
@@ -102,9 +102,7 @@ static void init_movable_kln(Klon *kln, int *srctab, int *dsttab)
 			for (int j=0; j < 7; j++) {
 				if (i == j)
 					continue;
-
-				Card *itop = cardlist::top(kln->tableau[i]);
-				if (kln->canmove(itop, CardPlace::tableau(j))) {
+				if (kln->canmove(cardlist::top(kln->tableau[i]), CardPlace::tableau(j))) {
 					*srctab = i;
 					*dsttab = j;
 					return;

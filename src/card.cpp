@@ -16,10 +16,11 @@ Card *cardlist::init(Card (&arr)[13*4])
 
 	std::random_shuffle(std::begin(arr), std::end(arr));
 
-	arr[13*4 - 1].next = nullptr;
-	for (int i = 13*4 - 2; i >= 0; i--)
-		arr[i].next = &arr[i+1];
-	return &arr[0];
+	Card *last = std::end(arr) - 1;
+	for (Card *ptr = std::begin(arr); ptr < last; ptr++)
+		ptr->next = &ptr[1];
+	last->next = nullptr;
+	return arr;
 }
 
 std::string Card::numstring() const
@@ -37,7 +38,7 @@ void Card::debug_print() const
 // crd can be nullptr
 static Card *next_n_times(Card *crd, int n)
 {
-	for (int i=0; i<n && crd; i++)
+	while (n-- && crd)
 		crd = crd->next;
 	return crd;
 }

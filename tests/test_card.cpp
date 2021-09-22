@@ -35,9 +35,9 @@ void test_cardlist_init()
 	for (Card *crd = fst; crd; crd = crd->next)
 		got[crd->suit][crd->num-1]++;
 
-	for (int i=0; i < 4; i++)
-		for (int j=0; j < 7; j++)
-			assert(got[i][j] == 1);
+	for (auto& row : got)
+		for (int val : row)
+			assert(val == 1);
 }
 
 static void abccards(Card *a, Card *b, Card *c, bool link)

@@ -10,10 +10,11 @@ void Klon::init()
 {
 	Card *list = cardlist::init(this->allcards);
 	for (int i=0; i < 7; i++) {
-		this->tableau[i] = nullptr;
+		Card *& tab = this->tableau[i];
+		tab = nullptr;
 		for (int j=0; j < i+1; j++)
-			cardlist::push_top(this->tableau[i], cardlist::pop_bottom(list));
-		cardlist::top(this->tableau[i])->visible = true;
+			cardlist::push_top(tab, cardlist::pop_bottom(list));
+		cardlist::top(tab)->visible = true;
 	}
 
 	this->stock = list;
@@ -153,10 +154,10 @@ bool Klon::canmove(const Card *crd, CardPlace dst) const
 Card *Klon::detachcard(const Card *crd)
 {
 	std::vector<Card**> look4 = { &this->discard, &this->stock };
-	for (int i=0; i < 4; i++)
-		look4.push_back(&this->foundations[i]);
-	for (int i=0; i < 7; i++)
-		look4.push_back(&this->tableau[i]);
+	for (Card **p = std::begin(this->foundations); p < std::end(this->foundations); p++)
+		look4.push_back(p);
+	for (Card **p = std::begin(this->tableau); p < std::end(this->tableau); p++)
+		look4.push_back(p);
 
 	for (Card **ptr : look4) {
 		// special case: no card has crd as ->next
@@ -226,8 +227,7 @@ void Klon::stock2discard(int pick)
 			crd->visible = false;
 		}
 
-		this->stock = this->discard;   // may be nullptr when all stock cards have been used
-		this->discard = nullptr;
+		std::swap(this->stock, this->discard);
 		this->discardshow = 0;
 		return;
 	}

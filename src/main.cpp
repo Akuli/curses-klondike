@@ -53,7 +53,7 @@ static void new_game(Klon &kln, SelMv &selmv)
 	selmv.sel = Sel{ nullptr, CardPlace::stock() };
 }
 
-// returns whether to continue playing
+// TODO: returning whether to continue playing is dumb
 static bool handle_key(Klon& kln, SelMv& selmv, int k, Args ar, const char *argv0)
 {
 	if (k == 'h') {
@@ -88,16 +88,18 @@ static bool handle_key(Klon& kln, SelMv& selmv, int k, Args ar, const char *argv
 	}
 
 	if (k == 'g' && !selmv.ismv) {
-		// inefficient, but not noticably inefficient
-		if (kln.move2foundation(cardlist::top(kln.discard)))
-			goto moved;
-		for (int i = 0; i < 7; i++)
-			if (kln.move2foundation(cardlist::top(kln.tableau[i])))
-				goto moved;
-		return true;
+		bool moved = kln.move2foundation(cardlist::top(kln.discard));
+		if (!moved) {
+			for (Card *tab : kln.tableau) {
+				if (kln.move2foundation(cardlist::top(tab))) {
+					moved = true;
+					break;
+				}
+			}
+		}
 
-	moved:
-		selmv.select_top_card_at_place(kln, selmv.sel.place);  // updates selmv.sel.card if needed
+		if (moved)
+			selmv.select_top_card_at_place(kln, selmv.sel.place);  // updates selmv.sel.card if needed
 		return true;
 	}
 
