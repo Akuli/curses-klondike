@@ -3,7 +3,7 @@ CXXFLAGS += -Wall -Wextra -Wpedantic -Wno-unused-parameter $(shell cat compile_f
 LDFLAGS += -lncursesw     # needs cursesw instead of curses for unicodes
 IWYU ?= iwyu
 
-SRC := $(filter-out src/main.cpp, $(wildcard src/*.cpp))
+SRC := $(wildcard src/*.cpp)
 OBJ := $(SRC:src/%.cpp=obj/%.o)
 HEADERS := $(wildcard src/*.hpp)
 TESTS_SRC := $(wildcard tests/*.cpp)
@@ -16,8 +16,8 @@ endif
 
 all: cursesklon test
 
-cursesklon: src/main.cpp $(OBJ) $(HEADERS)
-	$(CXX) $(CXXFLAGS) $< $(OBJ) -o $@ $(LDFLAGS)
+cursesklon: $(OBJ) $(HEADERS)
+	$(CXX) $(CXXFLAGS) $(OBJ) -o $@ $(LDFLAGS)
 
 .PHONY: clean
 clean:
@@ -28,10 +28,10 @@ obj/%.o: src/%.cpp $(HEADERS)
 
 .PHONY: iwyu
 iwyu:
-	for file in $(SRC) $(TESTS_SRC) src/main.cpp; do $(IWYU) $(shell cat compile_flags.txt) $$file; done || true
+	for file in $(SRC) $(TESTS_SRC); do $(IWYU) $(shell cat compile_flags.txt) $$file; done || true
 
 testrunner: $(TESTS_SRC) $(OBJ)
-	$(CXX) -I. $(CXXFLAGS) $(TESTS_SRC) $(OBJ) -o testrunner $(LDFLAGS)
+	$(CXX) -I. $(CXXFLAGS) $(TESTS_SRC) $(filter-out obj/main.o, $(OBJ)) -o testrunner $(LDFLAGS)
 
 .PHONY: test
 test: testrunner
