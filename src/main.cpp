@@ -169,14 +169,15 @@ static int main_internal(int argc, char **argv)
 	if (!setlocale(LC_ALL, ""))
 		throw std::runtime_error("setlocale() failed");
 
-	std::vector<std::string> argvec = {};
+	std::vector<std::string> arg_vector = {};
 	for (int i = 0; i < argc; i++)
-		argvec.push_back(argv[i]);
+		arg_vector.push_back(argv[i]);
 
-	Args ar;
-	int sts = args_parse(ar, argvec, stdout, stderr);
-	if (sts >= 0)
-		return sts;
+	int status;
+	std::optional<Args> args_option = args_parse(status, arg_vector, stdout, stderr);
+	if (!args_option.has_value())
+		return status;
+	Args args = args_option.value();
 
 	// https://stackoverflow.com/a/28020568
 	// see also ESCDELAY in a man page named "ncurses"
@@ -192,8 +193,8 @@ static int main_internal(int argc, char **argv)
 	CursesSession ses;
 
 	// changing ar.color here makes things easier
-	ar.color = (ar.color && has_colors() && start_color() != ERR);
-	if (ar.color)
+	args.color = (args.color && has_colors() && start_color() != ERR);
+	if (args.color)
 		ui_initcolors();
 
 	if (cbreak() == ERR) throw std::runtime_error("cbreak() failed");
@@ -208,7 +209,7 @@ static int main_internal(int argc, char **argv)
 
 	bool first = true;
 	while(1) {
-		ui_drawklon(stdscr, kln, selmv, ar.color, ar.discardhide);
+		ui_drawklon(stdscr, kln, selmv, args.color, args.discardhide);
 
 		if (first) {
 			int w, h;
@@ -225,7 +226,7 @@ static int main_internal(int argc, char **argv)
 		int k = getch();
 		if (k == 'q')
 			return 0;
-		handle_key(kln, selmv, k, ar, argv[0]);  // TODO: too many args
+		handle_key(kln, selmv, k, args, argv[0]);  // TODO: too many args
 	}
 }
 

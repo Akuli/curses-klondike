@@ -243,19 +243,14 @@ private:
 
 };
 
-// TODO: clean up
-int args_parse(Args& ar, const std::vector<std::string>& argvec, FILE *out, FILE *err)
+std::optional<Args> args_parse(int& status, const std::vector<std::string>& args, FILE *out, FILE *err)
 {
-	Parser parser = { out, err, argvec[0] };
+	Parser parser = { out, err, args[0] };
 
-	std::deque<std::string> argq;
-	for (const std::string& v : argvec)
-		argq.push_back(v);
-	argq.pop_front();
+	std::deque<std::string> arg_queue;
+	for (const std::string& v : args)
+		arg_queue.push_back(v);
+	arg_queue.pop_front();
 
-	int status = -1;
-	std::optional<Args> args_option = parser.parse(argq, status);
-	if (args_option.has_value())
-		ar = args_option.value();
-	return status;
+	return parser.parse(arg_queue, status);
 }

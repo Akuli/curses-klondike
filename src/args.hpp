@@ -1,9 +1,10 @@
 #ifndef ARGS_H
 #define ARGS_H
 
-#include <vector>
-#include <string>
 #include <cstdio>  // c++ io streams suck ass https://stackoverflow.com/a/15106194
+#include <optional>
+#include <string>
+#include <vector>
 
 struct Args {
 	bool color = true;
@@ -11,8 +12,8 @@ struct Args {
 	bool discardhide = false;
 };
 
-// returns an exit status to return from main, or -1 to keep going
+// program should exit with status when this returns nullopt
 // using FILE* because printf
-int args_parse(Args& ar, const std::vector<std::string>& argvec, FILE *out, FILE *err);
+std::optional<Args> args_parse(int& status, const std::vector<std::string>& args, FILE *out, FILE *err);
 
 #endif   // ARGS_H

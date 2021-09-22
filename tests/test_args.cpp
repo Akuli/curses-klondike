@@ -40,8 +40,12 @@ public:
 		fclose(this->out);
 		fclose(this->err);
 	}
-	int parse(std::vector<std::string> argvec) {
-		return args_parse(args, argvec, out, err);
+	int parse(std::vector<std::string> arg_vector) {
+		int status = -1;
+		std::optional<Args> args = args_parse(status, arg_vector, this->out, this->err);
+		if (args.has_value())
+			this->args = args.value();
+		return status;
 	}
 };
 
