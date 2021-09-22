@@ -1,11 +1,11 @@
 # compile_flags.txt is for clangd
-CXXFLAGS += -Wall -Wextra -Wpedantic -Wno-unused-parameter $(shell cat compile_flags.txt)
+CXXFLAGS += -Wall -Wextra -Wpedantic -Wno-unused-parameter $(shell cat compile_flags.txt) -MMD
 LDFLAGS += -lncursesw     # needs cursesw instead of curses for unicodes
 IWYU ?= iwyu
 
 SRC := $(wildcard src/*.cpp)
 OBJ := $(SRC:src/%.cpp=obj/%.o)
-HEADERS := $(wildcard src/*.hpp)
+DEPENDS := $(OBJ:.o=.d)
 TESTS_SRC := $(wildcard tests/*.cpp)
 
 # valgrind is used in tests
@@ -16,14 +16,14 @@ endif
 
 all: cursesklon test
 
-cursesklon: $(OBJ) $(HEADERS)
+cursesklon: $(OBJ)
 	$(CXX) $(CXXFLAGS) $(OBJ) -o $@ $(LDFLAGS)
 
 .PHONY: clean
 clean:
 	rm -vrf obj cursesklon testrunner
 
-obj/%.o: src/%.cpp $(HEADERS)
+obj/%.o: src/%.cpp
 	mkdir -p $(@D) && $(CXX) -c -o $@ $< $(CXXFLAGS)
 
 .PHONY: iwyu
@@ -36,3 +36,5 @@ testrunner: $(TESTS_SRC) $(OBJ)
 .PHONY: test
 test: testrunner
 	$(VALGRIND) $(VALGRINDOPTS) ./testrunner
+
+-include $(DEPENDS)
