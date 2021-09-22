@@ -55,7 +55,7 @@ static std::string get_rules(const char *argv0)
 		;
 
 	std::string old = "PROGRAM";
-	s.replace(s.find(old), old.size(), argv0);
+	s.replace(s.find(old), old.length(), argv0);
 	return s;
 }
 
@@ -74,7 +74,7 @@ static int get_max_width(int w, int xoff, int yoff)
 {
 	if (yoff > (int)picture_lines.size())
 		return w - xoff;
-	return w - xoff - string_to_wstring(picture_lines[0]).size() - 3;  // 3 is for more space between picture_lines and helps
+	return w - xoff - string_to_wstring(picture_lines[0]).length() - 3;  // 3 is for more space between picture_lines and helps
 }
 
 static void print_colored(WINDOW *win, int y, int x, std::wstring s, bool color)
@@ -116,13 +116,13 @@ static void print_wrapped_colored(WINDOW *win, int w, std::string s, int xoff, i
 
 	while (!ws.empty()) {
 		int maxw = get_max_width(w, xoff, yoff);
-		int end = std::min((int)ws.size(), maxw);
+		int end = std::min((int)ws.length(), maxw);
 
 		// can break at newline?
 		size_t brk = ws.substr(0, end).find(L'\n');
 
 		// can break at space?
-		if (brk == std::wstring::npos && end < (int)ws.size())
+		if (brk == std::wstring::npos && end < (int)ws.length())
 			brk = ws.substr(0, end).find_last_of(L' ');
 
 		print_colored(win, yoff++, xoff, ws.substr(0, brk), color);
@@ -135,7 +135,7 @@ static void print_wrapped_colored(WINDOW *win, int w, std::string s, int xoff, i
 
 static void print_help_item(WINDOW *win, int w, int keymax, const HelpKey& help, int& y)
 {
-	int nspace = keymax - string_to_wstring(help.key).size();
+	int nspace = keymax - string_to_wstring(help.key).length();
 
 	if (win)
 		mvwprintw(win, y, 0, "%*s%s:", nspace, "", help.key.c_str());
@@ -148,7 +148,7 @@ static void print_title(WINDOW *win, int w, std::string title, int& y)
 	y += 2;
 
 	if (win) {
-		int len = string_to_wstring(title).size();
+		int len = string_to_wstring(title).length();
 		int x = (w - len)/2;
 		mvwhline(win, y, 0, 0, x-1);
 		mvwaddstr(win, y, x, title.c_str());
@@ -163,11 +163,11 @@ static int print_all_help(WINDOW *win, int w, std::vector<HelpKey> hkeys, const 
 {
 	if (win)
 		for (int y = 0; y < (int)picture_lines.size(); y++)
-			mvwaddstr(win, y, w - string_to_wstring(picture_lines[y]).size(), picture_lines[y].c_str());
+			mvwaddstr(win, y, w - string_to_wstring(picture_lines[y]).length(), picture_lines[y].c_str());
 
 	int keymax = 0;
 	for (const HelpKey& k : hkeys)
-		keymax = std::max(keymax, (int)string_to_wstring(k.key).size());
+		keymax = std::max(keymax, (int)string_to_wstring(k.key).length());
 
 	int y = 0;
 	for (const HelpKey& k : hkeys)
