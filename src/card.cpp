@@ -30,11 +30,6 @@ std::string Card::numstring() const
 	return nstrs[this->num - 1];
 }
 
-void Card::debug_print() const
-{
-	std::printf("%s%s\n", this->suit.string().c_str(), this->numstring().c_str());
-}
-
 // crd can be nullptr
 static Card *next_n_times(Card *crd, int n)
 {

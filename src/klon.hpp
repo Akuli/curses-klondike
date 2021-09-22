@@ -32,8 +32,6 @@ struct Klon {
 	Card *tableau[7];      // bottommost cards or nullptrs
 	Card allcards[13*4];
 
-	void debug_print() const;
-
 	// not a part of constructor because unnecessary with e.g. dup() method
 	void init();
 

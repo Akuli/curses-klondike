@@ -59,7 +59,6 @@ struct Card {
 	Card *next = nullptr;   // the card that is on top of this card
 
 	std::string numstring() const;  // e.g. "A"
-	void debug_print() const;
 };
 
 namespace cardlist {

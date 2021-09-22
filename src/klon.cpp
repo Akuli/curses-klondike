@@ -24,43 +24,6 @@ void Klon::init()
 		f = nullptr;
 }
 
-static int print_cards(const Card *list)
-{
-	int n = 0;
-	for (; list; list = list->next) {
-		std::printf(" %c%s%s",
-				list->visible ? 'v' : '?',
-				list->suit.string().c_str(),
-				list->numstring().c_str());
-		n++;
-	}
-	std::printf(" (%d cards)\n", n);
-	return n;
-}
-
-void Klon::debug_print() const
-{
-	int total = 0;
-
-	std::printf("stock:");
-	total += print_cards(this->stock);
-
-	std::printf("discard:");
-	total += print_cards(this->discard);
-
-	for (int i=0; i < 4; i++) {
-		std::printf("foundation %d:", i);
-		total += print_cards(this->foundations[i]);
-	}
-
-	for (int i=0; i < 7; i++) {
-		std::printf("tableau %d:", i);
-		total += print_cards(this->tableau[i]);
-	}
-
-	std::printf("total: %d cards\n", total);
-}
-
 static void copy_cards(const Card *src, Card **dst, const Card *srccrd, Card **dstcrd, Card *& list)
 {
 	*dst = nullptr;
