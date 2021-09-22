@@ -12,15 +12,15 @@ void Klon::init()
 	for (int i=0; i < 7; i++) {
 		this->tableau[i] = nullptr;
 		for (int j=0; j < i+1; j++)
-			cardlist::push_top(&this->tableau[i], cardlist::pop_bottom(&list));
+			cardlist::push_top(this->tableau[i], cardlist::pop_bottom(list));
 		cardlist::top(this->tableau[i])->visible = true;
 	}
 
 	this->stock = list;
 	this->discard = nullptr;
 	this->discardshow = 0;
-	for (int i=0; i < 4; i++)
-		this->foundations[i] = nullptr;
+	for (Card *& f : this->foundations)
+		f = nullptr;
 }
 
 static int print_cards(const Card *list)
@@ -60,14 +60,13 @@ void Klon::debug_print() const
 	std::printf("total: %d cards\n", total);
 }
 
-static void copy_cards(const Card *src, Card **dst, const Card *srccrd, Card **dstcrd, Card **list)
+static void copy_cards(const Card *src, Card **dst, const Card *srccrd, Card **dstcrd, Card *& list)
 {
 	*dst = nullptr;
 	Card *top = nullptr;
 
 	for (; src; src = src->next) {
 		Card *dup = cardlist::pop_bottom(list);
-		assert(dup);
 		if (src == srccrd)
 			*dstcrd = dup;
 
@@ -87,13 +86,13 @@ Card *Klon::dup(Klon& dst, const Card *srccrd) const
 	Card *dstcrd = nullptr;
 
 	Card *list = cardlist::init(dst.allcards);
-	copy_cards(this->stock, &dst.stock, srccrd, &dstcrd, &list);
-	copy_cards(this->discard, &dst.discard, srccrd, &dstcrd, &list);
+	copy_cards(this->stock, &dst.stock, srccrd, &dstcrd, list);
+	copy_cards(this->discard, &dst.discard, srccrd, &dstcrd, list);
 	dst.discardshow = this->discardshow;
 	for (int i=0; i < 4; i++)
-		copy_cards(this->foundations[i], &dst.foundations[i], srccrd, &dstcrd, &list);
+		copy_cards(this->foundations[i], &dst.foundations[i], srccrd, &dstcrd, list);
 	for (int i=0; i < 7; i++)
-		copy_cards(this->tableau[i], &dst.tableau[i], srccrd, &dstcrd, &list);
+		copy_cards(this->tableau[i], &dst.tableau[i], srccrd, &dstcrd, list);
 
 	assert(list == nullptr);
 	return dstcrd;
@@ -202,7 +201,7 @@ void Klon::move(Card *crd, CardPlace dst, bool raw)
 		case CardPlace::TABLEAU: dstp = &this->tableau[dst.num]; break;
 	}
 
-	cardlist::push_top(dstp, crd);
+	cardlist::push_top(*dstp, crd);
 }
 
 bool Klon::move2foundation(Card *card)
@@ -236,10 +235,10 @@ void Klon::stock2discard(int pick)
 	int i;
 	for (i = 0; i < pick && this->stock; i++) {
 		// the moved cards must be visible, but other stock cards aren't
-		Card *pop = cardlist::pop_bottom(&this->stock);
+		Card *pop = cardlist::pop_bottom(this->stock);
 		assert(!pop->visible);
 		pop->visible = true;
-		cardlist::push_top(&this->discard, pop);
+		cardlist::push_top(this->discard, pop);
 	}
 
 	// now there are i cards moved, and 0 <= i <= pick

@@ -91,7 +91,7 @@ void test_cardlist_pop()
 	abccards(&a, &b, &c, true);
 
 	Card *p = &a;
-	assert(cardlist::pop_bottom(&p) == &a);
+	assert(cardlist::pop_bottom(p) == &a);
 	assert(p == &b);
 }
 
@@ -101,11 +101,11 @@ void test_cardlist_push()
 	abccards(&a, &b, &c, false);
 	Card *p = nullptr;
 
-	cardlist::push_top(&p, &a);
+	cardlist::push_top(p, &a);
 	assert(p == &a);
 	assert(!p->next);
 
-	cardlist::push_top(&p, &b);
+	cardlist::push_top(p, &b);
 	assert(p == &a);
 	assert(p->next == &b);
 	assert(!p->next->next);

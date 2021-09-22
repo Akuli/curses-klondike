@@ -54,20 +54,21 @@ Card *cardlist::top(Card *crd)
 	return cardlist::top_n(crd, 1);
 }
 
-Card *cardlist::pop_bottom(Card **bot)
+Card *cardlist::pop_bottom(Card *& bot)
 {
-	Card *res = *bot;  // c funniness: res and bot are different types, but this is correct
-	*bot = res->next;
+	Card *res = bot;
+	bot = res->next;
 	res->next = nullptr;
 	return res;
 }
 
-void cardlist::push_top(Card **list, Card *newtop)
+void cardlist::push_top(Card *& list, Card *newtop)
 {
-	if (*list) {
-		Card *top = cardlist::top(*list);
+	if (list) {
+		Card *top = cardlist::top(list);
 		assert(!top->next);
 		top->next = newtop;
-	} else
-		*list = newtop;
+	} else {
+		list = newtop;
+	}
 }
