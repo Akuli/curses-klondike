@@ -65,6 +65,24 @@ void test_cardlist_top()
 
 	assert(cardlist::top(&a) == &c);
 	assert(cardlist::top(cardlist::top(&a)) == &c);
+
+	assert(cardlist::top_n(&a, 0) == nullptr);
+	assert(cardlist::top_n(&a, 1) == &c);
+	assert(cardlist::top_n(&a, 2) == &b);
+	assert(cardlist::top_n(&a, 3) == &a);
+	assert(cardlist::top_n(&a, 4) == &a);
+
+	assert(cardlist::top_n(&b, 0) == nullptr);
+	assert(cardlist::top_n(&b, 1) == &c);
+	assert(cardlist::top_n(&b, 2) == &b);
+	assert(cardlist::top_n(&b, 3) == &b);
+	assert(cardlist::top_n(&b, 4) == &b);
+
+	assert(cardlist::top_n(&c, 0) == nullptr);
+	assert(cardlist::top_n(&c, 1) == &c);
+	assert(cardlist::top_n(&c, 2) == &c);
+	assert(cardlist::top_n(&c, 3) == &c);
+	assert(cardlist::top_n(&c, 4) == &c);
 }
 
 void test_cardlist_pop()

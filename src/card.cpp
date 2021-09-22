@@ -42,7 +42,7 @@ static Card *next_n_times(Card *crd, int n)
 	return crd;
 }
 
-Card *cardlist::tops(Card *crd, int n)
+Card *cardlist::top_n(Card *crd, int n)
 {
 	while (next_n_times(crd, n))
 		crd = crd->next;
@@ -51,7 +51,7 @@ Card *cardlist::tops(Card *crd, int n)
 
 Card *cardlist::top(Card *crd)
 {
-	return cardlist::tops(crd, 1);
+	return cardlist::top_n(crd, 1);
 }
 
 Card *cardlist::pop_bottom(Card **bot)

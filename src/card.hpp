@@ -72,8 +72,8 @@ namespace cardlist {
 	Card *top(Card *crd);
 
 	// returns at most n topmost cards from a linked list of cards as another linked list
-	// tops(nullptr, n) == nullptr
-	Card *tops(Card *crd, int n);
+	// top_n(nullptr, n) == nullptr
+	Card *top_n(Card *crd, int n);
 
 	// gets bottommost card from a linked list of cards
 	// sets *bot to (*bot)->next (that can be nullptr)

@@ -167,7 +167,7 @@ static void draw_the_klon(WINDOW *win, const Klon& kln, const Sel& sel, bool mov
 		nshowdis++;
 
 	int x = ui_x(1, w);
-	for (Card *crd = cardlist::tops(kln.discard, nshowdis); crd; (crd = crd->next), (x += dscxoff)) {
+	for (Card *crd = cardlist::top_n(kln.discard, nshowdis); crd; (crd = crd->next), (x += dscxoff)) {
 		Card crdval = *crd;
 
 		assert(crdval.visible);
