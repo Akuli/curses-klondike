@@ -1,9 +1,9 @@
 #include "card.hpp"
 #include "klon.hpp"
 #include <cassert>
-#include <cstdio>
+#include <iterator>
 #include <stdexcept>
-#include <string>
+#include <utility>
 #include <vector>
 
 void Klon::init()

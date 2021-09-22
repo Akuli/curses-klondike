@@ -1,7 +1,6 @@
 #include "card.hpp"
 #include <algorithm>
 #include <cassert>
-#include <cstdio>
 #include <iterator>
 #include <vector>
 
@@ -60,11 +59,8 @@ Card *cardlist::pop_bottom(Card *& bot)
 
 void cardlist::push_top(Card *& list, Card *newtop)
 {
-	if (list) {
-		Card *top = cardlist::top(list);
-		assert(!top->next);
-		top->next = newtop;
-	} else {
+	if (list)
+		cardlist::top(list)->next = newtop;
+	else
 		list = newtop;
-	}
 }
