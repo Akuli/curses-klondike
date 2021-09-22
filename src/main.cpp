@@ -53,100 +53,104 @@ static void new_game(Klon &kln, SelMv &selmv)
 	selmv.sel = Sel{ nullptr, CardPlace::stock() };
 }
 
-// TODO: returning whether to continue playing is dumb
-static bool handle_key(Klon& kln, SelMv& selmv, int k, Args ar, const char *argv0)
+static void handle_key(Klon& kln, SelMv& selmv, int k, Args ar, const char *argv0)
 {
-	if (k == 'h') {
+	switch(k) {
+	case 'h':
 		help_show(stdscr, help_keys, argv0, ar.color);
-		return true;
-	}
+		break;
 
-	if (k == 'q')
-		return false;
-
-	if (k == 'n')
+	case 'n':
 		new_game(kln, selmv);
+		break;
 
-	if (k == 's' && !selmv.ismv) {
-		kln.stock2discard(ar.pick);
+	case 's':
+		if (!selmv.ismv) {
+			kln.stock2discard(ar.pick);
 
-		// if you change this, think about what if the discard card was selected?
-		// then the moved card ended up on top of the old discarded card
-		// and we have 2 cards selected, so you need to handle that
-		selmv.select_top_card_at_place(kln, CardPlace::discard());
+			// if you change this, think about what if the discard card was selected?
+			// then the moved card ended up on top of the old discarded card
+			// and we have 2 cards selected, so you need to handle that
+			selmv.select_top_card_at_place(kln, CardPlace::discard());
+		}
+		break;
 
-		return true;
-	}
+	case 'd':
+		if (!selmv.ismv)
+			selmv.select_top_card_at_place(kln, CardPlace::discard());
+		break;
 
-	if (k == 'd' && !selmv.ismv)
-		selmv.select_top_card_at_place(kln, CardPlace::discard());
-
-	if (k == 'f' && !selmv.ismv && selmv.sel.card) {
-		if (kln.move2foundation(selmv.sel.card))
-			selmv.select_top_card_at_place(kln, selmv.sel.place);  // updates selmv.sel.card if needed
-		return true;
-	}
-
-	if (k == 'g' && !selmv.ismv) {
-		bool moved = kln.move2foundation(cardlist::top(kln.discard));
-		if (!moved) {
-			for (Card *tab : kln.tableau) {
-				if (kln.move2foundation(cardlist::top(tab))) {
-					moved = true;
-					break;
+	case 'f':
+		if (!selmv.ismv && selmv.sel.card && kln.move2foundation(selmv.sel.card))
+			selmv.select_top_card_at_place(kln, selmv.sel.place);
+		break;
+	case 'g':
+		if (!selmv.ismv) {
+			bool moved = kln.move2foundation(cardlist::top(kln.discard));
+			if (!moved) {
+				for (Card *tab : kln.tableau) {
+					if (kln.move2foundation(cardlist::top(tab))) {
+						moved = true;
+						break;
+					}
 				}
 			}
+			if (moved)
+				selmv.select_top_card_at_place(kln, selmv.sel.place);  // updates selmv.sel.card if needed
 		}
+		break;
 
-		if (moved)
-			selmv.select_top_card_at_place(kln, selmv.sel.place);  // updates selmv.sel.card if needed
-		return true;
-	}
+	case 27:   // esc key, didn't find KEY_ constant
+		selmv.ismv = false;
+		break;
 
-	if (k == 27) {   // esc key, didn't find a KEY_ constant for this
-		if (selmv.ismv)
-			selmv.ismv = false;
-		return true;
-	}
+	case KEY_UP:
+	case KEY_DOWN:
+		if (!selmv.ismv && k == KEY_UP && selmv.sel.more(kln))
+			break;
+		if (!selmv.ismv && k == KEY_DOWN && selmv.sel.less(kln))
+			break;
+		// fall through
 
-	if (k == KEY_LEFT || k == KEY_RIGHT || k == KEY_UP || k == KEY_DOWN) {
-		if (!selmv.ismv) {
-			if (k == KEY_UP && selmv.sel.more(kln))
-				return true;
-			if (k == KEY_DOWN && selmv.sel.less(kln))
-				return true;
-		}
-
+	case KEY_LEFT:
+	case KEY_RIGHT:
 		selmv.select_another_card(kln, curses_key_to_seldirection(k));
-		return true;
-	}
+		break;
 
-	if (k == KEY_PPAGE && !selmv.ismv) {
-		while (selmv.sel.more(kln)) {}
-		return true;
-	}
+	case KEY_PPAGE:
+		if (!selmv.ismv) {
+			while (selmv.sel.more(kln)) {}
+		}
+		break;
 
-	if (k == KEY_NPAGE && !selmv.ismv) {
-		while (selmv.sel.less(kln)) {}
-		return true;
-	}
+	case KEY_NPAGE:
+		if (!selmv.ismv) {
+			while (selmv.sel.less(kln)) {}
+		}
+		break;
 
-	if (k == '\n') {
+	case '\n':
 		if (selmv.ismv)
 			selmv.end_move(kln);
 		else if (selmv.sel.place == CardPlace::stock())
 			kln.stock2discard(ar.pick);
 		else if (selmv.sel.card && selmv.sel.card->visible)
 			selmv.begin_move();
-		return true;
-	}
+		break;
 
-	if ('1' <= k && k <= '7') {
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
 		selmv.select_top_card_at_place(kln, CardPlace::tableau(k - '1'));
-		return true;
-	}
+		break;
 
-	return true;
+	default:
+		break;
+	}
 }
 
 class CursesSession {
@@ -204,7 +208,7 @@ static int main_internal(int argc, char **argv)
 	new_game(kln, selmv);
 
 	bool first = true;
-	do {
+	while(1) {
 		ui_drawklon(stdscr, kln, selmv, ar.color, ar.discardhide);
 
 		if (first) {
@@ -219,11 +223,13 @@ static int main_internal(int argc, char **argv)
 		}
 
 		refresh();
-	} while( handle_key(kln, selmv, getch(), ar, argv[0]) );  // TODO: too many args
-
-	endwin();
-
-	return 0;
+		int k = getch();
+		if (k == 'q') {
+			endwin();
+			return 0;
+		}
+		handle_key(kln, selmv, k, ar, argv[0]);  // TODO: too many args
+	}
 }
 
 int main(int argc, char **argv)
