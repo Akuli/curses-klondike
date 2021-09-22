@@ -22,7 +22,7 @@ static const std::vector<std::string> picture_lines = {
 
 static std::string get_rules(const char *argv0)
 {
-	std::string s =
+	std::string parts[2] = {
 		"Here the “suit” of a card means ♥, ♦, ♠ or ♣. "
 		"The “number” of a card means one of A,2,3,4,…,9,10,J,Q,K. "
 		"“Visible” cards are cards whose suit and number are visible to you, aka “face-up” cards.\n\n"
@@ -50,13 +50,10 @@ static std::string get_rules(const char *argv0)
 		"This can be useful in some cases.\n\n"
 
 		"If the game is too hard or too easy, you can customize it with command-line options. "
-		//                                    this is a non-breaking space ----↓
-		"Quit this help and then the game by pressing q twice, and run “PROGRAM --help” to get a list of all supported options."
-		;
-
-	std::string old = "PROGRAM";
-	s.replace(s.find(old), old.length(), argv0);
-	return s;
+		//                                 this is a non-breaking space ----↓
+		"Quit this help and then the game by pressing q twice, and run “", " --help” to get a list of all supported options."
+	};
+	return parts[0] + argv0 + parts[1];
 }
 
 static std::wstring string_to_wstring(std::string s)
