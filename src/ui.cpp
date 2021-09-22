@@ -152,7 +152,7 @@ static void draw_card_stack(WINDOW *win, const Card *botcrd, int xstart, int yst
 enum class DiscardHide { HIDE_ALL, SHOW_LAST_ONLY, SHOW_ALL };
 
 // TODO: this function is quite long, break it up
-static void draw_the_klon(WINDOW *win, const Klon& kln, const Sel& sel, bool moving, bool color, DiscardHide dh, int dscxoff)
+static void draw_the_klon(WINDOW *win, const Klon& kln, const Selection& sel, bool moving, bool color, DiscardHide dh, int dscxoff)
 {
 	werase(win);
 
@@ -212,29 +212,29 @@ static void draw_the_klon(WINDOW *win, const Klon& kln, const Sel& sel, bool mov
 	}
 }
 
-static DiscardHide decide_what_to_hide(const SelMv& selmv, bool cmdlnopt)
+static DiscardHide decide_what_to_hide(const SelectionOrMove& selmv, bool cmdlnopt)
 {
 	if (!cmdlnopt)
 		return DiscardHide::SHOW_ALL;
 
-	if (!selmv.ismv)
+	if (!selmv.ismove)
 		return DiscardHide::SHOW_LAST_ONLY;
 
-	if (selmv.mv.src == CardPlace::discard() && selmv.mv.dst == CardPlace::discard())
+	if (selmv.move.src == CardPlace::discard() && selmv.move.dst == CardPlace::discard())
 		return DiscardHide::SHOW_LAST_ONLY;
-	if (selmv.mv.src == CardPlace::discard())
+	if (selmv.move.src == CardPlace::discard())
 		return DiscardHide::HIDE_ALL;
 	return DiscardHide::SHOW_LAST_ONLY;
 }
 
-void ui_drawklon(WINDOW *win, const Klon& kln, const SelMv& selmv, bool color, bool discardhide)
+void ui_drawklon(WINDOW *win, const Klon& kln, const SelectionOrMove& selmv, bool color, bool discardhide)
 {
 	DiscardHide dh = decide_what_to_hide(selmv, discardhide);
 	int dscxoff = discardhide ? 1 : X_OFFSET;
 
-	if (selmv.ismv) {
+	if (selmv.ismove) {
 		Klon tmpkln;
-		Sel tmpsel = { kln.dup(tmpkln, selmv.mv.card), selmv.mv.dst };
+		Selection tmpsel = { kln.dup(tmpkln, selmv.move.card), selmv.move.dst };
 		tmpkln.move(tmpsel.card, tmpsel.place, true);
 		draw_the_klon(win, tmpkln, tmpsel, true, color, dh, dscxoff);
 	} else

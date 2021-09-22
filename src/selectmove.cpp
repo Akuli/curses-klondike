@@ -1,6 +1,6 @@
 #include "card.hpp"
 #include "klon.hpp"
-#include "selmv.hpp"
+#include "selectmove.hpp"
 #include <cassert>
 #include <optional>
 #include <stdexcept>
@@ -46,12 +46,12 @@ static Card *get_visible_top_card(Klon kln, CardPlace plc)
 	throw std::logic_error("bad place kind");
 }
 
-void SelMv::select_top_card_at_place(const Klon& kln, CardPlace plc)
+void SelectionOrMove::select_top_card_at_place(const Klon& kln, CardPlace plc)
 {
-	if (this->ismv)
-		this->mv.dst = plc;
+	if (this->ismove)
+		this->move.dst = plc;
 	else
-		this->sel = Sel{ get_visible_top_card(kln, plc), plc };
+		this->sel = Selection{ get_visible_top_card(kln, plc), plc };
 }
 
 // if tabfndonly, only allows moving to tableau or foundations
@@ -66,7 +66,7 @@ static bool change_x_left_right(int *x, SelDirection dir, bool tab, bool tabfndo
 	return (0 <= *x && *x < 7);
 }
 
-bool Sel::more(const Klon& kln)
+bool Selection::more(const Klon& kln)
 {
 	if (this->place.kind != CardPlace::TABLEAU)
 		return false;
@@ -79,7 +79,7 @@ bool Sel::more(const Klon& kln)
 	return false;
 }
 
-bool Sel::less(const Klon& kln)
+bool Selection::less(const Klon& kln)
 {
 	if (this->place.kind == CardPlace::TABLEAU && this->card && this->card->next) {
 		this->card = this->card->next;
@@ -88,26 +88,26 @@ bool Sel::less(const Klon& kln)
 	return false;
 }
 
-void SelMv::select_another_card(const Klon& kln, SelDirection dir)
+void SelectionOrMove::select_another_card(const Klon& kln, SelDirection dir)
 {
-	if (this->ismv)
-		assert(this->mv.card);
+	if (this->ismove)
+		assert(this->move.card);
 
-	int x = place_2_card_x(this->ismv ? this->mv.dst : this->sel.place);
+	int x = place_2_card_x(this->ismove ? this->move.dst : this->sel.place);
 	std::optional<CardPlace> topplace = card_x_2_top_place(x);
-	bool tab = (this->ismv ? this->mv.dst : this->sel.place).kind == CardPlace::TABLEAU;
+	bool tab = (this->ismove ? this->move.dst : this->sel.place).kind == CardPlace::TABLEAU;
 
 	switch(dir) {
 	case SelDirection::LEFT:
 	case SelDirection::RIGHT:
-		if (change_x_left_right(&x, dir, tab, this->ismv))
+		if (change_x_left_right(&x, dir, tab, this->ismove))
 			this->select_top_card_at_place(kln, tab ? CardPlace::tableau(x) : card_x_2_top_place(x).value());
 		break;
 
 	case SelDirection::UP:
-		if (this->ismv) {
+		if (this->ismove) {
 			// can only move from table to foundations, but multiple cards not even there
-			if (tab && topplace && topplace.value().kind == CardPlace::FOUNDATION && !this->mv.card->next)
+			if (tab && topplace && topplace.value().kind == CardPlace::FOUNDATION && !this->move.card->next)
 				this->select_top_card_at_place(kln, topplace.value());
 		} else {
 			if (tab && topplace)
@@ -116,26 +116,26 @@ void SelMv::select_another_card(const Klon& kln, SelDirection dir)
 		break;
 
 	case SelDirection::DOWN:
-		if (this->ismv || !tab)
+		if (this->ismove || !tab)
 			this->select_top_card_at_place(kln, CardPlace::tableau(x));
 		break;
 	}
 }
 
-void SelMv::begin_move()
+void SelectionOrMove::begin_move()
 {
-	this->ismv = true;
-	this->mv.card = this->sel.card;
-	this->mv.src = this->mv.dst = this->sel.place;
+	this->ismove = true;
+	this->move.card = this->sel.card;
+	this->move.src = this->move.dst = this->sel.place;
 }
 
-void SelMv::end_move(Klon& kln)
+void SelectionOrMove::end_move(Klon& kln)
 {
-	assert(this->ismv);
-	assert(this->mv.card);
-	if (kln.canmove(this->mv.card, this->mv.dst))
-		kln.move(this->mv.card, this->mv.dst, false);
+	assert(this->ismove);
+	assert(this->move.card);
+	if (kln.canmove(this->move.card, this->move.dst))
+		kln.move(this->move.card, this->move.dst, false);
 
-	this->ismv = false;
-	this->select_top_card_at_place(kln, this->mv.dst);
+	this->ismove = false;
+	this->select_top_card_at_place(kln, this->move.dst);
 }

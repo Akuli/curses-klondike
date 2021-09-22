@@ -5,7 +5,7 @@
 #include "card.hpp"
 #include "help.hpp"
 #include "klon.hpp"
-#include "selmv.hpp"
+#include "selectmove.hpp"
 #include "ui.hpp"
 #include <clocale>
 #include <cstdio>
@@ -45,14 +45,14 @@ static const std::vector<HelpKey> help_keys = {
 	{ "1,2,…,7", "select tableau by number" },
 };
 
-static void new_game(Klon &kln, SelMv &selmv)
+static void new_game(Klon &kln, SelectionOrMove &selmv)
 {
 	kln.init();
-	selmv.ismv = false;
-	selmv.sel = Sel{ nullptr, CardPlace::stock() };
+	selmv.ismove = false;
+	selmv.sel = Selection{ nullptr, CardPlace::stock() };
 }
 
-static void handle_key(Klon& kln, SelMv& selmv, int k, Args ar, const char *argv0)
+static void handle_key(Klon& kln, SelectionOrMove& selmv, int k, Args ar, const char *argv0)
 {
 	switch(k) {
 	case 'h':
@@ -64,7 +64,7 @@ static void handle_key(Klon& kln, SelMv& selmv, int k, Args ar, const char *argv
 		break;
 
 	case 's':
-		if (!selmv.ismv) {
+		if (!selmv.ismove) {
 			kln.stock2discard(ar.pick);
 
 			// if you change this, think about what if the discard card was selected?
@@ -75,16 +75,16 @@ static void handle_key(Klon& kln, SelMv& selmv, int k, Args ar, const char *argv
 		break;
 
 	case 'd':
-		if (!selmv.ismv)
+		if (!selmv.ismove)
 			selmv.select_top_card_at_place(kln, CardPlace::discard());
 		break;
 
 	case 'f':
-		if (!selmv.ismv && selmv.sel.card && kln.move2foundation(selmv.sel.card))
+		if (!selmv.ismove && selmv.sel.card && kln.move2foundation(selmv.sel.card))
 			selmv.select_top_card_at_place(kln, selmv.sel.place);
 		break;
 	case 'g':
-		if (!selmv.ismv) {
+		if (!selmv.ismove) {
 			bool moved = kln.move2foundation(cardlist::top(kln.discard));
 			if (!moved) {
 				for (Card *tab : kln.tableau) {
@@ -100,14 +100,14 @@ static void handle_key(Klon& kln, SelMv& selmv, int k, Args ar, const char *argv
 		break;
 
 	case 27:   // esc key, didn't find KEY_ constant
-		selmv.ismv = false;
+		selmv.ismove = false;
 		break;
 
 	case KEY_UP:
 	case KEY_DOWN:
-		if (!selmv.ismv && k == KEY_UP && selmv.sel.more(kln))
+		if (!selmv.ismove && k == KEY_UP && selmv.sel.more(kln))
 			break;
-		if (!selmv.ismv && k == KEY_DOWN && selmv.sel.less(kln))
+		if (!selmv.ismove && k == KEY_DOWN && selmv.sel.less(kln))
 			break;
 		// fall through
 
@@ -117,19 +117,19 @@ static void handle_key(Klon& kln, SelMv& selmv, int k, Args ar, const char *argv
 		break;
 
 	case KEY_PPAGE:
-		if (!selmv.ismv) {
+		if (!selmv.ismove) {
 			while (selmv.sel.more(kln)) {}
 		}
 		break;
 
 	case KEY_NPAGE:
-		if (!selmv.ismv) {
+		if (!selmv.ismove) {
 			while (selmv.sel.less(kln)) {}
 		}
 		break;
 
 	case '\n':
-		if (selmv.ismv)
+		if (selmv.ismove)
 			selmv.end_move(kln);
 		else if (selmv.sel.place == CardPlace::stock())
 			kln.stock2discard(ar.pick);
@@ -203,7 +203,7 @@ static int main_internal(int argc, char **argv)
 	refresh();   // yes, this is needed before drawing the cards for some reason
 
 	Klon kln;
-	SelMv selmv;
+	SelectionOrMove selmv;
 	new_game(kln, selmv);
 
 	bool first = true;

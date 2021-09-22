@@ -31,7 +31,7 @@ possible values:
 	.card = nullptr, .place = KLON_TABLEAU(n)
 		tableau n selected, but there are no cards in that tableau
 */
-struct Sel {
+struct Selection {
 	Card *card;
 	CardPlace place;
 
@@ -42,16 +42,16 @@ struct Sel {
 };
 
 // represents card being moved src --> dst
-struct Mv {
+struct Move {
 	Card *card;
 	CardPlace src;
 	CardPlace dst;
 };
 
-struct SelMv {
-	Sel sel;
-	Mv mv;
-	bool ismv;
+struct SelectionOrMove {
+	Selection sel;
+	Move move;
+	bool ismove;
 
 	void select_top_card_at_place(const Klon& kln, CardPlace plc);
 	void select_another_card(const Klon& kln, SelDirection dir);
