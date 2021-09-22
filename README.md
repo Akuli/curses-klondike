@@ -40,10 +40,6 @@ of them is, [create an issue].
 
 Because it's fun.
 
-### Why did you write a klondike game in C?
-
-Because it's fun.
-
 ### Why did you write a klondike game using curses?
 
 Because it's fun.
