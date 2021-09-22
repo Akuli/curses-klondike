@@ -28,7 +28,6 @@ static SelDirection curses_key_to_seldirection(int k)
 	}
 }
 
-// help is externed in help.h
 static const std::vector<HelpKey> help_keys = {
 	{ "h", "show this help" },
 	{ "q", "quit" },
