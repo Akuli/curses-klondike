@@ -1,6 +1,6 @@
 # Curses klondike
 
-This is a text-based [klondike] game written in C using curses.
+This is a text-based [klondike] game written in C++ using curses.
 
 [klondike]: https://en.wikipedia.org/wiki/Klondike_(solitaire)
 
@@ -12,13 +12,13 @@ If you don't like colors, use the `--no-colors` option:
 
 If you have apt, you can install all dependencies like this:
 
-    $ sudo apt install git make gcc libncurses5-dev libncursesw5-dev
+    $ sudo apt install git make g++ libncurses5-dev libncursesw5-dev
 
 Then you can download my code, compile it and run.
 
     $ git clone https://github.com/Akuli/curses-klondike
     $ cd curses-klondike
-    $ make
+    $ make -j2
     $ ./cursesklon
 
 
