@@ -50,7 +50,8 @@ struct Game {
 	Klondike klon;
 	SelectionOrMove selmv;
 
-	Game() {
+	// TODO: figure out why this can't be a constructor
+	void init() {
 		this->klon.init();
 		this->selmv.ismove = false;
 		this->selmv.sel = Selection{ nullptr, CardPlace::stock() };
@@ -70,6 +71,7 @@ static void handle_key(Game& game, int k, Args ar, const char *argv0)
 
 	case 'n':
 		game = Game();
+		game.init();
 		break;
 
 	case 's':
@@ -211,6 +213,7 @@ static int main_internal(int argc, char **argv)
 	if (keypad(stdscr, true) == ERR) throw std::runtime_error("keypad() failed");
 
 	Game game;
+	game.init();
 
 	bool first = true;
 	while(1) {
