@@ -77,28 +77,28 @@ static void draw_box(WINDOW *win, int xstart, int ystart, int w, int h, char bg,
 	mvwaddstr(win, ystart+h-1, xstart+w-1, b.lr.c_str());
 }
 
-// draws crd on win
+// draws card on win
 // xo and yo offsets as curses units, for drawing overlapping cards
 //
 // newwin() doesn't work because partially erasing borders is surprisingly tricky
 // partial erasing is needed for cards that are on top of cards
 // since we can't use subwindow borders, they're not very helpful
-static void draw_card(WINDOW *win, const Card *crd, int xstart, int ystart, bool sel, bool color)
+static void draw_card(WINDOW *win, const Card *card, int xstart, int ystart, bool sel, bool color)
 {
-	if (crd || sel)
-		draw_box(win, xstart, ystart, CARD_WIDTH, CARD_HEIGHT, (!crd || crd->visible) ? ' ' : '?', sel);
-	if (!crd)
+	if (card || sel)
+		draw_box(win, xstart, ystart, CARD_WIDTH, CARD_HEIGHT, (!card || card->visible) ? ' ' : '?', sel);
+	if (!card)
 		return;
 
-	if (crd->visible) {
+	if (card->visible) {
 		// underlying values of SuitColor are valid color pair numbers
-		int attr = COLOR_PAIR(crd->suit.color().color_pair_number());
+		int attr = COLOR_PAIR(card->suit.color().color_pair_number());
 		if (color)
 			wattron(win, attr);
-		mvaddstr(ystart+1, xstart+1, crd->number_string().c_str());
-		mvaddstr(ystart+1, xstart+CARD_WIDTH-2, crd->suit.string().c_str());
-		mvaddstr(ystart+CARD_HEIGHT-2, xstart+1, crd->suit.string().c_str());
-		mvaddstr(ystart+CARD_HEIGHT-2, xstart+CARD_WIDTH-1-crd->number_string().length(), crd->number_string().c_str());
+		mvaddstr(ystart+1, xstart+1, card->number_string().c_str());
+		mvaddstr(ystart+1, xstart+CARD_WIDTH-2, card->suit.string().c_str());
+		mvaddstr(ystart+CARD_HEIGHT-2, xstart+1, card->suit.string().c_str());
+		mvaddstr(ystart+CARD_HEIGHT-2, xstart+CARD_WIDTH-1-card->number_string().length(), card->number_string().c_str());
 		if (color)
 			wattroff(win, attr);
 	}
@@ -118,7 +118,7 @@ static void draw_card_stack(WINDOW *win, const Card *botcrd, int xstart, int yst
 	// let's figure out where it is for the topmost card
 	int toptxty = ystart+1;
 	int ncardstotal = 1;
-	for (Card *crd = botcrd->next /* botcrd is already counted */ ; crd; crd = crd->next) {
+	for (Card *card = botcrd->next /* botcrd is already counted */ ; card; card = card->next) {
 		toptxty += Y_OFFSET_BIG;
 		ncardstotal++;
 	}
@@ -140,10 +140,10 @@ static void draw_card_stack(WINDOW *win, const Card *botcrd, int xstart, int yst
 	// let's draw the cards
 	bool sel = false;
 	int y = ystart;
-	for (const Card *crd = botcrd; crd; crd = crd->next) {
-		if (crd == firstsel)
+	for (const Card *card = botcrd; card; card = card->next) {
+		if (card == firstsel)
 			sel = true;
-		draw_card(win, crd, xstart, y, sel, color);
+		draw_card(win, card, xstart, y, sel, color);
 		y += (--n > 0) ? Y_OFFSET_BIG : Y_OFFSET_SMALL;
 	}
 }
@@ -167,16 +167,16 @@ static void draw_the_klon(WINDOW *win, const Klon& kln, const Selection& sel, bo
 		nshowdis++;
 
 	int x = ui_x(1, w);
-	for (Card *crd = cardlist::top_n(kln.discard, nshowdis); crd; (crd = crd->next), (x += dscxoff)) {
-		Card crdval = *crd;
+	for (Card *card = cardlist::top_n(kln.discard, nshowdis); card; (card = card->next), (x += dscxoff)) {
+		Card crdval = *card;
 
 		assert(crdval.visible);
 		if (dh == DiscardHide::HIDE_ALL)
 			crdval.visible = false;
 		if (dh == DiscardHide::SHOW_LAST_ONLY)
-			crdval.visible = !crd->next;
+			crdval.visible = !card->next;
 
-		draw_card(win, &crdval, x, ui_y(0, h), sel.place == CardPlace::discard() && !crd->next, color);
+		draw_card(win, &crdval, x, ui_y(0, h), sel.place == CardPlace::discard() && !card->next, color);
 	}
 
 	if (!kln.discard)   // nothing was drawn, but if the discard is selected, at least draw that
@@ -195,13 +195,13 @@ static void draw_the_klon(WINDOW *win, const Klon& kln, const Selection& sel, bo
 		}
 
 		int yo = 0;
-		for (Card *crd = kln.tableau[x]; crd; crd = crd->next) {
-			if (crd->visible) {
-				draw_card_stack(win, crd, ui_x(x, w), ui_y(1, h) + yo, sel.card, color);
+		for (Card *card = kln.tableau[x]; card; card = card->next) {
+			if (card->visible) {
+				draw_card_stack(win, card, ui_x(x, w), ui_y(1, h) + yo, sel.card, color);
 				break;
 			}
 
-			draw_card(win, crd, ui_x(x, w), ui_y(1, h) + yo, false, color);
+			draw_card(win, card, ui_x(x, w), ui_y(1, h) + yo, false, color);
 			yo += Y_OFFSET_SMALL;
 		}
 	}
@@ -220,7 +220,7 @@ static DiscardHide decide_what_to_hide(const SelectionOrMove& selmv, bool cmdlno
 	if (!selmv.ismove)
 		return DiscardHide::SHOW_LAST_ONLY;
 
-	if (selmv.move.src == CardPlace::discard() && selmv.move.dst == CardPlace::discard())
+	if (selmv.move.src == CardPlace::discard() && selmv.move.dest == CardPlace::discard())
 		return DiscardHide::SHOW_LAST_ONLY;
 	if (selmv.move.src == CardPlace::discard())
 		return DiscardHide::HIDE_ALL;
@@ -234,7 +234,7 @@ void ui_drawklon(WINDOW *win, const Klon& kln, const SelectionOrMove& selmv, boo
 
 	if (selmv.ismove) {
 		Klon tmpkln;
-		Selection tmpsel = { kln.dup(tmpkln, selmv.move.card), selmv.move.dst };
+		Selection tmpsel = { kln.dup(tmpkln, selmv.move.card), selmv.move.dest };
 		tmpkln.move(tmpsel.card, tmpsel.place, true);
 		draw_the_klon(win, tmpkln, tmpsel, true, color, dh, dscxoff);
 	} else

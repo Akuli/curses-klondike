@@ -7,18 +7,18 @@
 
 std::string Card::number_string() const
 {
-	static constexpr std::array<std::string_view, 13> nstrs = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
+	static constexpr std::array<const char *, 13> strings = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
 	assert(1 <= this->number && this->number <= 13);
-	return std::string(nstrs[this->number - 1]);
+	return strings[this->number - 1];
 }
 
 Card *cardlist::init(std::array<Card, 13*4>& cards)
 {
 	constexpr std::array<Suit, 4> suits = { Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE };
 	int i = 0;
-	for (const Suit& s : suits) {
+	for (const Suit& suit : suits) {
 		for (int n = 1; n <= 13; n++) {
-			cards[i++] = Card{ n, s };
+			cards[i++] = Card{ n, suit };
 		}
 	}
 
@@ -28,30 +28,31 @@ Card *cardlist::init(std::array<Card, 13*4>& cards)
 	for (Card *ptr = std::begin(cards); ptr < last; ptr++)
 		ptr->next = &ptr[1];
 	last->next = nullptr;
+
 	return &cards[0];
 }
 
-// crd can be nullptr
-static Card *next_n_times(Card *crd, int n)
+// card can be nullptr
+static Card *next_n_times(Card *card, int n)
 {
-	while (n-- && crd)
-		crd = crd->next;
-	return crd;
+	while (n-- && card)
+		card = card->next;
+	return card;
 }
 
-Card *cardlist::top_n(Card *crd, int n)
+Card *cardlist::top_n(Card *list, int n)
 {
-	while (next_n_times(crd, n))
-		crd = crd->next;
-	return crd;
+	while (next_n_times(list, n))
+		list = list->next;
+	return list;
 }
 
-Card *cardlist::top(Card *crd)
+Card *cardlist::top(Card *list)
 {
-	return cardlist::top_n(crd, 1);
+	return cardlist::top_n(list, 1);
 }
 
-Card *cardlist::pop_bottom(Card *& bot)
+Card *cardlist::pop_from_bottom(Card *& bot)
 {
 	Card *res = bot;
 	bot = res->next;
@@ -59,7 +60,7 @@ Card *cardlist::pop_bottom(Card *& bot)
 	return res;
 }
 
-void cardlist::push_top(Card *& list, Card *newtop)
+void cardlist::push_to_top(Card *& list, Card *newtop)
 {
 	if (list)
 		cardlist::top(list)->next = newtop;

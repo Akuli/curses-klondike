@@ -36,25 +36,25 @@ struct Klon {
 	// not a part of constructor because unnecessary with e.g. dup() method
 	void init();
 
-	// copies everything from src to dst
+	// copies everything from src to dest
 	// also creates new cards
-	// if srccrd is non-nullptr, returns the corresponding card of dst
-	// if srccrd is nullptr, returns nullptr
-	Card *dup(Klon& dst, const Card *srccrd) const;
+	// if source_card is non-nullptr, returns the corresponding card of dest
+	// if source_card is nullptr, returns nullptr
+	Card *dup(Klon& dest, const Card *source_card) const;
 
-	// returns whether a card can be moved to on top of dst
+	// returns whether a card can be moved to on top of dest
 	// use klon_stocktodiscard() instead for stock -> discard moves, this returns false for those
-	// crd must be a card in kln
-	bool canmove(const Card *crd, CardPlace dst) const;
+	// card must be a card in kln
+	bool can_move(const Card *card, CardPlace dest) const;
 
-	// replaces crd with nullptr
-	// if crd is someothercrd->next, someothercrd is returned
-	// if discard != nullptr and crd == top(discard), updates discardshow
-	Card *detachcard(const Card *crd);
+	// replaces card with nullptr
+	// if card is someothercrd->next, someothercrd is returned
+	// if discard != nullptr and card == top(discard), updates discardshow
+	Card *detach_card(const Card *card);
 
-	// moves the src card and ->next cards (if any) to dst
-	// if raw, accepts invalid moves (canmove) and never sets ->visible
-	void move(Card *crd, CardPlace dst, bool raw);
+	// moves the src card and ->next cards (if any) to dest
+	// if raw, accepts invalid moves (can_move) and never sets ->visible
+	void move(Card *card, CardPlace dest, bool raw);
 
 	// convenience function for moving a card to any foundation
 	// does nothing if card is nullptr

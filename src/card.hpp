@@ -69,20 +69,14 @@ namespace cardlist {
 	// returns topmost card in a linked list of cards
 	// special case to make some things easier: top(nullptr) == nullptr
 	// top(nonnull)->next is always nullptr
-	Card *top(Card *crd);
+	Card *top(Card *list);
 
-	// returns at most n topmost cards from a linked list of cards as another linked list
+	// returns at most n topmost cards from a linked list as another linked list
 	// top_n(nullptr, n) == nullptr
-	Card *top_n(Card *crd, int n);
+	Card *top_n(Card *list, int n);
 
-	// gets bottommost card from a linked list of cards
-	// sets bot to bot->next (can be nullptr)
-	Card *pop_bottom(Card *& bot);
-
-	// adds a card to top of a linked list of cards
-	// if list is nullptr, sets list to newtop
-	// if list is non-nullptr, sets top(list)->next to newtop
-	void push_top(Card *& list, Card *newtop);
+	Card *pop_from_bottom(Card *& list);
+	void push_to_top(Card *& list, Card *newtop);
 }
 
 #endif  // CARD_H

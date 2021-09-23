@@ -41,11 +41,11 @@ struct Selection {
 	bool less(const Klon& kln);
 };
 
-// represents card being moved src --> dst
+// represents card being moved src --> dest
 struct Move {
 	Card *card;
 	CardPlace src;
-	CardPlace dst;
+	CardPlace dest;
 };
 
 struct SelectionOrMove {

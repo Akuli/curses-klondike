@@ -49,7 +49,7 @@ static Card *get_visible_top_card(Klon kln, CardPlace plc)
 void SelectionOrMove::select_top_card_at_place(const Klon& kln, CardPlace plc)
 {
 	if (this->ismove)
-		this->move.dst = plc;
+		this->move.dest = plc;
 	else
 		this->sel = Selection{ get_visible_top_card(kln, plc), plc };
 }
@@ -71,9 +71,9 @@ bool Selection::more(const Klon& kln)
 	if (this->place.kind != CardPlace::TABLEAU)
 		return false;
 
-	for (Card *crd = kln.tableau[this->place.number]; crd && crd->next; crd = crd->next)
-		if (this->card == crd->next && crd->visible) {
-			this->card = crd;
+	for (Card *card = kln.tableau[this->place.number]; card && card->next; card = card->next)
+		if (this->card == card->next && card->visible) {
+			this->card = card;
 			return true;
 		}
 	return false;
@@ -93,9 +93,9 @@ void SelectionOrMove::select_another_card(const Klon& kln, SelDirection dir)
 	if (this->ismove)
 		assert(this->move.card);
 
-	int x = place_2_card_x(this->ismove ? this->move.dst : this->sel.place);
+	int x = place_2_card_x(this->ismove ? this->move.dest : this->sel.place);
 	std::optional<CardPlace> topplace = card_x_2_top_place(x);
-	bool tab = (this->ismove ? this->move.dst : this->sel.place).kind == CardPlace::TABLEAU;
+	bool tab = (this->ismove ? this->move.dest : this->sel.place).kind == CardPlace::TABLEAU;
 
 	switch(dir) {
 	case SelDirection::LEFT:
@@ -126,16 +126,16 @@ void SelectionOrMove::begin_move()
 {
 	this->ismove = true;
 	this->move.card = this->sel.card;
-	this->move.src = this->move.dst = this->sel.place;
+	this->move.src = this->move.dest = this->sel.place;
 }
 
 void SelectionOrMove::end_move(Klon& kln)
 {
 	assert(this->ismove);
 	assert(this->move.card);
-	if (kln.canmove(this->move.card, this->move.dst))
-		kln.move(this->move.card, this->move.dst, false);
+	if (kln.can_move(this->move.card, this->move.dest))
+		kln.move(this->move.card, this->move.dest, false);
 
 	this->ismove = false;
-	this->select_top_card_at_place(kln, this->move.dst);
+	this->select_top_card_at_place(kln, this->move.dest);
 }
