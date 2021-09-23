@@ -206,8 +206,6 @@ static int main_internal(int argc, char **argv)
 	if (curs_set(0) == ERR) throw std::runtime_error("curs_set() failed");
 	if (keypad(stdscr, true) == ERR) throw std::runtime_error("keypad() failed");
 
-	refresh();   // yes, this is needed before drawing the cards for some reason
-
 	Klondike klon;
 	SelectionOrMove selmv;
 	new_game(klon, selmv);
