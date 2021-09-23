@@ -52,7 +52,7 @@ static bool cards_match(Card *list1, Card *list2)
 			return false;
 		}
 
-		if (a->num != b->num || a->suit != b->suit || a->visible != b->visible)
+		if (a->number != b->number || a->suit != b->suit || a->visible != b->visible)
 			return false;
 	}
 

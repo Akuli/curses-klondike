@@ -4,6 +4,7 @@
 #define KLON_H
 
 #include "card.hpp" // IWYU pragma: keep
+#include <array>
 #include <cassert>
 #include <cstdint>
 
@@ -11,26 +12,26 @@ struct CardPlace {
 	enum Kind : uint8_t { STOCK, DISCARD, FOUNDATION, TABLEAU };
 
 	Kind kind;
-	int8_t num;
+	int8_t number;
 
 	static CardPlace stock() { return CardPlace{ STOCK, -1 }; }
 	static CardPlace discard() { return CardPlace{ DISCARD, -1 }; }
 	static CardPlace foundation(int n) { assert(0 <= n && n < 4); return CardPlace{ FOUNDATION, (int8_t)n }; }
 	static CardPlace tableau(int n) { assert(0 <= n && n < 7); return CardPlace{ TABLEAU, (int8_t)n }; }
 
-	bool operator==(CardPlace other) const { return this->kind == other.kind && this->num == other.num; }
+	bool operator==(CardPlace other) const { return this->kind == other.kind && this->number == other.number; }
 	bool operator!=(CardPlace other) const { return !(*this == other); }
 };
 
 struct Klon {
 	// https://www.denexa.com/wp-content/uploads/2015/11/klondike.png
 	// these point to just one card, use ->next to access others
-	Card *stock;           // TOPMOST card or nullptr
-	Card *discard;         // bottommost card or nullptr
-	int discardshow;       // number of cards shown in discard, or 0 if discard is nullptr
-	Card *foundations[4];  // bottommost cards or nullptrs
-	Card *tableau[7];      // bottommost cards or nullptrs
-	Card allcards[13*4];
+	Card *stock;                       // TOPMOST card or nullptr
+	Card *discard;                     // bottommost card or nullptr
+	int discardshow;                   // number of cards shown in discard, or 0 if discard is nullptr
+	std::array<Card*, 4> foundations;  // bottommost cards or nullptrs
+	std::array<Card*, 7> tableau;      // bottommost cards or nullptrs
+	std::array<Card, 13*4> allcards;
 
 	// not a part of constructor because unnecessary with e.g. dup() method
 	void init();

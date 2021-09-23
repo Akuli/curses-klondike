@@ -5,7 +5,7 @@
 
 void test_card_numstring()
 {
-	struct CardStrTest { int num; std::string numstr; };
+	struct CardStrTest { int number; std::string number_string; };
 	CardStrTest tests[] = {
 		{1, "A"},
 		{2, "2"},
@@ -20,7 +20,7 @@ void test_card_numstring()
 	for (const CardStrTest& test : tests) {
 		for (Suit s : std::vector<Suit>{ Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE }) {
 			for (bool visible : std::vector<bool>{ true, false }) {
-				assert(( Card{ test.num, s, visible }.numstring() == test.numstr ));
+				assert(( Card{ test.number, s, visible }.number_string() == test.number_string ));
 			}
 		}
 	}
@@ -30,10 +30,10 @@ void test_cardlist_init()
 {
 	int got[4][13] = {0};
 
-	Card cards[13*4];
+	std::array<Card, 13*4> cards;
 	Card *fst = cardlist::init(cards);
 	for (Card *crd = fst; crd; crd = crd->next)
-		got[crd->suit][crd->num-1]++;
+		got[crd->suit][crd->number-1]++;
 
 	for (auto& row : got)
 		for (int val : row)
@@ -42,17 +42,17 @@ void test_cardlist_init()
 
 static void abccards(Card *a, Card *b, Card *c, bool link)
 {
-	a->num = 1;
+	a->number = 1;
 	a->suit = Suit::SPADE;
 	a->visible = true;
 	a->next = link ? b : nullptr;
 
-	b->num = 2;
+	b->number = 2;
 	b->suit = Suit::DIAMOND;
 	b->visible = false;
 	b->next = link ? c : nullptr;
 
-	c->num = 3;
+	c->number = 3;
 	c->suit = Suit::HEART;
 	c->visible = true;
 	c->next = nullptr;

@@ -95,10 +95,10 @@ static void draw_card(WINDOW *win, const Card *crd, int xstart, int ystart, bool
 		int attr = COLOR_PAIR(crd->suit.color().color_pair_number());
 		if (color)
 			wattron(win, attr);
-		mvaddstr(ystart+1, xstart+1, crd->numstring().c_str());
+		mvaddstr(ystart+1, xstart+1, crd->number_string().c_str());
 		mvaddstr(ystart+1, xstart+CARD_WIDTH-2, crd->suit.string().c_str());
 		mvaddstr(ystart+CARD_HEIGHT-2, xstart+1, crd->suit.string().c_str());
-		mvaddstr(ystart+CARD_HEIGHT-2, xstart+CARD_WIDTH-1-crd->numstring().length(), crd->numstring().c_str());
+		mvaddstr(ystart+CARD_HEIGHT-2, xstart+CARD_WIDTH-1-crd->number_string().length(), crd->number_string().c_str());
 		if (color)
 			wattroff(win, attr);
 	}
@@ -114,7 +114,7 @@ static void draw_card_stack(WINDOW *win, const Card *botcrd, int xstart, int yst
 	getmaxyx(win, h, w);
 	(void)w;   // suppress warning about unused var
 
-	// the text (num and suit) of botcrd is at ystart+1
+	// the text (number and suit) of botcrd is at ystart+1
 	// let's figure out where it is for the topmost card
 	int toptxty = ystart+1;
 	int ncardstotal = 1;

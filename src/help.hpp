@@ -5,12 +5,12 @@
 #include <string>
 #include <vector>
 
-struct HelpKey {
-	std::string key;
-	std::string desc;
+struct HelpItem {
+	std::string_view key;
+	std::string_view desc;
 };
 
 // screen must be erased after calling, but not before
-void help_show(WINDOW *win, std::vector<HelpKey> hkeys, const char *argv0, bool color);
+void help_show(WINDOW *win, std::vector<HelpItem> hkeys, const char *argv0, bool color);
 
 #endif  // HELP_H

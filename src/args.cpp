@@ -13,12 +13,12 @@ doesn't support --, but nobody needs it for this program imo
 #include <stdexcept>
 #include "args.hpp"
 
-enum class OptType { YESNO, INT };
+enum class OptionType { YESNO, INT };
 
-struct OptSpec {
+struct OptionSpec {
 	std::string_view name;
 	std::optional<std::string_view> metavar;
-	OptType type;
+	OptionType type;
 	int min;
 	int max;
 	std::string_view desc;
@@ -30,11 +30,11 @@ struct OptSpec {
 	}
 };
 
-static constexpr std::array<OptSpec, 4> option_specs = {
-	OptSpec{ "--help", std::nullopt, OptType::YESNO, 0, 0, "show this help message and exit" },
-	OptSpec{ "--no-colors", std::nullopt, OptType::YESNO, 0, 0, "don't use colors, even if the terminal supports colors" },
-	OptSpec{ "--pick", "n", OptType::INT, 1, 13*4 - (1+2+3+4+5+6+7), "pick n cards from stock at a time, default is 3" },
-	OptSpec{ "--discard-hide", std::nullopt, OptType::YESNO, 0, 0, "only show topmost discarded card (not useful with --pick=1)" }
+static constexpr std::array<OptionSpec, 4> option_specs = {
+	OptionSpec{ "--help", std::nullopt, OptionType::YESNO, 0, 0, "show this help message and exit" },
+	OptionSpec{ "--no-colors", std::nullopt, OptionType::YESNO, 0, 0, "don't use colors, even if the terminal supports colors" },
+	OptionSpec{ "--pick", "n", OptionType::INT, 1, 13*4 - (1+2+3+4+5+6+7), "pick n cards from stock at a time, default is 3" },
+	OptionSpec{ "--discard-hide", std::nullopt, OptionType::YESNO, 0, 0, "only show topmost discarded card (not useful with --pick=1)" }
 };
 static constexpr int option_max_length = 14;
 
@@ -42,7 +42,7 @@ static constexpr int option_max_length = 14;
 // needed because one arg token can come from 2 argv items: --pick 3
 // or just 1: --no-colors, --pick=3
 struct Token {
-	OptSpec spec;
+	OptionSpec spec;
 	std::optional<std::string> value;
 };
 
@@ -93,11 +93,11 @@ private:
 	void print_help() const
 	{
 		std::fprintf(this->out, "Usage: %s", this->argv0.c_str());
-		for (const OptSpec& opt : option_specs)
+		for (const OptionSpec& opt : option_specs)
 			std::fprintf(this->out, " [%s]", std::string(opt.get_name_with_metavar()).c_str());
 
 		std::fprintf(this->out, "\n\nOptions:\n");
-		for (const OptSpec& opt : option_specs)
+		for (const OptionSpec& opt : option_specs)
 		{
 			std::fprintf(this->out, "  %-*s  %s\n",
 				option_max_length,
@@ -106,11 +106,11 @@ private:
 		}
 	}
 
-	std::optional<OptSpec> find_from_option_specs(std::string nam) const
+	std::optional<OptionSpec> find_from_option_specs(std::string nam) const
 	{
-		std::optional<OptSpec> res = std::nullopt;
+		std::optional<OptionSpec> res = std::nullopt;
 
-		for (const OptSpec& spec : option_specs) {
+		for (const OptionSpec& spec : option_specs) {
 			if (spec.name.find(nam) != 0)
 				continue;
 
@@ -158,7 +158,7 @@ private:
 			}
 		}
 
-		std::optional<OptSpec> spec = this->find_from_option_specs(nam.c_str());
+		std::optional<OptionSpec> spec = this->find_from_option_specs(nam.c_str());
 		if (!spec.has_value())
 			return std::nullopt;
 		return Token{ spec.value(), val };
@@ -167,7 +167,7 @@ private:
 	bool check_token_by_type(const Token& tok) const
 	{
 		switch(tok.spec.type) {
-		case OptType::YESNO:
+		case OptionType::YESNO:
 			if (tok.value.has_value()) {
 				std::fprintf(this->err, "%s: use just '%s', not '%s=something' or '%s something'\n",
 					this->argv0.c_str(),
@@ -176,7 +176,7 @@ private:
 			}
 			break;
 
-		case OptType::INT:
+		case OptionType::INT:
 			if (!tok.value.has_value()) {
 				std::fprintf(this->err, "%s: use '%s' or '%s', not just '%s'\n",
 					this->argv0.c_str(),

@@ -1,6 +1,7 @@
 #ifndef CARD_H
 #define CARD_H
 
+#include <array>
 #include <stdexcept>
 #include <string>
 
@@ -53,17 +54,17 @@ private:
 };
 
 struct Card {
-	int num;  // 1 for A, 11 for J, 12 for Q, 13 for K, others the obvious way
+	int number;  // 1 for A, 11 for J, 12 for Q, 13 for K, others the obvious way
 	Suit suit;
 	bool visible = false;
 	Card *next = nullptr;   // the card that is on top of this card
 
-	std::string numstring() const;  // e.g. "A"
+	std::string number_string() const;  // e.g. "A"
 };
 
 namespace cardlist {
 	// initialize and shuffle an array of cards, and build a linked list of them
-	Card *init(Card (&arr)[13*4]);
+	Card *init(std::array<Card, 13*4>& cards);
 
 	// returns topmost card in a linked list of cards
 	// special case to make some things easier: top(nullptr) == nullptr

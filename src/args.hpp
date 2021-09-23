@@ -1,7 +1,7 @@
 #ifndef ARGS_H
 #define ARGS_H
 
-#include <cstdio>  // c++ io streams suck ass https://stackoverflow.com/a/15106194
+#include <cstdio>  // c++ io streams can't printf https://stackoverflow.com/a/15106194
 #include <optional>
 #include <string>
 #include <vector>

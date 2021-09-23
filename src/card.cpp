@@ -5,30 +5,30 @@
 #include <iterator>
 #include <vector>
 
-Card *cardlist::init(Card (&arr)[13*4])
+std::string Card::number_string() const
+{
+	static constexpr std::array<std::string_view, 13> nstrs = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
+	assert(1 <= this->number && this->number <= 13);
+	return std::string(nstrs[this->number - 1]);
+}
+
+Card *cardlist::init(std::array<Card, 13*4>& cards)
 {
 	constexpr std::array<Suit, 4> suits = { Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE };
 	int i = 0;
 	for (const Suit& s : suits) {
 		for (int n = 1; n <= 13; n++) {
-			arr[i++] = Card{ n, s };
+			cards[i++] = Card{ n, s };
 		}
 	}
 
-	std::random_shuffle(std::begin(arr), std::end(arr));
+	std::random_shuffle(std::begin(cards), std::end(cards));
 
-	Card *last = std::end(arr) - 1;
-	for (Card *ptr = std::begin(arr); ptr < last; ptr++)
+	Card *last = std::end(cards) - 1;
+	for (Card *ptr = std::begin(cards); ptr < last; ptr++)
 		ptr->next = &ptr[1];
 	last->next = nullptr;
-	return arr;
-}
-
-std::string Card::numstring() const
-{
-	static constexpr std::array<std::string_view, 13> nstrs = { "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K" };
-	assert(1 <= this->num && this->num <= 13);
-	return std::string(nstrs[this->num - 1]);
+	return &cards[0];
 }
 
 // crd can be nullptr

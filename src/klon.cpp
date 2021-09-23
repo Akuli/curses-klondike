@@ -93,20 +93,20 @@ bool Klon::canmove(const Card *crd, CardPlace dst) const
 	Card *fnd, *tab;
 	switch(dst.kind) {
 	case CardPlace::FOUNDATION:
-		fnd = this->foundations[dst.num];
+		fnd = this->foundations[dst.number];
 		if (!fnd)
-			return (crd->num == 1);
+			return (crd->number == 1);
 
 		fnd = cardlist::top(fnd);
-		return (crd->suit == fnd->suit && crd->num == fnd->num + 1);
+		return (crd->suit == fnd->suit && crd->number == fnd->number + 1);
 
 	case CardPlace::TABLEAU:
-		tab = this->tableau[dst.num];
+		tab = this->tableau[dst.number];
 		if (!tab)
-			return (crd->num == 13);
+			return (crd->number == 13);
 
 		tab = cardlist::top(tab);
-		return (crd->suit.color() != tab->suit.color() && crd->num == tab->num - 1);
+		return (crd->suit.color() != tab->suit.color() && crd->number == tab->number - 1);
 
 	default:
 		throw std::logic_error("this shouldn't happen");
@@ -161,8 +161,8 @@ void Klon::move(Card *crd, CardPlace dst, bool raw)
 	switch(dst.kind) {
 		case CardPlace::STOCK: dstp = &this->stock; break;
 		case CardPlace::DISCARD: dstp = &this->discard; break;
-		case CardPlace::FOUNDATION: dstp = &this->foundations[dst.num]; break;
-		case CardPlace::TABLEAU: dstp = &this->tableau[dst.num]; break;
+		case CardPlace::FOUNDATION: dstp = &this->foundations[dst.number]; break;
+		case CardPlace::TABLEAU: dstp = &this->tableau[dst.number]; break;
 	}
 
 	cardlist::push_top(*dstp, crd);

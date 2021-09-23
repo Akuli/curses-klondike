@@ -9,9 +9,9 @@ static int place_2_card_x(CardPlace plc)
 {
 	switch(plc.kind) {
 	case CardPlace::TABLEAU:
-		return plc.num;
+		return plc.number;
 	case CardPlace::FOUNDATION:
-		return 3 + plc.num;
+		return 3 + plc.number;
 	case CardPlace::STOCK:
 		return 0;
 	case CardPlace::DISCARD:
@@ -35,9 +35,9 @@ static Card *get_visible_top_card(Klon kln, CardPlace plc)
 {
 	switch(plc.kind) {
 		case CardPlace::FOUNDATION:
-			return cardlist::top(kln.foundations[plc.num]);
+			return cardlist::top(kln.foundations[plc.number]);
 		case CardPlace::TABLEAU:
-			return cardlist::top(kln.tableau[plc.num]);
+			return cardlist::top(kln.tableau[plc.number]);
 		case CardPlace::DISCARD:
 			return cardlist::top(kln.discard);
 		case CardPlace::STOCK:
@@ -71,7 +71,7 @@ bool Selection::more(const Klon& kln)
 	if (this->place.kind != CardPlace::TABLEAU)
 		return false;
 
-	for (Card *crd = kln.tableau[this->place.num]; crd && crd->next; crd = crd->next)
+	for (Card *crd = kln.tableau[this->place.number]; crd && crd->next; crd = crd->next)
 		if (this->card == crd->next && crd->visible) {
 			this->card = crd;
 			return true;

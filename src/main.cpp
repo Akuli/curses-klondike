@@ -7,6 +7,7 @@
 #include "klon.hpp"
 #include "selectmove.hpp"
 #include "ui.hpp"
+#include <array>
 #include <clocale>
 #include <cstdio>
 #include <cstdlib>
@@ -28,21 +29,21 @@ static SelDirection curses_key_to_seldirection(int k)
 	}
 }
 
-static const std::vector<HelpKey> help_keys = {
-	{ "h", "show this help" },
-	{ "q", "quit" },
-	{ "n", "new game" },
-	{ "s", "move card(s) from stock to discard and select discard" },
-	{ "d", "select discard" },
-	{ "f", "move selected card to any foundation, if possible" },
-	{ "g", "move any card to any foundation, if possible" },
-	{ "Enter", "start moving the selected card(s), or complete the move if currently moving" },
-	{ "Esc", "if currently moving card(s), stop that" },
-	{ "←,→", "move selection left/right" },
-	{ "↑,↓", "move selection up/down or select more/less tableau cards" },
-	{ "PageUp", "select all tableau cards" },
-	{ "PageDown", "select only 1 tableau card" },
-	{ "1,2,…,7", "select tableau by number" },
+static constexpr std::array<HelpItem, 14> help_items = {
+	HelpItem{ "h", "show this help" },
+	HelpItem{ "q", "quit" },
+	HelpItem{ "n", "new game" },
+	HelpItem{ "s", "move card(s) from stock to discard and select discard" },
+	HelpItem{ "d", "select discard" },
+	HelpItem{ "f", "move selected card to any foundation, if possible" },
+	HelpItem{ "g", "move any card to any foundation, if possible" },
+	HelpItem{ "Enter", "start moving the selected card(s), or complete the move if currently moving" },
+	HelpItem{ "Esc", "if currently moving card(s), stop that" },
+	HelpItem{ "←,→", "move selection left/right" },
+	HelpItem{ "↑,↓", "move selection up/down or select more/less tableau cards" },
+	HelpItem{ "PageUp", "select all tableau cards" },
+	HelpItem{ "PageDown", "select only 1 tableau card" },
+	HelpItem{ "1,2,…,7", "select tableau by number" },
 };
 
 static void new_game(Klon &kln, SelectionOrMove &selmv)
@@ -56,7 +57,11 @@ static void handle_key(Klon& kln, SelectionOrMove& selmv, int k, Args ar, const 
 {
 	switch(k) {
 	case 'h':
-		help_show(stdscr, help_keys, argv0, ar.color);
+		help_show(
+			stdscr,
+			std::vector<HelpItem>(help_items.begin(), help_items.end()),
+			argv0,
+			ar.color);
 		break;
 
 	case 'n':
