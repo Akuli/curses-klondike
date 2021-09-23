@@ -9,7 +9,7 @@
 #include <memory>
 #include <stdexcept>
 
-static const std::vector<std::string> picture_lines = {
+static constexpr std::array<std::string_view, 8> picture_lines = {
 	"╭──╮╭──╮    ╭──╮╭──╮╭──╮╭──╮",
 	"│  ││  │    │ foundations  │",
 	"╰──╯╰──╯    ╰──╯╰──╯╰──╯╰──╯",
@@ -56,7 +56,7 @@ static std::string get_rules(const char *argv0)
 	return parts[0] + argv0 + parts[1];
 }
 
-static std::wstring string_to_wstring(std::string s)
+static std::wstring string_to_wstring(const std::string& s)
 {
 	size_t n = mbstowcs(nullptr, s.c_str(), 0) + 1;
 	assert(n != (size_t)-1);
@@ -71,121 +71,136 @@ static int get_max_width(int w, int xoff, int yoff)
 {
 	if (yoff > (int)picture_lines.size())
 		return w - xoff;
-	return w - xoff - string_to_wstring(picture_lines[0]).length() - 3;  // 3 is for more space between picture_lines and helps
+	// 3 is for more space between picture_lines and helps
+	return w - xoff - string_to_wstring(std::string(picture_lines[0])).length() - 3;
 }
 
-static void print_colored(WINDOW *win, int y, int x, std::wstring s, bool color)
-{
-	if (!win)
-		return;
-
-	for (wchar_t w : s) {
-		int attr = 0;
-		if (color)
-			switch(w) {
-			case L'♥':
-			case L'♦':
-				attr = COLOR_PAIR(SuitColor(SuitColor::RED).color_pair_number());
-				break;
-			case L'♠':
-			case L'♣':
-				attr = COLOR_PAIR(SuitColor(SuitColor::BLACK).color_pair_number());
-				break;
-			default:
-				break;
-			}
-
-		if (attr)
-			wattron(win, attr);
-		mvwaddnwstr(win, y, x++, &w, 1);
-		if (attr)
-			wattroff(win, attr);
-	}
-}
-
-static void print_wrapped_colored(WINDOW *win, int w, std::string s, int xoff, int& yoff, bool color)
-{
-	// unicode is easiest to do with wchars in this case
-	// wchars work because posix wchar_t is 4 bytes
-	// windows has two-byte wchars which is too small for some unicodes, lol
-	static_assert(sizeof(wchar_t) >= 4);
-	std::wstring ws = string_to_wstring(s);
-
-	while (!ws.empty()) {
-		int maxw = get_max_width(w, xoff, yoff);
-		int end = std::min((int)ws.length(), maxw);
-
-		// can break at newline?
-		size_t brk = ws.substr(0, end).find(L'\n');
-
-		// can break at space?
-		if (brk == std::wstring::npos && end < (int)ws.length())
-			brk = ws.substr(0, end).find_last_of(L' ');
-
-		print_colored(win, yoff++, xoff, ws.substr(0, brk), color);
-		if (brk == std::wstring::npos)
-			ws = ws.substr(end);
-		else
-			ws = ws.substr(brk+1);
-	}
-}
-
-static void print_help_item(WINDOW *win, int w, int keymax, const HelpKey& help, int& y)
-{
-	int nspace = keymax - string_to_wstring(help.key).length();
-
-	if (win)
-		mvwprintw(win, y, 0, "%*s%s:", nspace, "", help.key.c_str());
-
-	print_wrapped_colored(win, w, help.desc, keymax + 2, y, false);
-}
-
-static void print_title(WINDOW *win, int w, std::string title, int& y)
-{
-	y += 2;
-
-	if (win) {
-		int len = string_to_wstring(title).length();
-		int x = (w - len)/2;
-		mvwhline(win, y, 0, 0, x-1);
-		mvwaddstr(win, y, x, title.c_str());
-		mvwhline(win, y, x+len+1, 0, w - (x+len+1));
-	}
-
-	y += 2;
-}
-
-// returns number of lines
-static int print_all_help(WINDOW *win, int w, std::vector<HelpKey> hkeys, const char *argv0, bool color)
-{
-	if (win)
-		for (int y = 0; y < (int)picture_lines.size(); y++)
-			mvwaddstr(win, y, w - string_to_wstring(picture_lines[y]).length(), picture_lines[y].c_str());
-
-	int keymax = 0;
-	for (const HelpKey& k : hkeys)
-		keymax = std::max(keymax, (int)string_to_wstring(k.key).length());
-
+class Printer {
+public:
 	int y = 0;
-	for (const HelpKey& k : hkeys)
-		print_help_item(win, w, keymax, k, y);
+	void reset(WINDOW *w) { this->y = 0; this->window = w; }
 
-	print_title(win, w, "Rules", y);
-	print_wrapped_colored(win, w, get_rules(argv0).c_str(), 0, y, color);
+	int print_all_help(int w, std::vector<HelpKey> hkeys, const char *argv0, bool color)
+	{
+		if (this->window) {
+			for (int y = 0; y < (int)picture_lines.size(); y++) {
+				std::string line = std::string(picture_lines[y]);
+				mvwaddstr(this->window, y, w - string_to_wstring(line).length(), line.c_str());
+			}
+		}
 
-	return std::max(y, (int)picture_lines.size());
-}
+		int keymax = 0;
+		for (const HelpKey& k : hkeys)
+			keymax = std::max(keymax, (int)string_to_wstring(k.key).length());
 
-void help_show(WINDOW *win, std::vector<HelpKey> hkeys, const char *argv0, bool color)
+		for (const HelpKey& k : hkeys)
+			this->print_help_item(w, keymax, k);
+
+		this->print_title(w, "Rules");
+		this->print_wrapped_colored(w, get_rules(argv0).c_str(), 0, color);
+		return std::max(y, (int)picture_lines.size());
+	}
+
+private:
+	WINDOW *window = NULL;
+
+	void print_colored(int x, const std::wstring& s, bool color) const
+	{
+		if (!this->window)
+			return;
+
+		for (wchar_t w : s) {
+			int attr = 0;
+			if (color)
+				switch(w) {
+				case L'♥':
+				case L'♦':
+					attr = COLOR_PAIR(SuitColor(SuitColor::RED).color_pair_number());
+					break;
+				case L'♠':
+				case L'♣':
+					attr = COLOR_PAIR(SuitColor(SuitColor::BLACK).color_pair_number());
+					break;
+				default:
+					break;
+				}
+
+			if (attr)
+				wattron(this->window, attr);
+			mvwaddnwstr(this->window, this->y, x++, &w, 1);
+			if (attr)
+				wattroff(this->window, attr);
+		}
+	}
+
+	void print_wrapped_colored(int w, const std::string& s, int xoff, bool color)
+	{
+		// unicode is easiest to do with wchars in this case
+		// wchars work because posix wchar_t is 4 bytes
+		// windows has two-byte wchars which is too small for some unicodes, lol
+		static_assert(sizeof(wchar_t) >= 4);
+		std::wstring ws = string_to_wstring(s);
+
+		while (!ws.empty()) {
+			int maxw = get_max_width(w, xoff, this->y);
+			int end = std::min((int)ws.length(), maxw);
+
+			// can break at newline?
+			size_t brk = ws.substr(0, end).find(L'\n');
+
+			// can break at space?
+			if (brk == std::wstring::npos && end < (int)ws.length())
+				brk = ws.substr(0, end).find_last_of(L' ');
+
+			this->print_colored(xoff, ws.substr(0, brk), color);
+			this->y++;
+
+			if (brk == std::wstring::npos)
+				ws = ws.substr(end);
+			else
+				ws = ws.substr(brk+1);
+		}
+	}
+
+	void print_help_item(int w, int keymax, const HelpKey& help)
+	{
+		int nspace = keymax - string_to_wstring(help.key).length();
+
+		if (this->window)
+			mvwprintw(this->window, y, 0, "%*s%s:", nspace, "", help.key.c_str());
+
+		this->print_wrapped_colored(w, help.desc, keymax + 2, false);
+	}
+
+	void print_title(int w, const std::string& title)
+	{
+		this->y += 2;
+
+		if (this->window) {
+			int len = string_to_wstring(title).length();
+			int x = (w - len)/2;
+			mvwhline(this->window, y, 0, 0, x-1);
+			mvwaddstr(this->window, y, x, title.c_str());
+			mvwhline(this->window, y, x+len+1, 0, w - (x+len+1));
+		}
+
+		this->y += 2;
+	}
+};
+
+void help_show(WINDOW *window, std::vector<HelpKey> hkeys, const char *argv0, bool color)
 {
-	int w, h;
-	getmaxyx(win, h, w);
-	(void) h;  // silence warning about unused var
+	int width, height;
+	getmaxyx(window, height, width);
+	(void) height;  // silence warning about unused var
 
-	WINDOW *pad = newpad(print_all_help(nullptr, w, hkeys, argv0, false), w);
+	Printer printer;
+	printer.print_all_help(width, hkeys, argv0, false);
+	WINDOW *pad = newpad(printer.y, width);
 	if (!pad)
 		throw std::runtime_error("newpad() failed");
-	print_all_help(pad, w, hkeys, argv0, color);
 
-	scroll_showpad(win, pad);
+	printer.reset(pad);
+	printer.print_all_help(width, hkeys, argv0, color);
+	scroll_showpad(window, pad);
 }
