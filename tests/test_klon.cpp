@@ -19,24 +19,24 @@ static int count_cards(Card *fst, int *total, int *visible)
 
 void test_klon_init()
 {
-	Klon kln;
-	kln.init();
-	assert(kln.discardshow == 0);
+	Klondike klon;
+	klon.init();
+	assert(klon.discardshow == 0);
 	int total = 0;
 
 	int svis = 0;
-	assert(count_cards(kln.stock, &total, &svis) == 13*4 - (1+2+3+4+5+6+7));
+	assert(count_cards(klon.stock, &total, &svis) == 13*4 - (1+2+3+4+5+6+7));
 	assert(svis == 0);
 
-	assert(count_cards(kln.discard, &total, nullptr) == 0);
+	assert(count_cards(klon.discard, &total, nullptr) == 0);
 
-	for (Card *fnd : kln.foundations)
+	for (Card *fnd : klon.foundations)
 		assert(count_cards(fnd, &total, nullptr) == 0);
 	for (int t=0; t < 7; t++) {
 		int tvis = 0;
-		assert(count_cards(kln.tableau[t], &total, &tvis) == t+1);
+		assert(count_cards(klon.tableau[t], &total, &tvis) == t+1);
 		assert(tvis == 1);
-		assert(cardlist::top(kln.tableau[t])->visible);
+		assert(cardlist::top(klon.tableau[t])->visible);
 	}
 
 	assert(total == 13*4);
@@ -61,7 +61,7 @@ static bool cards_match(Card *list1, Card *list2)
 
 void test_klon_dup()
 {
-	Klon kln1, kln2;
+	Klondike kln1, kln2;
 	kln1.init();
 	Card *dupres = kln1.dup(kln2, kln1.tableau[2]->next);
 	assert(dupres == kln2.tableau[2]->next);
@@ -76,33 +76,33 @@ void test_klon_dup()
 
 void test_klon_canmove()
 {
-	Klon kln;
-	kln.init();
+	Klondike klon;
+	klon.init();
 
 	// non-visible cards can never be moved
-	assert(!kln.tableau[2]->visible);
-	assert(!kln.can_move(kln.tableau[2], CardPlace::stock()));
-	assert(!kln.can_move(kln.tableau[2], CardPlace::discard()));
-	assert(!kln.can_move(kln.tableau[2], CardPlace::foundation(3)));
-	assert(!kln.can_move(kln.tableau[2], CardPlace::tableau(3)));
+	assert(!klon.tableau[2]->visible);
+	assert(!klon.can_move(klon.tableau[2], CardPlace::stock()));
+	assert(!klon.can_move(klon.tableau[2], CardPlace::discard()));
+	assert(!klon.can_move(klon.tableau[2], CardPlace::foundation(3)));
+	assert(!klon.can_move(klon.tableau[2], CardPlace::tableau(3)));
 
 	// discarding is implemented with klon_stocktodiscard(), not with klon_canmove()
-	assert(!kln.can_move(kln.stock, CardPlace::discard()));
+	assert(!klon.can_move(klon.stock, CardPlace::discard()));
 
 	// TODO: test rest of the code? problem is, how do i find e.g. ♠A or ♥Q
 }
 
 // creates a game where a move is possible, sets move data to mvcrd and mvdst
-static void init_movable_kln(Klon *kln, int *srctab, int *dsttab)
+static void init_movable_kln(Klondike *klon, int *srctab, int *dsttab)
 {
 	while (true) {
-		kln->init();
+		klon->init();
 
 		for (int i=0; i < 7; i++) {
 			for (int j=0; j < 7; j++) {
 				if (i == j)
 					continue;
-				if (kln->can_move(cardlist::top(kln->tableau[i]), CardPlace::tableau(j))) {
+				if (klon->can_move(cardlist::top(klon->tableau[i]), CardPlace::tableau(j))) {
 					*srctab = i;
 					*dsttab = j;
 					return;
@@ -114,15 +114,15 @@ static void init_movable_kln(Klon *kln, int *srctab, int *dsttab)
 
 void test_klon_move()
 {
-	Klon kln;
+	Klondike klon;
 	int srctab, dsttab;
-	init_movable_kln(&kln, &srctab, &dsttab);
+	init_movable_kln(&klon, &srctab, &dsttab);
 
-	kln.move(cardlist::top(kln.tableau[srctab]), CardPlace::tableau(dsttab), false);
+	klon.move(cardlist::top(klon.tableau[srctab]), CardPlace::tableau(dsttab), false);
 	for (int i=0; i < 7; i++) {
 		int ncrd = i+1 - (i == srctab) + (i == dsttab);
 		int visible = 0;
-		assert(count_cards(kln.tableau[i], nullptr, &visible) == ncrd);
+		assert(count_cards(klon.tableau[i], nullptr, &visible) == ncrd);
 
 		if (i == dsttab)
 			assert(visible == 2);
@@ -131,51 +131,51 @@ void test_klon_move()
 		else
 			assert(visible == 1);
 
-		if (kln.tableau[i])
-			assert(cardlist::top(kln.tableau[i])->visible);
+		if (klon.tableau[i])
+			assert(cardlist::top(klon.tableau[i])->visible);
 	}
 }
 
-static void discard_check(Klon kln, int ndiscarded, int ds)
+static void discard_check(Klondike klon, int ndiscarded, int ds)
 {
-	assert(kln.discardshow == ds);
+	assert(klon.discardshow == ds);
 
 	int svis = 0;
-	assert(count_cards(kln.stock, nullptr, &svis) == 13*4 - (1+2+3+4+5+6+7) - ndiscarded);
+	assert(count_cards(klon.stock, nullptr, &svis) == 13*4 - (1+2+3+4+5+6+7) - ndiscarded);
 	assert(svis == 0);
 
 	int dvis = 0;
-	assert(count_cards(kln.discard, nullptr, &dvis) == ndiscarded);
+	assert(count_cards(klon.discard, nullptr, &dvis) == ndiscarded);
 	assert(dvis == ndiscarded);
 }
 
 void test_klon_stock2discard()
 {
-	Klon kln;
-	kln.init();
-	discard_check(kln, 0, 0);
+	Klondike klon;
+	klon.init();
+	discard_check(klon, 0, 0);
 
-	Card *savestock = kln.stock;
+	Card *savestock = klon.stock;
 
-	kln.stock2discard(1);
-	discard_check(kln, 1, 1);
+	klon.stock2discard(1);
+	discard_check(klon, 1, 1);
 
-	kln.stock2discard(2);
-	discard_check(kln, 3, 2);
+	klon.stock2discard(2);
+	discard_check(klon, 3, 2);
 
 	for (int n=4; n <= 13*4 - (1+2+3+4+5+6+7) - 1; n++) {
-		kln.stock2discard(1);
-		discard_check(kln, n, 1);
+		klon.stock2discard(1);
+		discard_check(klon, n, 1);
 	}
 
-	kln.stock2discard(1);
-	discard_check(kln, 13*4 - (1+2+3+4+5+6+7), 1);
+	klon.stock2discard(1);
+	discard_check(klon, 13*4 - (1+2+3+4+5+6+7), 1);
 
-	kln.stock2discard(13*4 - (1+2+3+4+5+6+7));  // 11 is an arbitrary number i picked
-	discard_check(kln, 0, 0);
+	klon.stock2discard(13*4 - (1+2+3+4+5+6+7));  // 11 is an arbitrary number i picked
+	discard_check(klon, 0, 0);
 
 	// make sure that the order of the cards doesn't reverse
-	assert(kln.stock == savestock);
+	assert(klon.stock == savestock);
 
 	// TODO: test with less than 13*4 - (1+2+3+4+5+6+7) stock cards? e.g. 0 stock cards
 }

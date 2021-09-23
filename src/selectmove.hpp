@@ -19,13 +19,13 @@ possible values:
 	.card = nullptr, .place = KLON_STOCK
 		stock selected
 
-	.card = top(kln->discard), .place = KLON_DISCARD
+	.card = top(klon->discard), .place = KLON_DISCARD
 		discard selected
 
-	.card = top(kln->foundations[n]), .place = KLON_FOUNDATION(n)
+	.card = top(klon->foundations[n]), .place = KLON_FOUNDATION(n)
 		nth foundation selected
 
-	.card = kln->tableau[n] or some of its ->nexts, .card is visible, .place = KLON_TABLEAU(n)
+	.card = klon->tableau[n] or some of its ->nexts, .card is visible, .place = KLON_TABLEAU(n)
 		nth tableau selected, including the specified card and all its ->nexts
 
 	.card = nullptr, .place = KLON_TABLEAU(n)
@@ -37,8 +37,8 @@ struct Selection {
 
 	// if sel is in tableau and possible to select more/less cards in that tableau item, do that
 	// returns true if something was done, false otherwise
-	bool more(const Klon& kln);
-	bool less(const Klon& kln);
+	bool more(const Klondike& klon);
+	bool less(const Klondike& klon);
 };
 
 // represents card being moved src --> dest
@@ -53,10 +53,10 @@ struct SelectionOrMove {
 	Move move;
 	bool ismove;
 
-	void select_top_card_at_place(const Klon& kln, CardPlace plc);
-	void select_another_card(const Klon& kln, SelDirection dir);
+	void select_top_card_at_place(const Klondike& klon, CardPlace plc);
+	void select_another_card(const Klondike& klon, SelDirection dir);
 	void begin_move();
-	void end_move(Klon& kln);  // moves card if possible
+	void end_move(Klondike& klon);  // moves card if possible
 };
 
 

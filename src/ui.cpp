@@ -152,7 +152,7 @@ static void draw_card_stack(WINDOW *win, const Card *botcrd, int xstart, int yst
 enum class DiscardHide { HIDE_ALL, SHOW_LAST_ONLY, SHOW_ALL };
 
 // TODO: this function is quite long, break it up
-static void draw_the_klon(WINDOW *win, const Klon& kln, const Selection& sel, bool moving, bool color, DiscardHide dh, int dscxoff)
+static void draw_the_klon(WINDOW *win, const Klondike& klon, const Selection& sel, bool moving, bool color, DiscardHide dh, int dscxoff)
 {
 	werase(win);
 
@@ -160,14 +160,14 @@ static void draw_the_klon(WINDOW *win, const Klon& kln, const Selection& sel, bo
 	getmaxyx(win, h, w);
 
 	// drawing just one card is enough for this
-	draw_card(win, kln.stock, ui_x(0, w), ui_y(0, h), sel.place == CardPlace::stock(), color);
+	draw_card(win, klon.stock, ui_x(0, w), ui_y(0, h), sel.place == CardPlace::stock(), color);
 
-	int nshowdis = kln.discardshow;
+	int nshowdis = klon.discardshow;
 	if (sel.place == CardPlace::discard() && moving)  // user is moving a detached card, and it's in the discard
 		nshowdis++;
 
 	int x = ui_x(1, w);
-	for (Card *card = cardlist::top_n(kln.discard, nshowdis); card; (card = card->next), (x += dscxoff)) {
+	for (Card *card = cardlist::top_n(klon.discard, nshowdis); card; (card = card->next), (x += dscxoff)) {
 		Card crdval = *card;
 
 		assert(crdval.visible);
@@ -179,23 +179,23 @@ static void draw_the_klon(WINDOW *win, const Klon& kln, const Selection& sel, bo
 		draw_card(win, &crdval, x, ui_y(0, h), sel.place == CardPlace::discard() && !card->next, color);
 	}
 
-	if (!kln.discard)   // nothing was drawn, but if the discard is selected, at least draw that
+	if (!klon.discard)   // nothing was drawn, but if the discard is selected, at least draw that
 		draw_card(win, nullptr, ui_x(1, w), ui_y(0, h), sel.place == CardPlace::discard(), color);
 
 	// foundations are similar to discard
 	for (int i=0; i < 4; i++)
-		draw_card(win, cardlist::top(kln.foundations[i]), ui_x(3+i, w), ui_y(0, h), sel.place == CardPlace::foundation(i), color);
+		draw_card(win, cardlist::top(klon.foundations[i]), ui_x(3+i, w), ui_y(0, h), sel.place == CardPlace::foundation(i), color);
 
 	// now the tableau... here we go
 	for (int x=0; x < 7; x++) {
-		if (!kln.tableau[x]) {
+		if (!klon.tableau[x]) {
 			// draw a border if the tableau item is selected
 			draw_card(win, nullptr, ui_x(x, w), ui_y(1, h), sel.place == CardPlace::tableau(x), color);
 			continue;
 		}
 
 		int yo = 0;
-		for (Card *card = kln.tableau[x]; card; card = card->next) {
+		for (Card *card = klon.tableau[x]; card; card = card->next) {
 			if (card->visible) {
 				draw_card_stack(win, card, ui_x(x, w), ui_y(1, h) + yo, sel.card, color);
 				break;
@@ -206,7 +206,7 @@ static void draw_the_klon(WINDOW *win, const Klon& kln, const Selection& sel, bo
 		}
 	}
 
-	if (kln.win()) {
+	if (klon.win()) {
 		std::string msg = "you win :)";
 		mvwaddstr(win, h/2, (w - msg.length())/2, msg.c_str());
 	}
@@ -227,16 +227,16 @@ static DiscardHide decide_what_to_hide(const SelectionOrMove& selmv, bool cmdlno
 	return DiscardHide::SHOW_LAST_ONLY;
 }
 
-void ui_drawklon(WINDOW *win, const Klon& kln, const SelectionOrMove& selmv, bool color, bool discardhide)
+void ui_drawklon(WINDOW *win, const Klondike& klon, const SelectionOrMove& selmv, bool color, bool discardhide)
 {
 	DiscardHide dh = decide_what_to_hide(selmv, discardhide);
 	int dscxoff = discardhide ? 1 : X_OFFSET;
 
 	if (selmv.ismove) {
-		Klon tmpkln;
-		Selection tmpsel = { kln.dup(tmpkln, selmv.move.card), selmv.move.dest };
+		Klondike tmpkln;
+		Selection tmpsel = { klon.dup(tmpkln, selmv.move.card), selmv.move.dest };
 		tmpkln.move(tmpsel.card, tmpsel.place, true);
 		draw_the_klon(win, tmpkln, tmpsel, true, color, dh, dscxoff);
 	} else
-		draw_the_klon(win, kln, selmv.sel, false, color, dh, dscxoff);
+		draw_the_klon(win, klon, selmv.sel, false, color, dh, dscxoff);
 }

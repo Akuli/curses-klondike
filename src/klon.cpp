@@ -6,72 +6,65 @@
 #include <utility>
 #include <vector>
 
-void Klon::init()
+void Klondike::init()
 {
 	Card *list = cardlist::init(this->allcards);
 	for (int i=0; i < 7; i++) {
-		Card *& tab = this->tableau[i];
-		tab = nullptr;
+		Card *& table = this->tableau[i];
+		table = nullptr;
 		for (int j=0; j < i+1; j++)
-			cardlist::push_to_top(tab, cardlist::pop_from_bottom(list));
-		cardlist::top(tab)->visible = true;
+			cardlist::push_to_top(table, cardlist::pop_from_bottom(list));
+		cardlist::top(table)->visible = true;
 	}
 
 	this->stock = list;
 	this->discard = nullptr;
 	this->discardshow = 0;
-	for (Card *& f : this->foundations)
-		f = nullptr;
+	for (Card *& foundation : this->foundations)
+		foundation = nullptr;
 }
 
-static void copy_cards(const Card *src, Card **dest, const Card *source_card, Card **dstcrd, Card *& list)
+static void copy_cards(const Card *src, Card *& dest, const Card *source_card, Card **dest_card, Card *& list)
 {
-	*dest = nullptr;
-	Card *top = nullptr;
-
+	dest = nullptr;
 	for (; src; src = src->next) {
-		Card *dup = cardlist::pop_from_bottom(list);
+		Card *copy = cardlist::pop_from_bottom(list);
 		if (src == source_card)
-			*dstcrd = dup;
+			*dest_card = copy;
 
-		*dup = *src;
-		dup->next = nullptr;
-
-		if (top)
-			top->next = dup;
-		else
-			*dest = dup;
-		top = dup;
+		*copy = *src;
+		copy->next = nullptr;
+		cardlist::push_to_top(dest, copy);
 	}
 }
 
-Card *Klon::dup(Klon& dest, const Card *source_card) const
+Card *Klondike::dup(Klondike& dest, const Card *source_card) const
 {
-	Card *dstcrd = nullptr;
+	Card *dest_card = nullptr;
 
 	Card *list = cardlist::init(dest.allcards);
-	copy_cards(this->stock, &dest.stock, source_card, &dstcrd, list);
-	copy_cards(this->discard, &dest.discard, source_card, &dstcrd, list);
+	copy_cards(this->stock, dest.stock, source_card, &dest_card, list);
+	copy_cards(this->discard, dest.discard, source_card, &dest_card, list);
 	dest.discardshow = this->discardshow;
 	for (int i=0; i < 4; i++)
-		copy_cards(this->foundations[i], &dest.foundations[i], source_card, &dstcrd, list);
+		copy_cards(this->foundations[i], dest.foundations[i], source_card, &dest_card, list);
 	for (int i=0; i < 7; i++)
-		copy_cards(this->tableau[i], &dest.tableau[i], source_card, &dstcrd, list);
+		copy_cards(this->tableau[i], dest.tableau[i], source_card, &dest_card, list);
 
-	assert(list == nullptr);
-	return dstcrd;
+	assert(list == nullptr);  // all cards used
+	return dest_card;
 }
 
-static bool card_in_some_tableau(const Klon& kln, const Card *card)
+static bool card_in_some_tableau(const Klondike& klon, const Card *card)
 {
-	for (Card *bot : kln.tableau)
+	for (Card *bot : klon.tableau)
 		for (Card *tabcrd = bot; tabcrd; tabcrd = tabcrd->next)
 			if (tabcrd == card)
 				return true;
 	return false;
 }
 
-bool Klon::can_move(const Card *card, CardPlace dest) const
+bool Klondike::can_move(const Card *card, CardPlace dest) const
 {
 
 	if (
@@ -90,23 +83,23 @@ bool Klon::can_move(const Card *card, CardPlace dest) const
 	)
 		return false;
 
-	Card *fnd, *tab;
+	Card *foundation, *table;
 	switch(dest.kind) {
 	case CardPlace::FOUNDATION:
-		fnd = this->foundations[dest.number];
-		if (!fnd)
+		foundation = this->foundations[dest.number];
+		if (!foundation)
 			return (card->number == 1);
 
-		fnd = cardlist::top(fnd);
-		return (card->suit == fnd->suit && card->number == fnd->number + 1);
+		foundation = cardlist::top(foundation);
+		return (card->suit == foundation->suit && card->number == foundation->number + 1);
 
 	case CardPlace::TABLEAU:
-		tab = this->tableau[dest.number];
-		if (!tab)
+		table = this->tableau[dest.number];
+		if (!table)
 			return (card->number == 13);
 
-		tab = cardlist::top(tab);
-		return (card->suit.color() != tab->suit.color() && card->number == tab->number - 1);
+		table = cardlist::top(table);
+		return (card->suit.color() != table->suit.color() && card->number == table->number - 1);
 
 	default:
 		throw std::logic_error("this shouldn't happen");
@@ -114,61 +107,61 @@ bool Klon::can_move(const Card *card, CardPlace dest) const
 }
 
 // a double-linked list would make this easier but many other things harder
-Card *Klon::detach_card(const Card *card)
+Card *Klondike::detach_card(const Card *card)
 {
-	std::vector<Card**> look4 = { &this->discard, &this->stock };
-	for (Card **p = std::begin(this->foundations); p < std::end(this->foundations); p++)
-		look4.push_back(p);
-	for (Card **p = std::begin(this->tableau); p < std::end(this->tableau); p++)
-		look4.push_back(p);
+	std::vector<Card**> card_lists = { &this->discard, &this->stock };
+	for (Card **p = this->foundations.begin(); p < this->foundations.end(); p++)
+		card_lists.push_back(p);
+	for (Card **p = this->tableau.begin(); p < this->tableau.end(); p++)
+		card_lists.push_back(p);
 
-	for (Card **ptr : look4) {
+	for (Card **list : card_lists) {
 		// special case: no card has card as ->next
-		if (*ptr == card) {
-			if (ptr == &this->discard)
+		if (*list == card) {
+			if (list == &this->discard)
 				this->discardshow = 0;
-			*ptr = nullptr;
+			*list = nullptr;
 			return nullptr;
 		}
 
-		for (Card *prv = *ptr; prv && prv->next; prv = prv->next)
-			if (prv->next == card) {
-				if (ptr == &this->discard && this->discardshow > 1)
+		for (Card *prev = *list; prev && prev->next; prev = prev->next)
+			if (prev->next == card) {
+				if (list == &this->discard && this->discardshow > 1)
 					this->discardshow--;
-				prv->next = nullptr;
-				return prv;
+				prev->next = nullptr;
+				return prev;
 			}
 	}
 
 	throw std::logic_error("card not found");
 }
 
-void Klon::move(Card *card, CardPlace dest, bool raw)
+void Klondike::move(Card *card, CardPlace dest, bool raw)
 {
 	if (!raw)
 		assert(this->can_move(card, dest));
 
-	Card *prv = this->detach_card(card);
+	Card *prev = this->detach_card(card);
 
-	// prv:
+	// prev:
 	//  * is nullptr, if card was the bottommost card
 	//  * has ->next==true, if moving only some of many visible cards on top of each other
 	//  * has ->next==false, if card was the bottommost VISIBLE card in the tableau list
-	if (prv && !raw)
-		prv->visible = true;
+	if (prev && !raw)
+		prev->visible = true;
 
-	Card **dstp;
+	Card **dest_pointer;
 	switch(dest.kind) {
-		case CardPlace::STOCK: dstp = &this->stock; break;
-		case CardPlace::DISCARD: dstp = &this->discard; break;
-		case CardPlace::FOUNDATION: dstp = &this->foundations[dest.number]; break;
-		case CardPlace::TABLEAU: dstp = &this->tableau[dest.number]; break;
+		case CardPlace::STOCK: dest_pointer = &this->stock; break;
+		case CardPlace::DISCARD: dest_pointer = &this->discard; break;
+		case CardPlace::FOUNDATION: dest_pointer = &this->foundations[dest.number]; break;
+		case CardPlace::TABLEAU: dest_pointer = &this->tableau[dest.number]; break;
 	}
 
-	cardlist::push_to_top(*dstp, card);
+	cardlist::push_to_top(*dest_pointer, card);
 }
 
-bool Klon::move2foundation(Card *card)
+bool Klondike::move2foundation(Card *card)
 {
 	if (!card)
 		return false;
@@ -181,7 +174,7 @@ bool Klon::move2foundation(Card *card)
 	return false;
 }
 
-void Klon::stock2discard(int pick)
+void Klondike::stock2discard(int pick)
 {
 	assert(1 <= pick && pick <= 13*4 - (1+2+3+4+5+6+7));
 	if (!this->stock) {
@@ -208,11 +201,11 @@ void Klon::stock2discard(int pick)
 	this->discardshow = i;
 }
 
-bool Klon::win() const
+bool Klondike::win() const
 {
-	for (Card *fnd : this->foundations) {
+	for (Card *foundation : this->foundations) {
 		int n = 0;
-		for (Card *card = fnd; card; card = card->next)
+		for (Card *card = foundation; card; card = card->next)
 			n++;
 
 		// n can be >13 when cards are being moved

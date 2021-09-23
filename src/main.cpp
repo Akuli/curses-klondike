@@ -46,14 +46,14 @@ static constexpr std::array<HelpItem, 14> help_items = {
 	HelpItem{ "1,2,…,7", "select tableau by number" },
 };
 
-static void new_game(Klon &kln, SelectionOrMove &selmv)
+static void new_game(Klondike &klon, SelectionOrMove &selmv)
 {
-	kln.init();
+	klon.init();
 	selmv.ismove = false;
 	selmv.sel = Selection{ nullptr, CardPlace::stock() };
 }
 
-static void handle_key(Klon& kln, SelectionOrMove& selmv, int k, Args ar, const char *argv0)
+static void handle_key(Klondike& klon, SelectionOrMove& selmv, int k, Args ar, const char *argv0)
 {
 	switch(k) {
 	case 'h':
@@ -65,42 +65,42 @@ static void handle_key(Klon& kln, SelectionOrMove& selmv, int k, Args ar, const 
 		break;
 
 	case 'n':
-		new_game(kln, selmv);
+		new_game(klon, selmv);
 		break;
 
 	case 's':
 		if (!selmv.ismove) {
-			kln.stock2discard(ar.pick);
+			klon.stock2discard(ar.pick);
 
 			// if you change this, think about what if the discard card was selected?
 			// then the moved card ended up on top of the old discarded card
 			// and we have 2 cards selected, so you need to handle that
-			selmv.select_top_card_at_place(kln, CardPlace::discard());
+			selmv.select_top_card_at_place(klon, CardPlace::discard());
 		}
 		break;
 
 	case 'd':
 		if (!selmv.ismove)
-			selmv.select_top_card_at_place(kln, CardPlace::discard());
+			selmv.select_top_card_at_place(klon, CardPlace::discard());
 		break;
 
 	case 'f':
-		if (!selmv.ismove && selmv.sel.card && kln.move2foundation(selmv.sel.card))
-			selmv.select_top_card_at_place(kln, selmv.sel.place);
+		if (!selmv.ismove && selmv.sel.card && klon.move2foundation(selmv.sel.card))
+			selmv.select_top_card_at_place(klon, selmv.sel.place);
 		break;
 	case 'g':
 		if (!selmv.ismove) {
-			bool moved = kln.move2foundation(cardlist::top(kln.discard));
+			bool moved = klon.move2foundation(cardlist::top(klon.discard));
 			if (!moved) {
-				for (Card *tab : kln.tableau) {
-					if (kln.move2foundation(cardlist::top(tab))) {
+				for (Card *tab : klon.tableau) {
+					if (klon.move2foundation(cardlist::top(tab))) {
 						moved = true;
 						break;
 					}
 				}
 			}
 			if (moved)
-				selmv.select_top_card_at_place(kln, selmv.sel.place);  // updates selmv.sel.card if needed
+				selmv.select_top_card_at_place(klon, selmv.sel.place);  // updates selmv.sel.card if needed
 		}
 		break;
 
@@ -110,34 +110,34 @@ static void handle_key(Klon& kln, SelectionOrMove& selmv, int k, Args ar, const 
 
 	case KEY_UP:
 	case KEY_DOWN:
-		if (!selmv.ismove && k == KEY_UP && selmv.sel.more(kln))
+		if (!selmv.ismove && k == KEY_UP && selmv.sel.more(klon))
 			break;
-		if (!selmv.ismove && k == KEY_DOWN && selmv.sel.less(kln))
+		if (!selmv.ismove && k == KEY_DOWN && selmv.sel.less(klon))
 			break;
 		// fall through
 
 	case KEY_LEFT:
 	case KEY_RIGHT:
-		selmv.select_another_card(kln, curses_key_to_seldirection(k));
+		selmv.select_another_card(klon, curses_key_to_seldirection(k));
 		break;
 
 	case KEY_PPAGE:
 		if (!selmv.ismove) {
-			while (selmv.sel.more(kln)) {}
+			while (selmv.sel.more(klon)) {}
 		}
 		break;
 
 	case KEY_NPAGE:
 		if (!selmv.ismove) {
-			while (selmv.sel.less(kln)) {}
+			while (selmv.sel.less(klon)) {}
 		}
 		break;
 
 	case '\n':
 		if (selmv.ismove)
-			selmv.end_move(kln);
+			selmv.end_move(klon);
 		else if (selmv.sel.place == CardPlace::stock())
-			kln.stock2discard(ar.pick);
+			klon.stock2discard(ar.pick);
 		else if (selmv.sel.card && selmv.sel.card->visible)
 			selmv.begin_move();
 		break;
@@ -149,7 +149,7 @@ static void handle_key(Klon& kln, SelectionOrMove& selmv, int k, Args ar, const 
 	case '5':
 	case '6':
 	case '7':
-		selmv.select_top_card_at_place(kln, CardPlace::tableau(k - '1'));
+		selmv.select_top_card_at_place(klon, CardPlace::tableau(k - '1'));
 		break;
 
 	default:
@@ -208,13 +208,13 @@ static int main_internal(int argc, char **argv)
 
 	refresh();   // yes, this is needed before drawing the cards for some reason
 
-	Klon kln;
+	Klondike klon;
 	SelectionOrMove selmv;
-	new_game(kln, selmv);
+	new_game(klon, selmv);
 
 	bool first = true;
 	while(1) {
-		ui_drawklon(stdscr, kln, selmv, args.color, args.discardhide);
+		ui_drawklon(stdscr, klon, selmv, args.color, args.discardhide);
 
 		if (first) {
 			int w, h;
@@ -231,7 +231,7 @@ static int main_internal(int argc, char **argv)
 		int k = getch();
 		if (k == 'q')
 			return 0;
-		handle_key(kln, selmv, k, args, argv[0]);  // TODO: too many args
+		handle_key(klon, selmv, k, args, argv[0]);  // TODO: too many args
 	}
 }
 

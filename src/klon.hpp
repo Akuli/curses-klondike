@@ -23,7 +23,7 @@ struct CardPlace {
 	bool operator!=(CardPlace other) const { return !(*this == other); }
 };
 
-struct Klon {
+struct Klondike {
 	// https://www.denexa.com/wp-content/uploads/2015/11/klondike.png
 	// these point to just one card, use ->next to access others
 	Card *stock;                       // TOPMOST card or nullptr
@@ -40,11 +40,11 @@ struct Klon {
 	// also creates new cards
 	// if source_card is non-nullptr, returns the corresponding card of dest
 	// if source_card is nullptr, returns nullptr
-	Card *dup(Klon& dest, const Card *source_card) const;
+	Card *dup(Klondike& dest, const Card *source_card) const;
 
 	// returns whether a card can be moved to on top of dest
 	// use klon_stocktodiscard() instead for stock -> discard moves, this returns false for those
-	// card must be a card in kln
+	// card must be a card in klon
 	bool can_move(const Card *card, CardPlace dest) const;
 
 	// replaces card with nullptr
