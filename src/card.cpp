@@ -22,10 +22,10 @@ Card *cardlist::init(std::array<Card, 13*4>& cards)
 		}
 	}
 
-	std::random_shuffle(std::begin(cards), std::end(cards));
+	std::random_shuffle(cards.begin(), cards.end());
 
 	Card *last = std::end(cards) - 1;
-	for (Card *ptr = std::begin(cards); ptr < last; ptr++)
+	for (Card *ptr = cards.begin(); ptr < last; ptr++)
 		ptr->next = &ptr[1];
 	last->next = nullptr;
 
