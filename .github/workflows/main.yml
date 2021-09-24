@@ -13,7 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: sudo apt update && sudo apt install $APT_PACKAGES
-    - run: CFLAGS=-Werror make -j2
+    - run: CXXFLAGS=-Werror make -j2
 
   iwyu:
     runs-on: ubuntu-latest
