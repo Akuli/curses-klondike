@@ -52,7 +52,7 @@ struct SelectionOrMove {
 	Move move;
 	bool ismove;
 
-	void select_top_card_at_place(const Klondike& klon, CardPlace plc);
+	void select_top_card_or_move_to(const Klondike& klon, CardPlace plc);
 	void select_another_card(const Klondike& klon, SelDirection dir);
 	void begin_move();
 	void end_move(Klondike& klon);  // moves card if possible
