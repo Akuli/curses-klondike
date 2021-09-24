@@ -202,22 +202,21 @@ private:
 
 	bool check_tokens(const std::vector<Token>& tokens) const
 	{
-		std::set<std::string_view> seen = {};
+		std::vector<std::string_view> names;
+		for (const Token& token : tokens)
+			names.push_back(token.spec.name);
+		std::sort(names.begin(), names.end());
 
-		for (Token tok : tokens) {
-			if (seen.count(tok.spec.name) > 0) {
-				std::fprintf(this->err, "%s: repeated option '%s'\n",
-					this->argv0.c_str(),
-					std::string(tok.spec.name).c_str());
-				return false;
-			}
-			seen.insert(tok.spec.name);
-
-			if (!this->check_token_by_type(tok))
-				return false;
+		auto duplicate = std::adjacent_find(names.begin(), names.end());
+		if (duplicate != names.end()) {
+			std::fprintf(this->err, "%s: repeated option '%s'\n",
+				this->argv0.c_str(), std::string(*duplicate).c_str());
+			return false;
 		}
 
-		return true;
+		return std::all_of(
+			tokens.begin(), tokens.end(),
+			[&](const Token& token) { return this->check_token_by_type(token); });
 	}
 
 	// returns true to keep running, or false to exit with status 0
