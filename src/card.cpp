@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include <iterator>
 
 std::string Card::number_string() const
 {
