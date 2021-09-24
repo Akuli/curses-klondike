@@ -99,7 +99,7 @@ void SelectionOrMove::select_another_card(const Klondike& klon, SelDirection dir
 			if (new_place && (
 					!this->ismove || is_bottom_row || new_place->kind == CardPlace::FOUNDATION))
 			{
-				this->select_top_card_or_move_to(klon, CardPlace::tableau(x));
+				this->select_top_card_or_move_to(klon, new_place.value());
 			}
 		}
 		break;
