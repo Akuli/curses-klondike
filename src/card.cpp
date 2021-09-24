@@ -11,24 +11,24 @@ std::string Card::number_string() const
 	return strings[this->number - 1];
 }
 
-Card *cardlist::init(std::array<Card, 13*4>& cards)
+Card *cardlist::init(std::array<Card, 13*4>& card_array)
 {
 	constexpr std::array<Suit, 4> suits = { Suit::CLUB, Suit::DIAMOND, Suit::HEART, Suit::SPADE };
 	int i = 0;
 	for (const Suit& suit : suits) {
 		for (int n = 1; n <= 13; n++) {
-			cards[i++] = Card{ n, suit };
+			card_array[i++] = Card{ n, suit };
 		}
 	}
 
-	std::random_shuffle(cards.begin(), cards.end());
+	std::random_shuffle(card_array.begin(), card_array.end());
 
-	Card *last = std::end(cards) - 1;
-	for (Card *ptr = cards.begin(); ptr < last; ptr++)
+	Card *last = card_array.end() - 1;
+	for (Card *ptr = card_array.begin(); ptr < last; ptr++)
 		ptr->next = &ptr[1];
 	last->next = nullptr;
 
-	return &cards[0];
+	return &card_array[0];
 }
 
 // card can be nullptr

@@ -19,8 +19,9 @@ static int count_cards(Card *fst, int *total, int *visible)
 
 void test_klon_init()
 {
+	std::array<Card, 13*4> card_array;
 	Klondike klon;
-	klon.init();
+	klon.init(card_array);
 	assert(klon.discardshow == 0);
 	int total = 0;
 
@@ -62,8 +63,9 @@ static bool cards_match(Card *list1, Card *list2)
 void test_klon_dup()
 {
 	Klondike kln1, kln2;
-	kln1.init();
-	Card *dupres = kln1.dup(kln2, kln1.tableau[2]->next);
+	std::array<Card, 13*4> card_array1, card_array2;
+	kln1.init(card_array1);
+	Card *dupres = kln1.dup(kln2, kln1.tableau[2]->next, card_array2);
 	assert(dupres == kln2.tableau[2]->next);
 
 	assert(cards_match(kln1.stock, kln2.stock));
@@ -77,7 +79,8 @@ void test_klon_dup()
 void test_klon_canmove()
 {
 	Klondike klon;
-	klon.init();
+	std::array<Card, 13*4> card_array;
+	klon.init(card_array);
 
 	// non-visible cards can never be moved
 	assert(!klon.tableau[2]->visible);
@@ -93,10 +96,10 @@ void test_klon_canmove()
 }
 
 // creates a game where a move is possible, sets move data to mvcrd and mvdst
-static void init_movable_kln(Klondike *klon, int *srctab, int *dsttab)
+static void init_movable_kln(Klondike *klon, int *srctab, int *dsttab, std::array<Card, 13*4>& card_array)
 {
 	while (true) {
-		klon->init();
+		klon->init(card_array);
 
 		for (int i=0; i < 7; i++) {
 			for (int j=0; j < 7; j++) {
@@ -115,8 +118,9 @@ static void init_movable_kln(Klondike *klon, int *srctab, int *dsttab)
 void test_klon_move()
 {
 	Klondike klon;
+	std::array<Card, 13*4> card_array;
 	int srctab, dsttab;
-	init_movable_kln(&klon, &srctab, &dsttab);
+	init_movable_kln(&klon, &srctab, &dsttab, card_array);
 
 	klon.move(cardlist::top(klon.tableau[srctab]), CardPlace::tableau(dsttab), false);
 	for (int i=0; i < 7; i++) {
@@ -152,7 +156,8 @@ static void discard_check(Klondike klon, int ndiscarded, int ds)
 void test_klon_stock2discard()
 {
 	Klondike klon;
-	klon.init();
+	std::array<Card, 13*4> card_array;
+	klon.init(card_array);
 	discard_check(klon, 0, 0);
 
 	Card *savestock = klon.stock;
