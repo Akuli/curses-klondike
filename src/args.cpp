@@ -165,33 +165,33 @@ private:
 		return Token{ spec.value(), value };
 	}
 
-	bool check_token_by_type(const Token& tok) const
+	bool check_token_by_type(const Token& token) const
 	{
-		switch(tok.spec.type) {
+		switch(token.spec.type) {
 		case OptionType::YESNO:
-			if (tok.value.has_value()) {
+			if (token.value.has_value()) {
 				std::fprintf(this->err, "%s: use just '%s', not '%s=something' or '%s something'\n",
 					this->argv0.c_str(),
-					std::string(tok.spec.name).c_str(), std::string(tok.spec.name).c_str(), std::string(tok.spec.name).c_str());
+					std::string(token.spec.name).c_str(), std::string(token.spec.name).c_str(), std::string(token.spec.name).c_str());
 				return false;
 			}
 			break;
 
 		case OptionType::INT:
-			if (!tok.value.has_value()) {
+			if (!token.value.has_value()) {
 				std::fprintf(this->err, "%s: use '%s' or '%s', not just '%s'\n",
 					this->argv0.c_str(),
-					tok.spec.get_name_with_metavar(' ').c_str(),
-					tok.spec.get_name_with_metavar('=').c_str(),
-					std::string(tok.spec.name).c_str());
+					token.spec.get_name_with_metavar(' ').c_str(),
+					token.spec.get_name_with_metavar('=').c_str(),
+					std::string(token.spec.name).c_str());
 				return false;
 			}
-			if (!is_valid_integer(tok.value.value(), tok.spec.min, tok.spec.max)) {
+			if (!is_valid_integer(token.value.value(), token.spec.min, token.spec.max)) {
 				std::fprintf(this->err, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
 					this->argv0.c_str(),
-					std::string(tok.spec.name).c_str(),
-					tok.spec.min, tok.spec.max,
-					tok.value.value().c_str());
+					std::string(token.spec.name).c_str(),
+					token.spec.min, token.spec.max,
+					token.value.value().c_str());
 				return false;
 			}
 			break;
@@ -222,20 +222,20 @@ private:
 	std::optional<Args> tokens_to_args(const std::vector<Token>& tokens) const
 	{
 		Args result = {};
-		for (Token tok : tokens) {
-			if (tok.spec.name == "--help") {
+		for (Token token : tokens) {
+			if (token.spec.name == "--help") {
 				this->print_help();
 				return std::nullopt;
 			}
 
-			if (tok.spec.name == "--no-colors")
+			if (token.spec.name == "--no-colors")
 				result.color = false;
-			else if (tok.spec.name == "--pick")
-				result.pick = std::stoi(tok.value.value());  // already validated
-			else if (tok.spec.name == "--discard-hide")
+			else if (token.spec.name == "--pick")
+				result.pick = std::stoi(token.value.value());  // already validated
+			else if (token.spec.name == "--discard-hide")
 				result.discardhide = true;
 			else
-				throw std::logic_error("unknown arg name: " + std::string(tok.spec.name));
+				throw std::logic_error("unknown arg name: " + std::string(token.spec.name));
 		}
 		return result;
 	}
