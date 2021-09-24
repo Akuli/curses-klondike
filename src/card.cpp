@@ -1,7 +1,16 @@
 #include "card.hpp"
 #include <algorithm>
+#include <curses.h>
 #include <array>
 #include <cassert>
+
+void Suit::init_color_pairs()
+{
+	if (init_pair(SuitColor(SuitColor::RED).color_pair_number(), COLOR_RED, COLOR_BLACK) == ERR)
+		throw std::runtime_error("init_pair() failed");
+	if (init_pair(SuitColor(SuitColor::BLACK).color_pair_number(), COLOR_WHITE, COLOR_BLACK) == ERR)
+		throw std::runtime_error("init_pair() failed");
+}
 
 std::string Card::number_string() const
 {

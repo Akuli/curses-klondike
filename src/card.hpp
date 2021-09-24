@@ -49,6 +49,8 @@ public:
 		throw std::logic_error("bad suit");
 	}
 
+	static void init_color_pairs();
+
 private:
 	Value val;
 };

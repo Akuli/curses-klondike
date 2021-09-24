@@ -15,14 +15,6 @@ static constexpr int X_OFFSET = 3;
 static constexpr int Y_OFFSET_SMALL = 1;
 static constexpr int Y_OFFSET_BIG = 2;
 
-void ui_initcolors()
-{
-	if (init_pair(SuitColor(SuitColor::RED).color_pair_number(), COLOR_RED, COLOR_BLACK) == ERR)
-		throw std::runtime_error("init_color() failed");
-	if (init_pair(SuitColor(SuitColor::BLACK).color_pair_number(), COLOR_WHITE, COLOR_BLACK) == ERR)
-		throw std::runtime_error("init_color() failed");
-}
-
 // ui_x() and ui_y() convert coordinates from card counts to curses coordinates
 static inline int ui_x(int x_count, int terminal_width)
 {
@@ -233,17 +225,17 @@ static DiscardHide decide_what_to_hide(const SelectionOrMove& selmv, bool comman
 	return DiscardHide::SHOW_LAST_ONLY;
 }
 
-void ui_drawklon(WINDOW *window, const Klondike& klon, const SelectionOrMove& selmv, bool color, bool discardhide)
+void ui_draw(WINDOW *window, const Klondike& klon, const SelectionOrMove& selmv, const Args& args)
 {
-	DiscardHide discard_hide = decide_what_to_hide(selmv, discardhide);
-	int discard_x_offset = discardhide ? 1 : X_OFFSET;
+	DiscardHide discard_hide = decide_what_to_hide(selmv, args.discardhide);
+	int discard_x_offset = args.discardhide ? 1 : X_OFFSET;
 
 	if (selmv.ismove) {
 		std::array<Card, 13*4> temp_cards;
 		Klondike temp_klon;
 		Selection temp_sel = { klon.dup(temp_klon, selmv.move.card, temp_cards), selmv.move.dest };
 		temp_klon.move(temp_sel.card, temp_sel.place, true);
-		draw_game(window, temp_klon, temp_sel, true, color, discard_hide, discard_x_offset);
+		draw_game(window, temp_klon, temp_sel, true, args.color, discard_hide, discard_x_offset);
 	} else
-		draw_game(window, klon, selmv.sel, false, color, discard_hide, discard_x_offset);
+		draw_game(window, klon, selmv.sel, false, args.color, discard_hide, discard_x_offset);
 }

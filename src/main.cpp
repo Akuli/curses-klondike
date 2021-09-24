@@ -201,7 +201,7 @@ static int main_internal(int argc, const char *const *argv)
 
 	parsed_args.color = (parsed_args.color && has_colors() && start_color() != ERR);
 	if (parsed_args.color)
-		ui_initcolors();
+		Suit::init_color_pairs();
 
 	if (cbreak() == ERR) throw std::runtime_error("cbreak() failed");
 	if (noecho() == ERR) throw std::runtime_error("noecho() failed");
@@ -212,7 +212,7 @@ static int main_internal(int argc, const char *const *argv)
 
 	bool first = true;
 	while(1) {
-		ui_drawklon(stdscr, game.klon, game.selmv, parsed_args.color, parsed_args.discardhide);
+		ui_draw(stdscr, game.klon, game.selmv, parsed_args);
 
 		if (first) {
 			int width, height;
