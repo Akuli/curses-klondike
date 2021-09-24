@@ -15,28 +15,6 @@ static constexpr int X_OFFSET = 3;
 static constexpr int Y_OFFSET_SMALL = 1;
 static constexpr int Y_OFFSET_BIG = 2;
 
-// ui_x() and ui_y() convert coordinates from card counts to curses coordinates
-static inline int ui_x(int x_count, int terminal_width)
-{
-	// evenly spaced 7 columns, centered
-	//
-	// space per column = terminal_width/7
-	// center of column = space per column * (x_count + 1/2)
-	// result = center of column - CARD_WIDTH/2
-	//
-	// simplifying it gives this, i wrote it with just 1 division to get only 1
-	// floordiv and hopefully less little errors, could have also used floats but
-	// this works fine
-	return ((2*x_count + 1)*terminal_width - 7*CARD_WIDTH)/(2*7);
-}
-
-static inline int ui_y(int y_count)
-{
-	// start at first row, then no blank rows in between
-	// because the line drawing characters look blanky enough anyway
-	return y_count*CARD_HEIGHT;
-}
-
 // https://en.wikipedia.org/wiki/Box-drawing_character#Unicode
 struct Border {
 	const char *horizontal, *vertical, *upper_left, *upper_right, *lower_left, *lower_right;
@@ -103,6 +81,28 @@ struct Drawer {
 
 	int terminal_width()  const { int w,h; getmaxyx(this->window, h, w); (void)h; return w; }
 	int terminal_height() const { int w,h; getmaxyx(this->window, h, w); (void)w; return h; }
+
+	// ui_x() and ui_y() convert coordinates from card counts to curses coordinates
+	int ui_x(int x_count) const
+	{
+		// evenly spaced 7 columns, centered
+		//
+		// space per column = terminal_width/7
+		// center of column = space per column * (x_count + 1/2)
+		// result = center of column - CARD_WIDTH/2
+		//
+		// simplifying it gives this, i wrote it with just 1 division to get only 1
+		// floordiv and hopefully less little errors, could have also used floats but
+		// this works fine
+		return ((2*x_count + 1)*this->terminal_width() - 7*CARD_WIDTH)/(2*7);
+	}
+
+	int ui_y(int y_count) const
+	{
+		// start at first row, then no blank rows in between
+		// because the line drawing characters look blanky enough anyway
+		return y_count*CARD_HEIGHT;
+	}
 
 	// newwin() doesn't work because partially erasing borders is surprisingly tricky
 	// partial erasing is needed for cards that are on top of cards
@@ -178,7 +178,7 @@ struct Drawer {
 		if (this->sel->place == CardPlace::discard() && this->moving)
 			show_count++;
 
-		int x = ui_x(1, this->terminal_width());
+		int x = this->ui_x(1);
 		for (Card *card = cardlist::top_n(this->klon->discard, show_count); card; card = card->next)
 		{
 			Card temp = *card;
@@ -188,12 +188,12 @@ struct Drawer {
 			if (discard_hide == DiscardHide::SHOW_LAST_ONLY)
 				temp.visible = !card->next;
 
-			this->draw_card(&temp, x, ui_y(0), this->sel->place == CardPlace::discard() && !card->next);
+			this->draw_card(&temp, x, this->ui_y(0), this->sel->place == CardPlace::discard() && !card->next);
 			x += discard_x_offset;
 		}
 
 		if (!this->klon->discard)   // nothing was drawn, but if the discard is selected, at least draw that
-			this->draw_card(nullptr, ui_x(1, this->terminal_width()), ui_y(0), this->sel->place == CardPlace::discard());
+			this->draw_card(nullptr, this->ui_x(1), this->ui_y(0), this->sel->place == CardPlace::discard());
 	}
 
 	void draw_tableau() const
@@ -201,18 +201,18 @@ struct Drawer {
 		for (int x=0; x < 7; x++) {
 			if (!this->klon->tableau[x]) {
 				// draw a border if the tableau item is selected
-				this->draw_card(nullptr, ui_x(x, this->terminal_width()), ui_y(1), this->sel->place == CardPlace::tableau(x));
+				this->draw_card(nullptr, this->ui_x(x), this->ui_y(1), this->sel->place == CardPlace::tableau(x));
 				continue;
 			}
 
-			int y = ui_y(1);
+			int y = this->ui_y(1);
 			for (Card *card = this->klon->tableau[x]; card; card = card->next) {
 				if (card->visible) {
-					this->draw_card_stack(card, ui_x(x, this->terminal_width()), y, this->sel->card);
+					this->draw_card_stack(card, this->ui_x(x), y, this->sel->card);
 					break;
 				}
 
-				this->draw_card(card, ui_x(x, this->terminal_width()), y, false);
+				this->draw_card(card, this->ui_x(x), y, false);
 				y += Y_OFFSET_SMALL;
 			}
 		}
@@ -222,10 +222,10 @@ struct Drawer {
 	{
 		werase(this->window);
 
-		draw_card(this->klon->stock, ui_x(0, this->terminal_width()), ui_y(0), this->sel->place == CardPlace::stock());
+		draw_card(this->klon->stock, this->ui_x(0), this->ui_y(0), this->sel->place == CardPlace::stock());
 		this->draw_discard();
 		for (int i=0; i < 4; i++)
-			draw_card(cardlist::top(this->klon->foundations[i]), ui_x(3+i, this->terminal_width()), ui_y(0), this->sel->place == CardPlace::foundation(i));
+			draw_card(cardlist::top(this->klon->foundations[i]), this->ui_x(3+i), this->ui_y(0), this->sel->place == CardPlace::foundation(i));
 		this->draw_tableau();
 
 		if (this->klon->win()) {
