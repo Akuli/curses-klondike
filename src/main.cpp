@@ -79,18 +79,18 @@ struct Game {
 				// if you change this, think about what if the discard card was selected?
 				// then the moved card ended up on top of the old discarded card
 				// and we have 2 cards selected, so you need to handle that
-				this->selmv.select_top_card_at_place(this->klon, CardPlace::discard());
+				this->selmv.select_top_card_or_move_to(this->klon, CardPlace::discard());
 			}
 			break;
 
 		case 'd':
 			if (!this->selmv.ismove)
-				this->selmv.select_top_card_at_place(this->klon, CardPlace::discard());
+				this->selmv.select_top_card_or_move_to(this->klon, CardPlace::discard());
 			break;
 
 		case 'f':
 			if (!this->selmv.ismove && this->selmv.sel.card && this->klon.move2foundation(this->selmv.sel.card))
-				this->selmv.select_top_card_at_place(this->klon, this->selmv.sel.place);
+				this->selmv.select_top_card_or_move_to(this->klon, this->selmv.sel.place);
 			break;
 		case 'g':
 			if (!this->selmv.ismove) {
@@ -100,7 +100,7 @@ struct Game {
 						return this->klon.move2foundation(cardlist::top(list));
 					});
 				if (moved)
-					this->selmv.select_top_card_at_place(this->klon, this->selmv.sel.place);  // update sel.card if needed
+					this->selmv.select_top_card_or_move_to(this->klon, this->selmv.sel.place);  // update sel.card if needed
 			}
 			break;
 
@@ -149,7 +149,7 @@ struct Game {
 		case '5':
 		case '6':
 		case '7':
-			this->selmv.select_top_card_at_place(this->klon, CardPlace::tableau(key - '1'));
+			this->selmv.select_top_card_or_move_to(this->klon, CardPlace::tableau(key - '1'));
 			break;
 
 		default:
