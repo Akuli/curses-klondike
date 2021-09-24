@@ -140,15 +140,15 @@ struct Drawer {
 		// the text (number and suit) of bottom_card is at top+1
 		// let's figure out where it is for the topmost card
 		int top_text_y = top+1;
-		int total_card_count = 1;
-		for (Card *card = bottom_card->next /* bottom_card already counted */ ; card; card = card->next) {
+		int card_count_excluding_bottom = 0;
+		for (Card *card = bottom_card->next; card; card = card->next) {
 			top_text_y += Y_OFFSET_BIG;
-			total_card_count++;
+			card_count_excluding_bottom++;
 		}
 
 		// we can make all cards visible by displaying some cards with a smaller offset
 		// we'lower_left display visible_card_count cards with the bigger offset
-		int visible_card_count = total_card_count;
+		int visible_card_count = card_count_excluding_bottom;
 		while (top_text_y >= this->terminal_height()) {
 			top_text_y -= Y_OFFSET_BIG;
 			top_text_y += Y_OFFSET_SMALL;
@@ -157,7 +157,7 @@ struct Drawer {
 
 		// to give some extra room that wouldn't be really necessary, but is nicer
 		// without the if, cards get stacked even when there's enough room
-		if (visible_card_count != total_card_count)
+		if (visible_card_count != card_count_excluding_bottom)
 			visible_card_count--;
 
 		// let's draw the cards
@@ -167,7 +167,7 @@ struct Drawer {
 			if (card == first_selected)
 				selected = true;
 			this->draw_card(card, left, y, selected);
-			y += (--visible_card_count > 0) ? Y_OFFSET_BIG : Y_OFFSET_SMALL;
+			y += (visible_card_count-- > 0) ? Y_OFFSET_BIG : Y_OFFSET_SMALL;
 		}
 	}
 
