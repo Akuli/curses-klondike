@@ -82,7 +82,7 @@ public:
 			return std::nullopt;
 		}
 
-		std::optional<Args> res = this->tokens_to_struct_args(tokens);
+		std::optional<Args> res = this->tokens_to_args(tokens);
 		if (!res.has_value())
 			status = 0;  // help printed (success)
 		return res;
@@ -219,10 +219,9 @@ private:
 			[&](const Token& token) { return this->check_token_by_type(token); });
 	}
 
-	// returns true to keep running, or false to exit with status 0
-	std::optional<Args> tokens_to_struct_args(const std::vector<Token>& tokens) const
+	std::optional<Args> tokens_to_args(const std::vector<Token>& tokens) const
 	{
-		Args ar = {};
+		Args result = {};
 		for (Token tok : tokens) {
 			if (tok.spec.name == "--help") {
 				this->print_help();
@@ -230,17 +229,16 @@ private:
 			}
 
 			if (tok.spec.name == "--no-colors")
-				ar.color = false;
+				result.color = false;
 			else if (tok.spec.name == "--pick")
-				ar.pick = std::stoi(tok.value.value());  // already validated
+				result.pick = std::stoi(tok.value.value());  // already validated
 			else if (tok.spec.name == "--discard-hide")
-				ar.discardhide = true;
+				result.discardhide = true;
 			else
 				throw std::logic_error("unknown arg name: " + std::string(tok.spec.name));
 		}
-		return ar;
+		return result;
 	}
-
 };
 
 std::optional<Args> args_parse(int& status, const std::vector<std::string>& args, FILE *out, FILE *err)
