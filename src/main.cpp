@@ -22,9 +22,9 @@
 #include <vector>
 
 
-static SelDirection curses_key_to_seldirection(int k)
+static SelDirection curses_key_to_seldirection(int key)
 {
-	switch(k) {
+	switch(key) {
 		case KEY_LEFT: return SelDirection::LEFT;
 		case KEY_RIGHT: return SelDirection::RIGHT;
 		case KEY_UP: return SelDirection::UP;
@@ -62,15 +62,15 @@ struct Game {
 	}
 };
 
-static void handle_key(Game& game, int k, Args ar, const char *argv0)
+static void handle_key(Game& game, int key, Args args, const char *argv0)
 {
-	switch(k) {
+	switch(key) {
 	case 'h':
 		help_show(
 			stdscr,
 			std::vector<HelpItem>(help_items.begin(), help_items.end()),
 			argv0,
-			ar.color);
+			args.color);
 		break;
 
 	case 'n':
@@ -79,7 +79,7 @@ static void handle_key(Game& game, int k, Args ar, const char *argv0)
 
 	case 's':
 		if (!game.selmv.ismove) {
-			game.klon.stock2discard(ar.pick);
+			game.klon.stock2discard(args.pick);
 
 			// if you change this, think about what if the discard card was selected?
 			// then the moved card ended up on top of the old discarded card
@@ -119,15 +119,15 @@ static void handle_key(Game& game, int k, Args ar, const char *argv0)
 
 	case KEY_UP:
 	case KEY_DOWN:
-		if (!game.selmv.ismove && k == KEY_UP && game.selmv.sel.more(game.klon))
+		if (!game.selmv.ismove && key == KEY_UP && game.selmv.sel.more(game.klon))
 			break;
-		if (!game.selmv.ismove && k == KEY_DOWN && game.selmv.sel.less(game.klon))
+		if (!game.selmv.ismove && key == KEY_DOWN && game.selmv.sel.less(game.klon))
 			break;
 		// fall through
 
 	case KEY_LEFT:
 	case KEY_RIGHT:
-		game.selmv.select_another_card(game.klon, curses_key_to_seldirection(k));
+		game.selmv.select_another_card(game.klon, curses_key_to_seldirection(key));
 		break;
 
 	case KEY_PPAGE:
@@ -146,7 +146,7 @@ static void handle_key(Game& game, int k, Args ar, const char *argv0)
 		if (game.selmv.ismove)
 			game.selmv.end_move(game.klon);
 		else if (game.selmv.sel.place == CardPlace::stock())
-			game.klon.stock2discard(ar.pick);
+			game.klon.stock2discard(args.pick);
 		else if (game.selmv.sel.card && game.selmv.sel.card->visible)
 			game.selmv.begin_move();
 		break;
@@ -158,7 +158,7 @@ static void handle_key(Game& game, int k, Args ar, const char *argv0)
 	case '5':
 	case '6':
 	case '7':
-		game.selmv.select_top_card_at_place(game.klon, CardPlace::tableau(k - '1'));
+		game.selmv.select_top_card_at_place(game.klon, CardPlace::tableau(key - '1'));
 		break;
 
 	default:
@@ -199,14 +199,10 @@ static int main_internal(int argc, char **argv)
 	if (setenv("ESCDELAY", "25", false) < 0)
 		throw std::runtime_error("setenv() failed");
 
-	time_t t = time(nullptr);
-	if (t == (time_t)(-1))
-		throw std::runtime_error("time() failed");
-	srand(t);
+	std::srand(std::time(nullptr));
 
 	CursesSession ses;
 
-	// changing ar.color here makes things easier
 	args.color = (args.color && has_colors() && start_color() != ERR);
 	if (args.color)
 		ui_initcolors();
@@ -222,21 +218,21 @@ static int main_internal(int argc, char **argv)
 		ui_drawklon(stdscr, game.klon, game.selmv, args.color, args.discardhide);
 
 		if (first) {
-			int w, h;
-			getmaxyx(stdscr, h, w);
-			(void) w;   // silence warning about unused variable
+			int width, height;
+			getmaxyx(stdscr, height, width);
+			(void) width;   // silence warning about unused variable
 
 			wattron(stdscr, A_STANDOUT);
-			mvwaddstr(stdscr, h-1, 0, "Press h for help.");
+			mvwaddstr(stdscr, height-1, 0, "Press h for help.");
 			wattroff(stdscr, A_STANDOUT);
 			first = false;
 		}
 
 		refresh();
-		int k = getch();
-		if (k == 'q')
+		int key = getch();
+		if (key == 'q')
 			return 0;
-		handle_key(game, k, args, argv[0]);
+		handle_key(game, key, args, argv[0]);
 	}
 }
 
