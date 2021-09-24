@@ -180,7 +180,7 @@ static int main_internal(int argc, const char *const *argv)
 	int status;
 	std::optional<Args> args_option = args_parse(
 		status, std::vector<std::string>(argv, argv + argc),
-		stdout, stderr);
+		std::cout, std::cerr);
 	if (!args_option)
 		return status;
 	Args parsed_args = args_option.value();

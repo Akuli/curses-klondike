@@ -3,42 +3,30 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
-static void read_file(FILE *f, std::string expected)
+static void read_file(std::ostringstream& f, const std::string& expected)
 {
-	size_t n = ftell(f);
-
-	rewind(f);
-	std::string actual(n, '\0');
-	assert(fread(&actual[0], 1, n, f) == n);
-	rewind(f);
-
-	if (expected != actual) {
+	if (f.str() != expected) {
 		std::cout << "\n\noutputs differ\n";
-		std::cout << "=== expected ===\n" << expected << "\n";
-		std::cout << "===  actual  ===\n" << actual   << "\n";
-		std::cout.flush();
+		std::cout << "=== expected ===\n" << expected << std::endl;
+		std::cout << "=== actual ===\n"   << f.str()  << std::endl;
 		abort();
 	}
+	f = std::ostringstream();
 }
 
 class Tester {
 public:
-	FILE *out, *err;
+	std::ostringstream out;
+	std::ostringstream err;
 	Args args;
 
-	Tester() {
-		this->out = tmpfile();
-		this->err = tmpfile();
-		assert(this->out && this->err);
-	}
 	~Tester() {
 		read_file(this->out, "");
 		read_file(this->err, "");
-		fclose(this->out);
-		fclose(this->err);
 	}
 	int parse(std::vector<std::string> arg_vector) {
 		int status = -1;
@@ -95,7 +83,7 @@ void test_args_errors()
 	read_file(t.err, "asdasd: unexpected argument: 'wut'" + help);
 
 	assert(t.parse(std::vector<std::string>{ "asdasd", "--no-colors", "lel" }) == 2);
-	read_file(t.err, "asdasd: use just '--no-colors', not '--no-colors=something' or '--no-colors something'" + help);
+	read_file(t.err, "asdasd: use just '--no-colors', not '--no-colors something' or '--no-colors=something'" + help);
 
 	assert(t.parse(std::vector<std::string>{ "asdasd", "--no-colors", "--no-colors" }) == 2);
 	read_file(t.err, "asdasd: repeated option '--no-colors'" + help);
