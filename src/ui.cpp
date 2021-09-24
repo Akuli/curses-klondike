@@ -149,67 +149,6 @@ static void draw_card_stack(WINDOW *window, const Card *bottom_card, int left, i
 // https://github.com/Akuli/curses-klondike/issues/2
 enum class DiscardHide { HIDE_ALL, SHOW_LAST_ONLY, SHOW_ALL };
 
-// TODO: this function is quite long, break it up
-static void draw_game(WINDOW *window, const Klondike& klon, const Selection& sel, bool moving, bool color, DiscardHide discard_hide, int discard_x_offset)
-{
-	werase(window);
-
-	int terminal_width, terminal_height;
-	getmaxyx(window, terminal_height, terminal_width);
-
-	// drawing just one card is enough for this
-	draw_card(window, klon.stock, ui_x(0, terminal_width), ui_y(0), sel.place == CardPlace::stock(), color);
-
-	int cards_shown_in_discard = klon.discardshow;
-	if (sel.place == CardPlace::discard() && moving)
-		cards_shown_in_discard++;
-
-	int x = ui_x(1, terminal_width);
-	for (Card *card = cardlist::top_n(klon.discard, cards_shown_in_discard); card; (card = card->next), (x += discard_x_offset)) {
-		Card temp_card = *card;
-
-		assert(temp_card.visible);
-		if (discard_hide == DiscardHide::HIDE_ALL)
-			temp_card.visible = false;
-		if (discard_hide == DiscardHide::SHOW_LAST_ONLY)
-			temp_card.visible = !card->next;
-
-		draw_card(window, &temp_card, x, ui_y(0), sel.place == CardPlace::discard() && !card->next, color);
-	}
-
-	if (!klon.discard)   // nothing was drawn, but if the discard is selected, at least draw that
-		draw_card(window, nullptr, ui_x(1, terminal_width), ui_y(0), sel.place == CardPlace::discard(), color);
-
-	// foundations are similar to discard
-	for (int i=0; i < 4; i++)
-		draw_card(window, cardlist::top(klon.foundations[i]), ui_x(3+i, terminal_width), ui_y(0), sel.place == CardPlace::foundation(i), color);
-
-	// now the tableau... here we go
-	for (int x=0; x < 7; x++) {
-		if (!klon.tableau[x]) {
-			// draw a border if the tableau item is selected
-			draw_card(window, nullptr, ui_x(x, terminal_width), ui_y(1), sel.place == CardPlace::tableau(x), color);
-			continue;
-		}
-
-		int y = ui_y(1);
-		for (Card *card = klon.tableau[x]; card; card = card->next) {
-			if (card->visible) {
-				draw_card_stack(window, card, ui_x(x, terminal_width), y, sel.card, color);
-				break;
-			}
-
-			draw_card(window, card, ui_x(x, terminal_width), y, false, color);
-			y += Y_OFFSET_SMALL;
-		}
-	}
-
-	if (klon.win()) {
-		std::string msg = "you win :)";
-		mvwaddstr(window, terminal_height/2, (terminal_width - msg.length())/2, msg.c_str());
-	}
-}
-
 static DiscardHide decide_what_to_hide(const SelectionOrMove& selmv, bool command_line_option)
 {
 	if (!command_line_option)
@@ -225,17 +164,104 @@ static DiscardHide decide_what_to_hide(const SelectionOrMove& selmv, bool comman
 	return DiscardHide::SHOW_LAST_ONLY;
 }
 
+struct Drawer {
+	WINDOW *window;
+	const Klondike *klon;
+	const Selection *sel;
+	bool moving;
+	bool color;
+	DiscardHide discard_hide;
+	int discard_x_offset;
+
+	void draw_discard() const
+	{
+		int terminal_width, terminal_height;
+		getmaxyx(this->window, terminal_height, terminal_width);
+
+		int show_count = this->klon->discardshow;
+		if (this->sel->place == CardPlace::discard() && this->moving)
+			show_count++;
+
+		int x = ui_x(1, terminal_width);
+		for (Card *card = cardlist::top_n(this->klon->discard, show_count); card; card = card->next)
+		{
+			Card temp = *card;
+			assert(temp.visible);
+			if (discard_hide == DiscardHide::HIDE_ALL)
+				temp.visible = false;
+			if (discard_hide == DiscardHide::SHOW_LAST_ONLY)
+				temp.visible = !card->next;
+
+			draw_card(this->window, &temp, x, ui_y(0), this->sel->place == CardPlace::discard() && !card->next, this->color);
+			x += discard_x_offset;
+		}
+
+		if (!this->klon->discard)   // nothing was drawn, but if the discard is selected, at least draw that
+			draw_card(this->window, nullptr, ui_x(1, terminal_width), ui_y(0), this->sel->place == CardPlace::discard(), this->color);
+	}
+
+	void draw_tableau() const
+	{
+		int terminal_width, terminal_height;
+		getmaxyx(window, terminal_height, terminal_width);
+
+		for (int x=0; x < 7; x++) {
+			if (!this->klon->tableau[x]) {
+				// draw a border if the tableau item is selected
+				draw_card(window, nullptr, ui_x(x, terminal_width), ui_y(1), this->sel->place == CardPlace::tableau(x), color);
+				continue;
+			}
+
+			int y = ui_y(1);
+			for (Card *card = this->klon->tableau[x]; card; card = card->next) {
+				if (card->visible) {
+					draw_card_stack(window, card, ui_x(x, terminal_width), y, this->sel->card, color);
+					break;
+				}
+
+				draw_card(window, card, ui_x(x, terminal_width), y, false, color);
+				y += Y_OFFSET_SMALL;
+			}
+		}
+	}
+
+	void draw_game()
+	{
+		werase(this->window);
+
+		int terminal_width, terminal_height;
+		getmaxyx(this->window, terminal_height, terminal_width);
+
+		draw_card(this->window, this->klon->stock, ui_x(0, terminal_width), ui_y(0), this->sel->place == CardPlace::stock(), this->color);
+		this->draw_discard();
+		for (int i=0; i < 4; i++)
+			draw_card(this->window, cardlist::top(this->klon->foundations[i]), ui_x(3+i, terminal_width), ui_y(0), this->sel->place == CardPlace::foundation(i), this->color);
+		this->draw_tableau();
+
+		if (this->klon->win()) {
+			std::string msg = "you win :)";
+			mvwaddstr(this->window, terminal_height/2, (terminal_width - msg.length())/2, msg.c_str());
+		}
+	}
+};
+
 void ui_draw(WINDOW *window, const Klondike& klon, const SelectionOrMove& selmv, const Args& args)
 {
 	DiscardHide discard_hide = decide_what_to_hide(selmv, args.discardhide);
 	int discard_x_offset = args.discardhide ? 1 : X_OFFSET;
+
+	Drawer drawer = { window, &klon, &selmv.sel, true, args.color, discard_hide, discard_x_offset };
 
 	if (selmv.ismove) {
 		std::array<Card, 13*4> temp_cards;
 		Klondike temp_klon;
 		Selection temp_sel = { klon.dup(temp_klon, selmv.move.card, temp_cards), selmv.move.dest };
 		temp_klon.move(temp_sel.card, temp_sel.place, true);
-		draw_game(window, temp_klon, temp_sel, true, args.color, discard_hide, discard_x_offset);
-	} else
-		draw_game(window, klon, selmv.sel, false, args.color, discard_hide, discard_x_offset);
+
+		drawer.klon = &temp_klon;
+		drawer.sel = &temp_sel;
+		drawer.draw_game();
+	} else {
+		drawer.draw_game();
+	}
 }
