@@ -181,7 +181,8 @@ private:
 				return std::nullopt;
 			}
 			if (!is_valid_integer(*value, spec->min, spec->max)) {
-				this->err << this->argv0 << ": '" << spec->name << "' wants an integer"
+				this->err << this->argv0 << ":"
+					<< " '" << spec->name << "' wants an integer"
 					<< " between " << spec->min << " and " << spec->max << ","
 					<< " not '" << *value << "'" << std::endl;
 				return std::nullopt;
