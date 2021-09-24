@@ -157,6 +157,7 @@ struct Drawer {
 
 		// to give some extra room that wouldn't be really necessary, but is nicer
 		// without the if, cards get stacked even when there's enough room
+		// TODO: I don't like this behaviour anymore, change it
 		if (visible_card_count != card_count_excluding_bottom)
 			visible_card_count--;
 
