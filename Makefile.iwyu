@@ -1,0 +1,13 @@
+FLAGS += -Xiwyu --mapping_file=iwyumappings.imp
+FLAGS += -Xiwyu --no_fwd_decls
+# Hide stuff that C compilers warn about anyway
+FLAGS += -Wno-static-local-in-inline -Wno-absolute-value $(shell cat compile_flags.txt)
+
+# skip my weird glob implementation, too dynamic or something
+SRC := $(wildcard src/*.cpp src/*.hpp)
+
+all: $(SRC)
+
+.PHONY: $(SRC)
+$(SRC):
+	((iwyu $(FLAGS) $@ || true) 2>&1) | sed '/has correct #includes/d' | (! grep .)

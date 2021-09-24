@@ -2,7 +2,7 @@
 #define HELP_H
 
 #include <cursesw.h>
-#include <string>
+#include <string_view>
 #include <vector>
 
 struct HelpItem {

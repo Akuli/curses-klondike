@@ -1,7 +1,6 @@
 #include "card.hpp"
 #include "klon.hpp"
 #include <cassert>
-#include <iterator>
 #include <stdexcept>
 #include <utility>
 #include <vector>

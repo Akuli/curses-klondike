@@ -2,12 +2,13 @@
 #include "help.hpp"
 #include "scroll.hpp"
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <cursesw.h>
-#include <memory>
 #include <stdexcept>
+#include <string>
 
 static constexpr std::array<const char *, 8> picture_lines = {
 	"╭──╮╭──╮    ╭──╮╭──╮╭──╮╭──╮",

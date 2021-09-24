@@ -4,14 +4,16 @@ so i did it myself, why not :D
 doesn't support --, but nobody needs it for this program imo
 */
 
-#include <memory>
-#include <set>
-#include <deque>
-#include <string>
-#include <optional>
-#include <vector>
-#include <stdexcept>
 #include "args.hpp"
+#include <array>
+#include <deque>
+#include <memory>
+#include <optional>
+#include <set>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <vector>
 
 enum class OptionType { YESNO, INT };
 
