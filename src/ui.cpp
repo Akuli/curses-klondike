@@ -4,7 +4,6 @@
 #include <array>
 #include <cassert>
 #include <curses.h>
-#include <stdexcept>
 #include <string>
 
 static constexpr int CARD_WIDTH = 7;
