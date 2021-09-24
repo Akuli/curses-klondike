@@ -35,10 +35,9 @@ struct Selection {
 	Card *card;
 	CardPlace place;
 
-	// if sel is in tableau and possible to select more/less cards in that tableau item, do that
-	// returns true if something was done, false otherwise
-	bool more(const Klondike& klon);
-	bool less(const Klondike& klon);
+	// return true if something was done, false otherwise
+	bool select_more(const Klondike& klon);
+	bool select_less(const Klondike& klon);
 };
 
 // represents card being moved src --> dest

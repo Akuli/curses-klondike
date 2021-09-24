@@ -22,9 +22,9 @@
 #include <vector>
 
 
-static SelDirection curses_key_to_seldirection(int k)
+static SelDirection curses_key_to_seldirection(int key)
 {
-	switch(k) {
+	switch(key) {
 		case KEY_LEFT: return SelDirection::LEFT;
 		case KEY_RIGHT: return SelDirection::RIGHT;
 		case KEY_UP: return SelDirection::UP;
@@ -60,111 +60,108 @@ struct Game {
 		this->selmv.ismove = false;
 		this->selmv.sel = Selection{ nullptr, CardPlace::stock() };
 	}
-};
 
-static void handle_key(Game& game, int k, Args ar, const char *argv0)
-{
-	switch(k) {
-	case 'h':
-		help_show(
-			stdscr,
-			std::vector<HelpItem>(help_items.begin(), help_items.end()),
-			argv0,
-			ar.color);
-		break;
+	void handle_key(int key, Args parsed_args, const char *argv0)
+	{
+		switch(key) {
+		case 'h':
+			help_show(
+				stdscr,
+				std::vector<HelpItem>(help_items.begin(), help_items.end()),
+				argv0,
+				parsed_args.color);
+			break;
 
-	case 'n':
-		game = Game(std::move(game.card_array));
-		break;
+		case 's':
+			if (!this->selmv.ismove) {
+				this->klon.stock2discard(parsed_args.pick);
 
-	case 's':
-		if (!game.selmv.ismove) {
-			game.klon.stock2discard(ar.pick);
+				// if you change this, think about what if the discard card was selected?
+				// then the moved card ended up on top of the old discarded card
+				// and we have 2 cards selected, so you need to handle that
+				this->selmv.select_top_card_at_place(this->klon, CardPlace::discard());
+			}
+			break;
 
-			// if you change this, think about what if the discard card was selected?
-			// then the moved card ended up on top of the old discarded card
-			// and we have 2 cards selected, so you need to handle that
-			game.selmv.select_top_card_at_place(game.klon, CardPlace::discard());
-		}
-		break;
+		case 'd':
+			if (!this->selmv.ismove)
+				this->selmv.select_top_card_at_place(this->klon, CardPlace::discard());
+			break;
 
-	case 'd':
-		if (!game.selmv.ismove)
-			game.selmv.select_top_card_at_place(game.klon, CardPlace::discard());
-		break;
-
-	case 'f':
-		if (!game.selmv.ismove && game.selmv.sel.card && game.klon.move2foundation(game.selmv.sel.card))
-			game.selmv.select_top_card_at_place(game.klon, game.selmv.sel.place);
-		break;
-	case 'g':
-		if (!game.selmv.ismove) {
-			bool moved = game.klon.move2foundation(cardlist::top(game.klon.discard));
-			if (!moved) {
-				for (Card *tab : game.klon.tableau) {
-					if (game.klon.move2foundation(cardlist::top(tab))) {
-						moved = true;
-						break;
+		case 'f':
+			if (!this->selmv.ismove && this->selmv.sel.card && this->klon.move2foundation(this->selmv.sel.card))
+				this->selmv.select_top_card_at_place(this->klon, this->selmv.sel.place);
+			break;
+		case 'g':
+			if (!this->selmv.ismove) {
+				bool moved = this->klon.move2foundation(cardlist::top(this->klon.discard));
+				if (!moved) {
+					for (Card *tab : this->klon.tableau) {
+						if (this->klon.move2foundation(cardlist::top(tab))) {
+							moved = true;
+							break;
+						}
 					}
 				}
+				if (moved)
+					this->selmv.select_top_card_at_place(this->klon, this->selmv.sel.place);  // update sel.card if needed
 			}
-			if (moved)
-				game.selmv.select_top_card_at_place(game.klon, game.selmv.sel.place);  // update sel.card if needed
-		}
-		break;
-
-	case 27:   // esc key, didn't find KEY_ constant
-		game.selmv.ismove = false;
-		break;
-
-	case KEY_UP:
-	case KEY_DOWN:
-		if (!game.selmv.ismove && k == KEY_UP && game.selmv.sel.more(game.klon))
 			break;
-		if (!game.selmv.ismove && k == KEY_DOWN && game.selmv.sel.less(game.klon))
+
+		case 27:   // esc key, didn't find KEY_ constant
+			this->selmv.ismove = false;
 			break;
-		// fall through
 
-	case KEY_LEFT:
-	case KEY_RIGHT:
-		game.selmv.select_another_card(game.klon, curses_key_to_seldirection(k));
-		break;
+		case KEY_UP:
+		case KEY_DOWN:
+			if (!this->selmv.ismove && key == KEY_UP && this->selmv.sel.select_more(this->klon))
+				break;
+			if (!this->selmv.ismove && key == KEY_DOWN && this->selmv.sel.select_more(this->klon))
+				break;
+			// fall through
 
-	case KEY_PPAGE:
-		if (!game.selmv.ismove) {
-			while (game.selmv.sel.more(game.klon)) {}
+		case KEY_LEFT:
+		case KEY_RIGHT:
+			this->selmv.select_another_card(this->klon, curses_key_to_seldirection(key));
+			break;
+
+		case KEY_PPAGE:
+			if (!this->selmv.ismove) {
+				while (this->selmv.sel.select_more(this->klon)) {}
+			}
+			break;
+
+		case KEY_NPAGE:
+			if (!this->selmv.ismove) {
+				while (this->selmv.sel.select_more(this->klon)) {}
+			}
+			break;
+
+		case '\n':
+			if (this->selmv.ismove)
+				this->selmv.end_move(this->klon);
+			else if (this->selmv.sel.place == CardPlace::stock())
+				this->klon.stock2discard(parsed_args.pick);
+			else if (this->selmv.sel.card && this->selmv.sel.card->visible)
+				this->selmv.begin_move();
+			break;
+
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+			this->selmv.select_top_card_at_place(this->klon, CardPlace::tableau(key - '1'));
+			break;
+
+		default:
+			break;
 		}
-		break;
-
-	case KEY_NPAGE:
-		if (!game.selmv.ismove) {
-			while (game.selmv.sel.less(game.klon)) {}
-		}
-		break;
-
-	case '\n':
-		if (game.selmv.ismove)
-			game.selmv.end_move(game.klon);
-		else if (game.selmv.sel.place == CardPlace::stock())
-			game.klon.stock2discard(ar.pick);
-		else if (game.selmv.sel.card && game.selmv.sel.card->visible)
-			game.selmv.begin_move();
-		break;
-
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-		game.selmv.select_top_card_at_place(game.klon, CardPlace::tableau(k - '1'));
-		break;
-
-	default:
-		break;
 	}
-}
+};
+
 
 class CursesSession {
 public:
@@ -177,11 +174,12 @@ public:
 	}
 };
 
-static int main_internal(int argc, char **argv)
+static int main_internal(int argc, const char *const *argv)
 {
 	// displaying unicodes correctly needs setlocale here AND cursesw instead of curses in makefile
 	if (!setlocale(LC_ALL, ""))
 		throw std::runtime_error("setlocale() failed");
+	std::srand(std::time(nullptr));
 
 	std::vector<std::string> arg_vector = {};
 	for (int i = 0; i < argc; i++)
@@ -191,7 +189,7 @@ static int main_internal(int argc, char **argv)
 	std::optional<Args> args_option = args_parse(status, arg_vector, stdout, stderr);
 	if (!args_option.has_value())
 		return status;
-	Args args = args_option.value();
+	Args parsed_args = args_option.value();
 
 	// https://stackoverflow.com/a/28020568
 	// see also ESCDELAY in a man page named "ncurses"
@@ -199,19 +197,14 @@ static int main_internal(int argc, char **argv)
 	if (setenv("ESCDELAY", "25", false) < 0)
 		throw std::runtime_error("setenv() failed");
 
-	time_t t = time(nullptr);
-	if (t == (time_t)(-1))
-		throw std::runtime_error("time() failed");
-	srand(t);
-
 	CursesSession ses;
 
-	// changing ar.color here makes things easier
-	args.color = (args.color && has_colors() && start_color() != ERR);
-	if (args.color)
-		ui_initcolors();
+	parsed_args.color = (parsed_args.color && has_colors() && start_color() != ERR);
+	if (parsed_args.color)
+		Suit::init_color_pairs();
 
 	if (cbreak() == ERR) throw std::runtime_error("cbreak() failed");
+	if (noecho() == ERR) throw std::runtime_error("noecho() failed");
 	if (curs_set(0) == ERR) throw std::runtime_error("curs_set() failed");
 	if (keypad(stdscr, true) == ERR) throw std::runtime_error("keypad() failed");
 
@@ -219,24 +212,27 @@ static int main_internal(int argc, char **argv)
 
 	bool first = true;
 	while(1) {
-		ui_drawklon(stdscr, game.klon, game.selmv, args.color, args.discardhide);
+		ui_draw(stdscr, game.klon, game.selmv, parsed_args);
 
 		if (first) {
-			int w, h;
-			getmaxyx(stdscr, h, w);
-			(void) w;   // silence warning about unused variable
+			int width, height;
+			getmaxyx(stdscr, height, width);
+			(void) width;   // silence warning about unused variable
 
 			wattron(stdscr, A_STANDOUT);
-			mvwaddstr(stdscr, h-1, 0, "Press h for help.");
+			mvwaddstr(stdscr, height-1, 0, "Press h for help.");
 			wattroff(stdscr, A_STANDOUT);
 			first = false;
 		}
 
 		refresh();
-		int k = getch();
-		if (k == 'q')
+		int key = getch();
+		if (key == 'q')
 			return 0;
-		handle_key(game, k, args, argv[0]);
+		else if (key == 'n')
+			game = Game(std::move(game.card_array));
+		else
+			game.handle_key(key, parsed_args, argv[0]);
 	}
 }
 
