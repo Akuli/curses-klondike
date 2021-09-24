@@ -7,6 +7,7 @@
 #include "klon.hpp"
 #include "selectmove.hpp"
 #include "ui.hpp"
+#include <algorithm>
 #include <array>
 #include <clocale>
 #include <cstdio>
@@ -94,15 +95,11 @@ struct Game {
 			break;
 		case 'g':
 			if (!this->selmv.ismove) {
-				bool moved = this->klon.move2foundation(cardlist::top(this->klon.discard));
-				if (!moved) {
-					for (Card *tab : this->klon.tableau) {
-						if (this->klon.move2foundation(cardlist::top(tab))) {
-							moved = true;
-							break;
-						}
-					}
-				}
+				bool moved =
+					this->klon.move2foundation(cardlist::top(this->klon.discard))
+					|| std::any_of(this->klon.tableau.begin(), this->klon.tableau.end(), [&](Card *list){
+						return this->klon.move2foundation(cardlist::top(list));
+					});
 				if (moved)
 					this->selmv.select_top_card_at_place(this->klon, this->selmv.sel.place);  // update sel.card if needed
 			}
