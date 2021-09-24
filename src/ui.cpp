@@ -173,16 +173,16 @@ struct Drawer {
 	DiscardHide discard_hide;
 	int discard_x_offset;
 
+	int terminal_width()  const { int w,h; getmaxyx(this->window, h, w); (void)h; return w; }
+	int terminal_height() const { int w,h; getmaxyx(this->window, h, w); (void)w; return h; }
+
 	void draw_discard() const
 	{
-		int terminal_width, terminal_height;
-		getmaxyx(this->window, terminal_height, terminal_width);
-
 		int show_count = this->klon->discardshow;
 		if (this->sel->place == CardPlace::discard() && this->moving)
 			show_count++;
 
-		int x = ui_x(1, terminal_width);
+		int x = ui_x(1, this->terminal_width());
 		for (Card *card = cardlist::top_n(this->klon->discard, show_count); card; card = card->next)
 		{
 			Card temp = *card;
@@ -197,29 +197,26 @@ struct Drawer {
 		}
 
 		if (!this->klon->discard)   // nothing was drawn, but if the discard is selected, at least draw that
-			draw_card(this->window, nullptr, ui_x(1, terminal_width), ui_y(0), this->sel->place == CardPlace::discard(), this->color);
+			draw_card(this->window, nullptr, ui_x(1, this->terminal_width()), ui_y(0), this->sel->place == CardPlace::discard(), this->color);
 	}
 
 	void draw_tableau() const
 	{
-		int terminal_width, terminal_height;
-		getmaxyx(window, terminal_height, terminal_width);
-
 		for (int x=0; x < 7; x++) {
 			if (!this->klon->tableau[x]) {
 				// draw a border if the tableau item is selected
-				draw_card(window, nullptr, ui_x(x, terminal_width), ui_y(1), this->sel->place == CardPlace::tableau(x), color);
+				draw_card(window, nullptr, ui_x(x, this->terminal_width()), ui_y(1), this->sel->place == CardPlace::tableau(x), color);
 				continue;
 			}
 
 			int y = ui_y(1);
 			for (Card *card = this->klon->tableau[x]; card; card = card->next) {
 				if (card->visible) {
-					draw_card_stack(window, card, ui_x(x, terminal_width), y, this->sel->card, color);
+					draw_card_stack(window, card, ui_x(x, this->terminal_width()), y, this->sel->card, color);
 					break;
 				}
 
-				draw_card(window, card, ui_x(x, terminal_width), y, false, color);
+				draw_card(window, card, ui_x(x, this->terminal_width()), y, false, color);
 				y += Y_OFFSET_SMALL;
 			}
 		}
