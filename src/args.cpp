@@ -5,11 +5,11 @@ doesn't support --, but nobody needs it for this program imo
 */
 
 #include "args.hpp"
+#include <algorithm>
 #include <array>
 #include <deque>
 #include <memory>
 #include <optional>
-#include <set>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -81,7 +81,7 @@ public:
 			return std::nullopt;
 		}
 
-		std::optional<Args> res = this->tokens_to_struct_args(tokens);
+		std::optional<Args> res = this->tokens_to_args(tokens);
 		if (!res.has_value())
 			status = 0;  // help printed (success)
 		return res;
@@ -108,141 +108,129 @@ private:
 		}
 	}
 
-	std::optional<OptionSpec> find_from_option_specs(std::string nam) const
+	std::optional<OptionSpec> find_from_option_specs(std::string name) const
 	{
-		std::optional<OptionSpec> res = std::nullopt;
-
-		for (const OptionSpec& spec : option_specs) {
-			if (spec.name.find(nam) != 0)
-				continue;
-
-			if (res.has_value()) {
-				std::fprintf(this->err, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
-					this->argv0.c_str(),
-					nam.c_str(),
-					std::string(res.value().name).c_str(),
-					std::string(spec.name).c_str());
-				return std::nullopt;
-			}
-			res = spec;
+		auto name_matches = [&](const OptionSpec& spec){ return spec.name.find(name) == 0; };
+		const OptionSpec *match = std::find_if(option_specs.begin(), option_specs.end(), name_matches);
+		if (match == option_specs.end()) {
+			std::fprintf(this->err, "%s: unknown option '%s'\n", this->argv0.c_str(), name.c_str());
+			return std::nullopt;
 		}
 
-		if (!res.has_value())
-			std::fprintf(this->err, "%s: unknown option '%s'\n", this->argv0.c_str(), nam.c_str());
-		return res;
+		const OptionSpec *match2 = std::find_if(match+1, option_specs.end(), name_matches);
+		if (match2 != option_specs.end()) {
+			std::fprintf(this->err, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
+				this->argv0.c_str(),
+				name.c_str(),
+				std::string(match->name).c_str(),
+				std::string(match2->name).c_str());
+			return std::nullopt;
+		}
+
+		return *match;
 	}
 
 	// argc and argv should point to remaining args, not always all the args
-	std::optional<Token> get_token(std::deque<std::string>& argq) const
+	std::optional<Token> get_token(std::deque<std::string>& arg_queue) const
 	{
-		std::string arg = argq[0];
-		argq.pop_front();
+		std::string arg = arg_queue[0];
+		arg_queue.pop_front();
 
 		if (arg.length() < 3 || arg.find("--") != 0) {
 			std::fprintf(this->err, "%s: unexpected argument: '%s'\n", this->argv0.c_str(), arg.c_str());
 			return std::nullopt;
 		}
 
-		std::string nam;
-		std::optional<std::string> val;
+		std::string name;
+		std::optional<std::string> value;
 
 		size_t i = arg.find("=");
 		if (i != std::string::npos) {
-			nam = arg.substr(0, i);
-			val = arg.substr(i+1);
+			name = arg.substr(0, i);
+			value = arg.substr(i+1);
 		} else {
-			nam = arg;
-			if (argq.empty() || argq[0].c_str()[0] == '-') {
-				val = std::nullopt;
+			name = arg;
+			if (arg_queue.empty() || arg_queue[0].c_str()[0] == '-') {
+				value = std::nullopt;
 			} else {
-				val = argq[0];
-				argq.pop_front();
+				value = arg_queue[0];
+				arg_queue.pop_front();
 			}
 		}
 
-		std::optional<OptionSpec> spec = this->find_from_option_specs(nam.c_str());
+		std::optional<OptionSpec> spec = this->find_from_option_specs(name.c_str());
 		if (!spec.has_value())
 			return std::nullopt;
-		return Token{ spec.value(), val };
-	}
 
-	bool check_token_by_type(const Token& tok) const
-	{
-		switch(tok.spec.type) {
+		switch(spec->type) {
 		case OptionType::YESNO:
-			if (tok.value.has_value()) {
+			if (value.has_value()) {
 				std::fprintf(this->err, "%s: use just '%s', not '%s=something' or '%s something'\n",
 					this->argv0.c_str(),
-					std::string(tok.spec.name).c_str(), std::string(tok.spec.name).c_str(), std::string(tok.spec.name).c_str());
-				return false;
+					std::string(spec->name).c_str(), std::string(spec->name).c_str(), std::string(spec->name).c_str());
+				return std::nullopt;
 			}
 			break;
 
 		case OptionType::INT:
-			if (!tok.value.has_value()) {
+			if (!value.has_value()) {
 				std::fprintf(this->err, "%s: use '%s' or '%s', not just '%s'\n",
 					this->argv0.c_str(),
-					tok.spec.get_name_with_metavar(' ').c_str(),
-					tok.spec.get_name_with_metavar('=').c_str(),
-					std::string(tok.spec.name).c_str());
-				return false;
+					spec->get_name_with_metavar(' ').c_str(),
+					spec->get_name_with_metavar('=').c_str(),
+					std::string(spec->name).c_str());
+				return std::nullopt;
 			}
-			if (!is_valid_integer(tok.value.value(), tok.spec.min, tok.spec.max)) {
+			if (!is_valid_integer(*value, spec->min, spec->max)) {
 				std::fprintf(this->err, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
 					this->argv0.c_str(),
-					std::string(tok.spec.name).c_str(),
-					tok.spec.min, tok.spec.max,
-					tok.value.value().c_str());
-				return false;
+					std::string(spec->name).c_str(),
+					spec->min, spec->max,
+					value->c_str());
+				return std::nullopt;
 			}
 			break;
 		}
 
-		return true;
+		return Token{ spec.value(), value };
 	}
 
 	bool check_tokens(const std::vector<Token>& tokens) const
 	{
-		std::set<std::string_view> seen = {};
+		std::vector<std::string_view> names;
+		for (const Token& token : tokens)
+			names.push_back(token.spec.name);
+		std::sort(names.begin(), names.end());
 
-		for (Token tok : tokens) {
-			if (seen.count(tok.spec.name) > 0) {
-				std::fprintf(this->err, "%s: repeated option '%s'\n",
-					this->argv0.c_str(),
-					std::string(tok.spec.name).c_str());
-				return false;
-			}
-			seen.insert(tok.spec.name);
-
-			if (!this->check_token_by_type(tok))
-				return false;
+		auto duplicate = std::adjacent_find(names.begin(), names.end());
+		if (duplicate != names.end()) {
+			std::fprintf(this->err, "%s: repeated option '%s'\n",
+				this->argv0.c_str(), std::string(*duplicate).c_str());
+			return false;
 		}
-
 		return true;
 	}
 
-	// returns true to keep running, or false to exit with status 0
-	std::optional<Args> tokens_to_struct_args(const std::vector<Token>& tokens) const
+	std::optional<Args> tokens_to_args(const std::vector<Token>& tokens) const
 	{
-		Args ar = {};
-		for (Token tok : tokens) {
-			if (tok.spec.name == "--help") {
+		Args result = {};
+		for (Token token : tokens) {
+			if (token.spec.name == "--help") {
 				this->print_help();
 				return std::nullopt;
 			}
 
-			if (tok.spec.name == "--no-colors")
-				ar.color = false;
-			else if (tok.spec.name == "--pick")
-				ar.pick = std::stoi(tok.value.value());  // already validated
-			else if (tok.spec.name == "--discard-hide")
-				ar.discardhide = true;
+			if (token.spec.name == "--no-colors")
+				result.color = false;
+			else if (token.spec.name == "--pick")
+				result.pick = std::stoi(token.value.value());  // already validated
+			else if (token.spec.name == "--discard-hide")
+				result.discardhide = true;
 			else
-				throw std::logic_error("unknown arg name: " + std::string(tok.spec.name));
+				throw std::logic_error("unknown arg name: " + std::string(token.spec.name));
 		}
-		return ar;
+		return result;
 	}
-
 };
 
 std::optional<Args> args_parse(int& status, const std::vector<std::string>& args, FILE *out, FILE *err)

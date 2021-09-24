@@ -109,6 +109,9 @@ void test_args_errors()
 	assert(t.parse(std::vector<std::string>{ "asdasd", "--pick", "a" }) == 2);
 	read_file(t.err, "asdasd: '--pick' wants an integer between 1 and 24, not 'a'" + help);
 
+	assert(t.parse(std::vector<std::string>{ "asdasd", "--pick", "" }) == 2);
+	read_file(t.err, "asdasd: '--pick' wants an integer between 1 and 24, not ''" + help);
+
 	assert(t.parse(std::vector<std::string>{ "asdasd", "--pick", "1", "2" }) == 2);
 	read_file(t.err, "asdasd: unexpected argument: '2'" + help);
 

@@ -75,7 +75,7 @@ public:
 	Printer(int width, bool color) : terminal_width(width), color(color) {}
 	void reset(WINDOW *window) { this->y = 0; this->window = window; }
 
-	int print_all_help(std::vector<HelpItem> help_items, const char *argv0)
+	int print_all_help(const std::vector<HelpItem>& help_items, const char *argv0)
 	{
 		if (this->window) {
 			for (int y = 0; y < (int)picture_lines.size(); y++) {
