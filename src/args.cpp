@@ -161,42 +161,38 @@ private:
 		std::optional<OptionSpec> spec = this->find_from_option_specs(name.c_str());
 		if (!spec.has_value())
 			return std::nullopt;
-		return Token{ spec.value(), value };
-	}
 
-	bool check_token_by_type(const Token& token) const
-	{
-		switch(token.spec.type) {
+		switch(spec->type) {
 		case OptionType::YESNO:
-			if (token.value.has_value()) {
+			if (value.has_value()) {
 				std::fprintf(this->err, "%s: use just '%s', not '%s=something' or '%s something'\n",
 					this->argv0.c_str(),
-					std::string(token.spec.name).c_str(), std::string(token.spec.name).c_str(), std::string(token.spec.name).c_str());
-				return false;
+					std::string(spec->name).c_str(), std::string(spec->name).c_str(), std::string(spec->name).c_str());
+				return std::nullopt;
 			}
 			break;
 
 		case OptionType::INT:
-			if (!token.value.has_value()) {
+			if (!value.has_value()) {
 				std::fprintf(this->err, "%s: use '%s' or '%s', not just '%s'\n",
 					this->argv0.c_str(),
-					token.spec.get_name_with_metavar(' ').c_str(),
-					token.spec.get_name_with_metavar('=').c_str(),
-					std::string(token.spec.name).c_str());
-				return false;
+					spec->get_name_with_metavar(' ').c_str(),
+					spec->get_name_with_metavar('=').c_str(),
+					std::string(spec->name).c_str());
+				return std::nullopt;
 			}
-			if (!is_valid_integer(token.value.value(), token.spec.min, token.spec.max)) {
+			if (!is_valid_integer(*value, spec->min, spec->max)) {
 				std::fprintf(this->err, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
 					this->argv0.c_str(),
-					std::string(token.spec.name).c_str(),
-					token.spec.min, token.spec.max,
-					token.value.value().c_str());
-				return false;
+					std::string(spec->name).c_str(),
+					spec->min, spec->max,
+					value->c_str());
+				return std::nullopt;
 			}
 			break;
 		}
 
-		return true;
+		return Token{ spec.value(), value };
 	}
 
 	bool check_tokens(const std::vector<Token>& tokens) const
@@ -212,10 +208,7 @@ private:
 				this->argv0.c_str(), std::string(*duplicate).c_str());
 			return false;
 		}
-
-		return std::all_of(
-			tokens.begin(), tokens.end(),
-			[&](const Token& token) { return this->check_token_by_type(token); });
+		return true;
 	}
 
 	std::optional<Args> tokens_to_args(const std::vector<Token>& tokens) const
