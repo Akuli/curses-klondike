@@ -83,26 +83,29 @@ void SelectionOrMove::select_another_card(const Klondike& klon, SelDirection dir
 		assert(this->move.card);
 
 	int x = place_to_card_x(this->ismove ? this->move.dest : this->sel.place);
-	int dx;
 	bool is_bottom_row = (this->ismove ? this->move.dest : this->sel.place).kind == CardPlace::TABLEAU;
 
 	switch(dir) {
 	case SelDirection::LEFT:
 	case SelDirection::RIGHT:
-		dx = (dir == SelDirection::LEFT) ? -1 : 1;
+	{
+		int dx = (dir == SelDirection::LEFT) ? -1 : 1;
 		x += dx;
 		if (x == 2 && !is_bottom_row)   // between discard and tableau
 			x += dx;
 
-		if (is_bottom_row) {
-			if (0 <= x && x < 7)
+		if (0 <= x && x < 7) {
+			std::optional<CardPlace> new_place = is_bottom_row ? CardPlace::tableau(x) : card_x_to_top_place(x);
+			if (new_place && (
+					!this->ismove ||
+					new_place->kind == CardPlace::FOUNDATION ||
+					new_place->kind == CardPlace::TABLEAU))
+			{
 				this->select_top_card_or_move_to(klon, CardPlace::tableau(x));
-		} else {
-			std::optional<CardPlace> new_place = card_x_to_top_place(x);
-			if (new_place && (!this->ismove || new_place->kind == CardPlace::FOUNDATION))
-				this->select_top_card_or_move_to(klon, new_place.value());
+			}
 		}
 		break;
+	}
 
 	case SelDirection::UP:
 		if (is_bottom_row) {
