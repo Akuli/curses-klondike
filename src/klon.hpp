@@ -17,6 +17,7 @@ struct CardPlace {
 	static CardPlace stock() { return CardPlace{ STOCK, -1 }; }
 	static CardPlace discard() { return CardPlace{ DISCARD, -1 }; }
 	static CardPlace foundation(int n) { assert(0 <= n && n < 4); return CardPlace{ FOUNDATION, (int8_t)n }; }
+	static std::array<CardPlace, 4> foundations() { return { foundation(0), foundation(1), foundation(2), foundation(3) }; }
 	static CardPlace tableau(int n) { assert(0 <= n && n < 7); return CardPlace{ TABLEAU, (int8_t)n }; }
 
 	bool operator==(CardPlace other) const { return this->kind == other.kind && this->number == other.number; }

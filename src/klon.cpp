@@ -1,5 +1,6 @@
 #include "card.hpp"
 #include "klon.hpp"
+#include <algorithm>
 #include <cassert>
 #include <stdexcept>
 #include <utility>
@@ -56,16 +57,16 @@ Card *Klondike::dup(Klondike& dest, const Card *source_card, std::array<Card, 13
 
 static bool card_in_some_tableau(const Klondike& klon, const Card *card)
 {
-	for (Card *bot : klon.tableau)
-		for (Card *tabcrd = bot; tabcrd; tabcrd = tabcrd->next)
-			if (tabcrd == card)
+	return std::any_of(klon.tableau.begin(), klon.tableau.end(), [&](const Card *list) {
+		for (const Card *c = list; c; c = c->next)
+			if (c == card)
 				return true;
-	return false;
+		return false;
+	});
 }
 
 bool Klondike::can_move(const Card *card, CardPlace dest) const
 {
-
 	if (
 		(
 			// the only way how a stack of multiple cards is allowed to move is tableau -> tableau
@@ -165,12 +166,15 @@ bool Klondike::move2foundation(Card *card)
 	if (!card)
 		return false;
 
-	for (int i=0; i < 4; i++)
-		if (this->can_move(card, CardPlace::foundation(i))) {
-			this->move(card, CardPlace::foundation(i), false);
-			return true;
-		}
-	return false;
+	std::array<CardPlace, 4> foundations = CardPlace::foundations();
+	auto chosen_foundation = std::find_if(
+		foundations.begin(), foundations.end(),
+		[&](CardPlace place) { return this->can_move(card, place); });
+
+	if (chosen_foundation == foundations.end())
+		return false;
+	this->move(card, *chosen_foundation, false);
+	return true;
 }
 
 void Klondike::stock2discard(int pick)
