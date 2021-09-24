@@ -77,15 +77,6 @@ bool Selection::select_less(const Klondike& klon)
 	return false;
 }
 
-static std::optional<CardPlace> select_different_top_card_place(int x, int dx)
-{
-	assert(dx == 1 || dx == -1);
-	x += dx;
-	if (x == 2)   // between discard and tableau
-		x += dx;
-	return card_x_to_top_place(x);
-}
-
 void SelectionOrMove::select_another_card(const Klondike& klon, SelDirection dir)
 {
 	if (this->ismove)
@@ -99,12 +90,15 @@ void SelectionOrMove::select_another_card(const Klondike& klon, SelDirection dir
 	case SelDirection::LEFT:
 	case SelDirection::RIGHT:
 		dx = (dir == SelDirection::LEFT) ? -1 : 1;
-		if (is_bottom_row) {
+		x += dx;
+		if (x == 2 && !is_bottom_row)   // between discard and tableau
 			x += dx;
+
+		if (is_bottom_row) {
 			if (0 <= x && x < 7)
 				this->select_top_card_or_move_to(klon, CardPlace::tableau(x));
 		} else {
-			std::optional<CardPlace> new_place = select_different_top_card_place(x, dx);
+			std::optional<CardPlace> new_place = card_x_to_top_place(x);
 			if (new_place && (!this->ismove || new_place->kind == CardPlace::FOUNDATION))
 				this->select_top_card_or_move_to(klon, new_place.value());
 		}
