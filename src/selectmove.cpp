@@ -96,8 +96,8 @@ void SelectionOrMove::select_another_card(const Klondike& klon, SelDirection dir
 
 		if (0 <= x && x < 7) {
 			std::optional<CardPlace> new_place = is_bottom_row ? CardPlace::tableau(x) : card_x_to_top_place(x);
-			if (new_place && (
-					!this->ismove || is_bottom_row || new_place->kind == CardPlace::FOUNDATION))
+			assert(new_place);
+			if (!this->ismove || is_bottom_row || new_place->kind == CardPlace::FOUNDATION)
 			{
 				this->select_top_card_or_move_to(klon, new_place.value());
 			}
