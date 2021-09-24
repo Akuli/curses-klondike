@@ -98,9 +98,7 @@ void SelectionOrMove::select_another_card(const Klondike& klon, SelDirection dir
 			std::optional<CardPlace> new_place = is_bottom_row ? CardPlace::tableau(x) : card_x_to_top_place(x);
 			assert(new_place);
 			if (!this->ismove || is_bottom_row || new_place->kind == CardPlace::FOUNDATION)
-			{
 				this->select_top_card_or_move_to(klon, new_place.value());
-			}
 		}
 		break;
 	}
