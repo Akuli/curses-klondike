@@ -64,7 +64,7 @@ struct Card {
 
 namespace cardlist {
 	// initialize and shuffle an array of cards, and build a linked list of them
-	Card *init(std::array<Card, 13*4>& cards);
+	Card *init(std::array<Card, 13*4>& card_array);
 
 	// returns topmost card in a linked list of cards
 	// special case to make some things easier: top(nullptr) == nullptr

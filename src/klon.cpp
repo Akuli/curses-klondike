@@ -6,9 +6,9 @@
 #include <utility>
 #include <vector>
 
-void Klondike::init()
+void Klondike::init(std::array<Card, 13*4>& card_array)
 {
-	Card *list = cardlist::init(this->allcards);
+	Card *list = cardlist::init(card_array);
 	for (int i=0; i < 7; i++) {
 		Card *& table = this->tableau[i];
 		table = nullptr;
@@ -38,11 +38,11 @@ static void copy_cards(const Card *src, Card *& dest, const Card *source_card, C
 	}
 }
 
-Card *Klondike::dup(Klondike& dest, const Card *source_card) const
+Card *Klondike::dup(Klondike& dest, const Card *source_card, std::array<Card, 13*4>& card_array) const
 {
 	Card *dest_card = nullptr;
 
-	Card *list = cardlist::init(dest.allcards);
+	Card *list = cardlist::init(card_array);
 	copy_cards(this->stock, dest.stock, source_card, &dest_card, list);
 	copy_cards(this->discard, dest.discard, source_card, &dest_card, list);
 	dest.discardshow = this->discardshow;

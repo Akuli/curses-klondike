@@ -233,10 +233,11 @@ void ui_drawklon(WINDOW *win, const Klondike& klon, const SelectionOrMove& selmv
 	int dscxoff = discardhide ? 1 : X_OFFSET;
 
 	if (selmv.ismove) {
-		Klondike tmpkln;
-		Selection tmpsel = { klon.dup(tmpkln, selmv.move.card), selmv.move.dest };
-		tmpkln.move(tmpsel.card, tmpsel.place, true);
-		draw_the_klon(win, tmpkln, tmpsel, true, color, dh, dscxoff);
+		std::array<Card, 13*4> temp_cards;
+		Klondike temp_klon;
+		Selection temp_sel = { klon.dup(temp_klon, selmv.move.card, temp_cards), selmv.move.dest };
+		temp_klon.move(temp_sel.card, temp_sel.place, true);
+		draw_the_klon(win, temp_klon, temp_sel, true, color, dh, dscxoff);
 	} else
 		draw_the_klon(win, klon, selmv.sel, false, color, dh, dscxoff);
 }
