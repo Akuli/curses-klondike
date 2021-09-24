@@ -9,10 +9,10 @@
 #include <algorithm>
 #include <array>
 #include <clocale>
-#include <cstdio>
 #include <cstdlib>
 #include <ctime>
 #include <cursesw.h>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <stdexcept>

@@ -143,7 +143,7 @@ private:
 		std::string name;
 		std::optional<std::string> value;
 
-		size_t i = arg.find("=");
+		std::size_t i = arg.find("=");
 		if (i != std::string::npos) {
 			name = arg.substr(0, i);
 			value = arg.substr(i+1);
