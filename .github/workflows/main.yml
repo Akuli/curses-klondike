@@ -1,0 +1,29 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+env:
+  APT_PACKAGES: "make g++ libncurses5-dev libncursesw5-dev"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: sudo apt update && sudo apt install $APT_PACKAGES
+    - run: CFLAGS=-Werror make -j2
+
+  iwyu:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - run: git submodule init && git submodule update
+    # Apparently iwyu also needs clang-9, "iwyu --version" says it's based on it
+    # Errors I got without:
+    #
+    #   /usr/include/x86_64-linux-gnu/sys/types.h:144:10: fatal error: 'stddef.h' file not found
+    #
+    - run: sudo apt update && sudo apt install $APT_PACKAGES iwyu clang-9
+    - run: make -j2 -k iwyu
