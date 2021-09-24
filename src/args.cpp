@@ -26,7 +26,7 @@ struct OptionSpec {
 	std::string_view desc;
 
 	std::string get_name_with_metavar(char sep = ' ') const {
-		if (this->metavar.has_value())
+		if (this->metavar)
 			return std::string(this->name) + sep + std::string(this->metavar.value());
 		return std::string(this->name);
 	}
@@ -68,7 +68,7 @@ public:
 		std::vector<Token> tokens = {};
 		while (!args.empty()) {
 			std::optional<Token> token = this->get_token(args);
-			if (!token.has_value()) {
+			if (!token) {
 				tokenize_ok = false;
 				break;
 			}
@@ -82,7 +82,7 @@ public:
 		}
 
 		std::optional<Args> res = this->tokens_to_args(tokens);
-		if (!res.has_value())
+		if (!res)
 			status = 0;  // help printed (success)
 		return res;
 	}
@@ -159,12 +159,12 @@ private:
 		}
 
 		std::optional<OptionSpec> spec = this->find_from_option_specs(name.c_str());
-		if (!spec.has_value())
+		if (!spec)
 			return std::nullopt;
 
 		switch(spec->type) {
 		case OptionType::YESNO:
-			if (value.has_value()) {
+			if (value) {
 				std::fprintf(this->err, "%s: use just '%s', not '%s=something' or '%s something'\n",
 					this->argv0.c_str(),
 					std::string(spec->name).c_str(), std::string(spec->name).c_str(), std::string(spec->name).c_str());
@@ -173,7 +173,7 @@ private:
 			break;
 
 		case OptionType::INT:
-			if (!value.has_value()) {
+			if (!value) {
 				std::fprintf(this->err, "%s: use '%s' or '%s', not just '%s'\n",
 					this->argv0.c_str(),
 					spec->get_name_with_metavar(' ').c_str(),
