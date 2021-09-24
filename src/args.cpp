@@ -5,6 +5,7 @@ doesn't support --, but nobody needs it for this program imo
 */
 
 #include "args.hpp"
+#include <algorithm>
 #include <array>
 #include <deque>
 #include <memory>
@@ -108,28 +109,26 @@ private:
 		}
 	}
 
-	std::optional<OptionSpec> find_from_option_specs(std::string nam) const
+	std::optional<OptionSpec> find_from_option_specs(std::string name) const
 	{
-		std::optional<OptionSpec> res = std::nullopt;
-
-		for (const OptionSpec& spec : option_specs) {
-			if (spec.name.find(nam) != 0)
-				continue;
-
-			if (res.has_value()) {
-				std::fprintf(this->err, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
-					this->argv0.c_str(),
-					nam.c_str(),
-					std::string(res.value().name).c_str(),
-					std::string(spec.name).c_str());
-				return std::nullopt;
-			}
-			res = spec;
+		auto name_matches = [&](const OptionSpec& spec){ return spec.name.find(name) == 0; };
+		const OptionSpec *match = std::find_if(option_specs.begin(), option_specs.end(), name_matches);
+		if (match == option_specs.end()) {
+			std::fprintf(this->err, "%s: unknown option '%s'\n", this->argv0.c_str(), name.c_str());
+			return std::nullopt;
 		}
 
-		if (!res.has_value())
-			std::fprintf(this->err, "%s: unknown option '%s'\n", this->argv0.c_str(), nam.c_str());
-		return res;
+		const OptionSpec *match2 = std::find_if(match+1, option_specs.end(), name_matches);
+		if (match2 != option_specs.end()) {
+			std::fprintf(this->err, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
+				this->argv0.c_str(),
+				name.c_str(),
+				std::string(match->name).c_str(),
+				std::string(match2->name).c_str());
+			return std::nullopt;
+		}
+
+		return *match;
 	}
 
 	// argc and argv should point to remaining args, not always all the args
