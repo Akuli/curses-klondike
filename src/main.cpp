@@ -114,9 +114,9 @@ struct Game {
 
 		case KEY_UP:
 		case KEY_DOWN:
-			if (!this->selmv.ismove && key == KEY_UP && this->selmv.sel.more(this->klon))
+			if (!this->selmv.ismove && key == KEY_UP && this->selmv.sel.select_more(this->klon))
 				break;
-			if (!this->selmv.ismove && key == KEY_DOWN && this->selmv.sel.less(this->klon))
+			if (!this->selmv.ismove && key == KEY_DOWN && this->selmv.sel.select_more(this->klon))
 				break;
 			// fall through
 
@@ -127,13 +127,13 @@ struct Game {
 
 		case KEY_PPAGE:
 			if (!this->selmv.ismove) {
-				while (this->selmv.sel.more(this->klon)) {}
+				while (this->selmv.sel.select_more(this->klon)) {}
 			}
 			break;
 
 		case KEY_NPAGE:
 			if (!this->selmv.ismove) {
-				while (this->selmv.sel.less(this->klon)) {}
+				while (this->selmv.sel.select_more(this->klon)) {}
 			}
 			break;
 

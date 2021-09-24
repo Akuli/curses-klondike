@@ -6,13 +6,13 @@
 #include <optional>
 #include <stdexcept>
 
-static int place_2_card_x(CardPlace plc)
+static int place_to_card_x(CardPlace place)
 {
-	switch(plc.kind) {
+	switch(place.kind) {
 	case CardPlace::TABLEAU:
-		return plc.number;
+		return place.number;
 	case CardPlace::FOUNDATION:
-		return 3 + plc.number;
+		return 3 + place.number;
 	case CardPlace::STOCK:
 		return 0;
 	case CardPlace::DISCARD:
@@ -21,7 +21,7 @@ static int place_2_card_x(CardPlace plc)
 	throw std::logic_error("bad place kind");
 }
 
-static std::optional<CardPlace> card_x_2_top_place(int x)
+static std::optional<CardPlace> card_x_to_top_place(int x)
 {
 	if (x == 0)
 		return CardPlace::stock();
@@ -32,13 +32,13 @@ static std::optional<CardPlace> card_x_2_top_place(int x)
 	return std::nullopt;
 }
 
-static Card *get_visible_top_card(Klondike klon, CardPlace plc)
+static Card *get_visible_top_card(Klondike klon, CardPlace place)
 {
-	switch(plc.kind) {
+	switch(place.kind) {
 		case CardPlace::FOUNDATION:
-			return cardlist::top(klon.foundations[plc.number]);
+			return cardlist::top(klon.foundations[place.number]);
 		case CardPlace::TABLEAU:
-			return cardlist::top(klon.tableau[plc.number]);
+			return cardlist::top(klon.tableau[place.number]);
 		case CardPlace::DISCARD:
 			return cardlist::top(klon.discard);
 		case CardPlace::STOCK:
@@ -47,27 +47,26 @@ static Card *get_visible_top_card(Klondike klon, CardPlace plc)
 	throw std::logic_error("bad place kind");
 }
 
-void SelectionOrMove::select_top_card_at_place(const Klondike& klon, CardPlace plc)
+void SelectionOrMove::select_top_card_at_place(const Klondike& klon, CardPlace place)
 {
 	if (this->ismove)
-		this->move.dest = plc;
+		this->move.dest = place;
 	else
-		this->sel = Selection{ get_visible_top_card(klon, plc), plc };
+		this->sel = Selection{ get_visible_top_card(klon, place), place };
 }
 
-// if tabfndonly, only allows moving to tableau or foundations
-static bool change_x_left_right(int *x, SelDirection dir, bool tab, bool tabfndonly)
+static bool change_x_left_right(int& x, SelDirection dir, bool is_bottom_row, bool skip_stock_and_discard)
 {
 	do
-		*x += (dir == SelDirection::LEFT) ? -1 : 1;
-	while (0 <= *x && *x < 7 && !tab && !card_x_2_top_place(*x));
+		x += (dir == SelDirection::LEFT) ? -1 : 1;
+	while (0 <= x && x < 7 && !is_bottom_row && !card_x_to_top_place(x));
 
-	if (tabfndonly && !tab && card_x_2_top_place(*x).value().kind != CardPlace::FOUNDATION)
+	if (skip_stock_and_discard && !is_bottom_row && card_x_to_top_place(x).value().kind != CardPlace::FOUNDATION)
 		return false;
-	return (0 <= *x && *x < 7);
+	return (0 <= x && x < 7);
 }
 
-bool Selection::more(const Klondike& klon)
+bool Selection::select_more(const Klondike& klon)
 {
 	if (this->place.kind != CardPlace::TABLEAU)
 		return false;
@@ -80,7 +79,7 @@ bool Selection::more(const Klondike& klon)
 	return false;
 }
 
-bool Selection::less(const Klondike& klon)
+bool Selection::select_less(const Klondike& klon)
 {
 	if (this->place.kind == CardPlace::TABLEAU && this->card && this->card->next) {
 		this->card = this->card->next;
@@ -94,30 +93,30 @@ void SelectionOrMove::select_another_card(const Klondike& klon, SelDirection dir
 	if (this->ismove)
 		assert(this->move.card);
 
-	int x = place_2_card_x(this->ismove ? this->move.dest : this->sel.place);
-	std::optional<CardPlace> topplace = card_x_2_top_place(x);
-	bool tab = (this->ismove ? this->move.dest : this->sel.place).kind == CardPlace::TABLEAU;
+	int x = place_to_card_x(this->ismove ? this->move.dest : this->sel.place);
+	std::optional<CardPlace> topplace = card_x_to_top_place(x);
+	bool is_bottom_row = (this->ismove ? this->move.dest : this->sel.place).kind == CardPlace::TABLEAU;
 
 	switch(dir) {
 	case SelDirection::LEFT:
 	case SelDirection::RIGHT:
-		if (change_x_left_right(&x, dir, tab, this->ismove))
-			this->select_top_card_at_place(klon, tab ? CardPlace::tableau(x) : card_x_2_top_place(x).value());
+		if (change_x_left_right(x, dir, is_bottom_row, this->ismove))
+			this->select_top_card_at_place(klon, is_bottom_row ? CardPlace::tableau(x) : card_x_to_top_place(x).value());
 		break;
 
 	case SelDirection::UP:
 		if (this->ismove) {
 			// can only move from table to foundations, but multiple cards not even there
-			if (tab && topplace && topplace.value().kind == CardPlace::FOUNDATION && !this->move.card->next)
+			if (is_bottom_row && topplace && topplace.value().kind == CardPlace::FOUNDATION && !this->move.card->next)
 				this->select_top_card_at_place(klon, topplace.value());
 		} else {
-			if (tab && topplace)
+			if (is_bottom_row && topplace)
 				this->select_top_card_at_place(klon, topplace.value());
 		}
 		break;
 
 	case SelDirection::DOWN:
-		if (this->ismove || !tab)
+		if (this->ismove || !is_bottom_row)
 			this->select_top_card_at_place(klon, CardPlace::tableau(x));
 		break;
 	}
