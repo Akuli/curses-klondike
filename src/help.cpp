@@ -7,7 +7,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cursesw.h>
-#include <numeric>
 #include <stdexcept>
 #include <string>
 
@@ -76,7 +75,7 @@ public:
 	Printer(int width, bool color) : terminal_width(width), color(color) {}
 	void reset(WINDOW *window) { this->y = 0; this->window = window; }
 
-	int print_all_help(const std::vector<HelpItem>& help_items, const char *argv0)
+	int print_all_help(std::vector<HelpItem> help_items, const char *argv0)
 	{
 		if (this->window) {
 			for (int y = 0; y < (int)picture_lines.size(); y++) {
@@ -85,10 +84,9 @@ public:
 			}
 		}
 
-		std::vector<int> lengths;
+		int max_key_len = 0;
 		for (const HelpItem& item : help_items)
-			lengths.push_back(cstring_to_wstring(std::string(item.key).c_str()).length());
-		int max_key_len = *std::max_element(lengths.begin(), lengths.end());
+			max_key_len = std::max(max_key_len, (int)cstring_to_wstring(std::string(item.key).c_str()).length());
 
 		for (const HelpItem& item : help_items)
 			this->print_help_item(max_key_len, item);
@@ -108,26 +106,26 @@ private:
 			return;
 
 		for (wchar_t character : string) {
-			int attributes = 0;
+			int attr = 0;
 			if (this->color)
 				switch(character) {
 				case L'♥':
 				case L'♦':
-					attributes = COLOR_PAIR(SuitColor(SuitColor::RED).color_pair_number());
+					attr = COLOR_PAIR(SuitColor(SuitColor::RED).color_pair_number());
 					break;
 				case L'♠':
 				case L'♣':
-					attributes = COLOR_PAIR(SuitColor(SuitColor::BLACK).color_pair_number());
+					attr = COLOR_PAIR(SuitColor(SuitColor::BLACK).color_pair_number());
 					break;
 				default:
 					break;
 				}
 
-			if (attributes)
-				wattron(this->window, attributes);
+			if (attr)
+				wattron(this->window, attr);
 			mvwaddnwstr(this->window, this->y, x++, &character, 1);
-			if (attributes)
-				wattroff(this->window, attributes);
+			if (attr)
+				wattroff(this->window, attr);
 		}
 	}
 
