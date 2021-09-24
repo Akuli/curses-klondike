@@ -8,6 +8,7 @@ doesn't support --, but nobody needs it for this program imo
 #include <algorithm>
 #include <array>
 #include <deque>
+#include <iomanip>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -60,7 +61,7 @@ static bool is_valid_integer(const std::string& str, int min, int max)
 
 class Parser {
 public:
-	Parser(FILE *out, FILE *err, std::string argv0) : out(out), err(err), argv0(argv0) {}
+	Parser(std::ostream& out, std::ostream& err, std::string argv0) : out(out), err(err), argv0(argv0) {}
 
 	std::optional<Args> parse(std::deque<std::string>& args, int& status) const
 	{
@@ -76,7 +77,7 @@ public:
 		}
 
 		if (!tokenize_ok || !this->check_tokens(tokens)) {
-			std::fprintf(this->err, "Run '%s --help' for help.\n", this->argv0.c_str());
+			this->err << "Run '" << this->argv0 << " --help' for help." << std::endl;
 			status = 2;
 			return std::nullopt;
 		}
@@ -88,23 +89,22 @@ public:
 	}
 
 private:
-	FILE *out;
-	FILE *err;
+	std::ostream& out;
+	std::ostream& err;
 	std::string argv0;
 
 	void print_help() const
 	{
-		std::fprintf(this->out, "Usage: %s", this->argv0.c_str());
+		this->out << "Usage: " << this->argv0;
 		for (const OptionSpec& opt : option_specs)
-			std::fprintf(this->out, " [%s]", std::string(opt.get_name_with_metavar()).c_str());
+			this->out << " [" << opt.get_name_with_metavar() << "]";
 
-		std::fprintf(this->out, "\n\nOptions:\n");
+		this->out << "\n\nOptions:\n";
 		for (const OptionSpec& opt : option_specs)
 		{
-			std::fprintf(this->out, "  %-*s  %s\n",
-				option_max_length,
-				opt.get_name_with_metavar().c_str(),
-				std::string(opt.desc).c_str());
+			this->out << "  "
+				<< std::left << std::setw(option_max_length) << opt.get_name_with_metavar()
+				<< "  " << opt.desc << std::endl;
 		}
 	}
 
@@ -113,17 +113,16 @@ private:
 		auto name_matches = [&](const OptionSpec& spec){ return spec.name.find(name) == 0; };
 		const OptionSpec *match = std::find_if(option_specs.begin(), option_specs.end(), name_matches);
 		if (match == option_specs.end()) {
-			std::fprintf(this->err, "%s: unknown option '%s'\n", this->argv0.c_str(), name.c_str());
+			this->err << this->argv0 << ": unknown option '" << name << "'" << std::endl;
 			return std::nullopt;
 		}
 
 		const OptionSpec *match2 = std::find_if(match+1, option_specs.end(), name_matches);
 		if (match2 != option_specs.end()) {
-			std::fprintf(this->err, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
-				this->argv0.c_str(),
-				name.c_str(),
-				std::string(match->name).c_str(),
-				std::string(match2->name).c_str());
+			this->err << this->argv0 << ":"
+				<< " ambiguous option '" << name << "':"
+				<< " could be '" << match->name << "'"
+				<< " or '" << match2->name << "'" << std::endl;
 			return std::nullopt;
 		}
 
@@ -137,14 +136,14 @@ private:
 		arg_queue.pop_front();
 
 		if (arg.length() < 3 || arg.find("--") != 0) {
-			std::fprintf(this->err, "%s: unexpected argument: '%s'\n", this->argv0.c_str(), arg.c_str());
+			this->err << this->argv0 << ": unexpected argument: '" << arg << "'" << std::endl;
 			return std::nullopt;
 		}
 
 		std::string name;
 		std::optional<std::string> value;
 
-		size_t i = arg.find("=");
+		std::size_t i = arg.find("=");
 		if (i != std::string::npos) {
 			name = arg.substr(0, i);
 			value = arg.substr(i+1);
@@ -165,28 +164,27 @@ private:
 		switch(spec->type) {
 		case OptionType::YESNO:
 			if (value) {
-				std::fprintf(this->err, "%s: use just '%s', not '%s=something' or '%s something'\n",
-					this->argv0.c_str(),
-					std::string(spec->name).c_str(), std::string(spec->name).c_str(), std::string(spec->name).c_str());
+				this->err << this->argv0 << ":"
+					<< " use just '" << spec->name << "',"
+					<< " not '" << spec->name << " something'"
+					<< " or '" << spec->name << "=something'" << std::endl;
 				return std::nullopt;
 			}
 			break;
 
 		case OptionType::INT:
 			if (!value) {
-				std::fprintf(this->err, "%s: use '%s' or '%s', not just '%s'\n",
-					this->argv0.c_str(),
-					spec->get_name_with_metavar(' ').c_str(),
-					spec->get_name_with_metavar('=').c_str(),
-					std::string(spec->name).c_str());
+				this->err << this->argv0 << ": use"
+					<< " '" << spec->get_name_with_metavar(' ') << "' or"
+					<< " '" << spec->get_name_with_metavar('=') << "', not just"
+					<< " '" << spec->name << "'" << std::endl;
 				return std::nullopt;
 			}
 			if (!is_valid_integer(*value, spec->min, spec->max)) {
-				std::fprintf(this->err, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
-					this->argv0.c_str(),
-					std::string(spec->name).c_str(),
-					spec->min, spec->max,
-					value->c_str());
+				this->err << this->argv0 << ":"
+					<< " '" << spec->name << "' wants an integer"
+					<< " between " << spec->min << " and " << spec->max << ","
+					<< " not '" << *value << "'" << std::endl;
 				return std::nullopt;
 			}
 			break;
@@ -204,8 +202,7 @@ private:
 
 		auto duplicate = std::adjacent_find(names.begin(), names.end());
 		if (duplicate != names.end()) {
-			std::fprintf(this->err, "%s: repeated option '%s'\n",
-				this->argv0.c_str(), std::string(*duplicate).c_str());
+			this->err << this->argv0 << ": repeated option '" << *duplicate << "'" << std::endl;
 			return false;
 		}
 		return true;
@@ -233,7 +230,7 @@ private:
 	}
 };
 
-std::optional<Args> args_parse(int& status, const std::vector<std::string>& args, FILE *out, FILE *err)
+std::optional<Args> args_parse(int& status, const std::vector<std::string>& args, std::ostream& out, std::ostream& err)
 {
 	Parser parser = { out, err, args[0] };
 
