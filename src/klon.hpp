@@ -31,16 +31,15 @@ struct Klondike {
 	int discardshow;                   // number of cards shown in discard, or 0 if discard is nullptr
 	std::array<Card*, 4> foundations;  // bottommost cards or nullptrs
 	std::array<Card*, 7> tableau;      // bottommost cards or nullptrs
-	std::array<Card, 13*4> allcards;
 
 	// not a part of constructor because unnecessary with e.g. dup() method
-	void init();
+	void init(std::array<Card, 13*4>& card_array);
 
 	// copies everything from src to dest
 	// also creates new cards
 	// if source_card is non-nullptr, returns the corresponding card of dest
 	// if source_card is nullptr, returns nullptr
-	Card *dup(Klondike& dest, const Card *source_card) const;
+	Card *dup(Klondike& dest, const Card *source_card, std::array<Card, 13*4>& card_array) const;
 
 	// returns whether a card can be moved to on top of dest
 	// use klon_stocktodiscard() instead for stock -> discard moves, this returns false for those

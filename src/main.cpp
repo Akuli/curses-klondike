@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <cursesw.h>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -49,10 +50,10 @@ static constexpr std::array<HelpItem, 14> help_items = {
 struct Game {
 	Klondike klon;
 	SelectionOrMove selmv;
+	std::unique_ptr<std::array<Card, 13*4>> card_array;
 
-	// TODO: figure out why this can't be a constructor
-	void init() {
-		this->klon.init();
+	Game(std::unique_ptr<std::array<Card, 13*4>> card_array) : card_array(std::move(card_array)) {
+		this->klon.init(*this->card_array);
 		this->selmv.ismove = false;
 		this->selmv.sel = Selection{ nullptr, CardPlace::stock() };
 	}
@@ -70,8 +71,7 @@ static void handle_key(Game& game, int k, Args ar, const char *argv0)
 		break;
 
 	case 'n':
-		game = Game();
-		game.init();
+		game = Game(std::move(game.card_array));
 		break;
 
 	case 's':
@@ -212,8 +212,7 @@ static int main_internal(int argc, char **argv)
 	if (curs_set(0) == ERR) throw std::runtime_error("curs_set() failed");
 	if (keypad(stdscr, true) == ERR) throw std::runtime_error("keypad() failed");
 
-	Game game;
-	game.init();
+	Game game(std::make_unique<std::array<Card, 13*4>>());
 
 	bool first = true;
 	while(1) {
