@@ -178,12 +178,10 @@ static int main_internal(int argc, const char *const *argv)
 		throw std::runtime_error("setlocale() failed");
 	std::srand(std::time(nullptr));
 
-	std::vector<std::string> arg_vector = {};
-	for (int i = 0; i < argc; i++)
-		arg_vector.push_back(argv[i]);
-
 	int status;
-	std::optional<Args> args_option = args_parse(status, arg_vector, stdout, stderr);
+	std::optional<Args> args_option = args_parse(
+		status, std::vector<std::string>(argv, argv + argc),
+		stdout, stderr);
 	if (!args_option.has_value())
 		return status;
 	Args parsed_args = args_option.value();
