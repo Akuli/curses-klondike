@@ -1,6 +1,7 @@
 #include "card.hpp"
 #include "klon.hpp"
 #include "selectmove.hpp"
+#include <array>
 #include <cassert>
 #include <optional>
 #include <stdexcept>

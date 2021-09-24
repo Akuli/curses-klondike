@@ -28,7 +28,7 @@ obj/%.o: src/%.cpp
 
 .PHONY: iwyu
 iwyu:
-	for file in $(SRC) $(TESTS_SRC); do $(IWYU) $(shell cat compile_flags.txt) $$file; done || true
+	$(MAKE) -f Makefile.iwyu
 
 testrunner: $(TESTS_SRC) $(OBJ)
 	$(CXX) -I. $(CXXFLAGS) $(TESTS_SRC) $(filter-out obj/main.o, $(OBJ)) -o testrunner $(LDFLAGS)

@@ -1,0 +1,7 @@
+# https://github.com/include-what-you-use/include-what-you-use/blob/master/docs/IWYUMappings.md
+# I don't understand what "private" and "public" do below
+
+[
+	# needed only on my computer, idk why
+	{ include: ["<bits/types/time_t.h>", "private", "<time.h>", "public"] },
+]

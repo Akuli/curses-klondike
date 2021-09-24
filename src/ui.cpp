@@ -1,6 +1,7 @@
 #include "card.hpp"
 #include "klon.hpp"
 #include "ui.hpp"
+#include <array>
 #include <cassert>
 #include <curses.h>
 #include <stdexcept>

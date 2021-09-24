@@ -2,8 +2,6 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include <iterator>
-#include <vector>
 
 std::string Card::number_string() const
 {
