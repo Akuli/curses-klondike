@@ -132,37 +132,37 @@ private:
 	}
 
 	// argc and argv should point to remaining args, not always all the args
-	std::optional<Token> get_token(std::deque<std::string>& argq) const
+	std::optional<Token> get_token(std::deque<std::string>& arg_queue) const
 	{
-		std::string arg = argq[0];
-		argq.pop_front();
+		std::string arg = arg_queue[0];
+		arg_queue.pop_front();
 
 		if (arg.length() < 3 || arg.find("--") != 0) {
 			std::fprintf(this->err, "%s: unexpected argument: '%s'\n", this->argv0.c_str(), arg.c_str());
 			return std::nullopt;
 		}
 
-		std::string nam;
-		std::optional<std::string> val;
+		std::string name;
+		std::optional<std::string> value;
 
 		size_t i = arg.find("=");
 		if (i != std::string::npos) {
-			nam = arg.substr(0, i);
-			val = arg.substr(i+1);
+			name = arg.substr(0, i);
+			value = arg.substr(i+1);
 		} else {
-			nam = arg;
-			if (argq.empty() || argq[0].c_str()[0] == '-') {
-				val = std::nullopt;
+			name = arg;
+			if (arg_queue.empty() || arg_queue[0].c_str()[0] == '-') {
+				value = std::nullopt;
 			} else {
-				val = argq[0];
-				argq.pop_front();
+				value = arg_queue[0];
+				arg_queue.pop_front();
 			}
 		}
 
-		std::optional<OptionSpec> spec = this->find_from_option_specs(nam.c_str());
+		std::optional<OptionSpec> spec = this->find_from_option_specs(name.c_str());
 		if (!spec.has_value())
 			return std::nullopt;
-		return Token{ spec.value(), val };
+		return Token{ spec.value(), value };
 	}
 
 	bool check_token_by_type(const Token& tok) const
