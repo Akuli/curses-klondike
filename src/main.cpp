@@ -1,4 +1,3 @@
-// TODO: noecho
 #define _POSIX_C_SOURCE 200112L  // for setenv(3)
 
 #include "args.hpp"
