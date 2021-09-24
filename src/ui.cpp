@@ -239,7 +239,7 @@ void ui_draw(WINDOW *window, const Klondike& klon, const SelectionOrMove& selmv,
 	DiscardHide discard_hide = decide_what_to_hide(selmv, args.discardhide);
 	int discard_x_offset = args.discardhide ? 1 : X_OFFSET;
 
-	Drawer drawer = { window, &klon, &selmv.sel, true, args.color, discard_hide, discard_x_offset };
+	Drawer drawer = { window, &klon, &selmv.sel, selmv.ismove, args.color, discard_hide, discard_x_offset };
 
 	if (selmv.ismove) {
 		std::array<Card, 13*4> temp_cards;
