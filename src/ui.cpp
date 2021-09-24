@@ -221,10 +221,10 @@ struct Drawer {
 	{
 		werase(this->window);
 
-		draw_card(this->klon->stock, this->ui_x(0), this->ui_y(0), this->sel->place == CardPlace::stock());
+		this->draw_card(this->klon->stock, this->ui_x(0), this->ui_y(0), this->sel->place == CardPlace::stock());
 		this->draw_discard();
 		for (int i=0; i < 4; i++)
-			draw_card(cardlist::top(this->klon->foundations[i]), this->ui_x(3+i), this->ui_y(0), this->sel->place == CardPlace::foundation(i));
+			this->draw_card(cardlist::top(this->klon->foundations[i]), this->ui_x(3+i), this->ui_y(0), this->sel->place == CardPlace::foundation(i));
 		this->draw_tableau();
 
 		if (this->klon->win()) {
