@@ -98,7 +98,7 @@ public:
 
 private:
 	bool color;
-	WINDOW *window = NULL;
+	WINDOW *window = nullptr;
 
 	void print_colored(int x, std::wstring_view string) const
 	{
