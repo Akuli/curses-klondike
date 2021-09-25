@@ -1,5 +1,5 @@
 #include "card.hpp"
-#include "klon.hpp"
+#include "klondike.hpp"
 #include "ui.hpp"
 #include <array>
 #include <cassert>
@@ -235,7 +235,7 @@ struct Drawer {
 	}
 };
 
-void ui_draw(WINDOW *window, const Klondike& klon, const SelectionOrMove& selmv, const Args& args)
+void draw_klondike(WINDOW *window, const Klondike& klon, const SelectionOrMove& selmv, const Args& args)
 {
 	DiscardHide discard_hide = decide_what_to_hide(selmv, args.discardhide);
 	int discard_x_offset = args.discardhide ? 1 : X_OFFSET;

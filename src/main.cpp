@@ -3,7 +3,7 @@
 #include "args.hpp"
 #include "card.hpp"
 #include "help.hpp"
-#include "klon.hpp"
+#include "klondike.hpp"
 #include "selectmove.hpp"
 #include "ui.hpp"
 #include <algorithm>
@@ -65,7 +65,7 @@ struct Game {
 	{
 		switch(key) {
 		case 'h':
-			help_show(
+			show_help(
 				stdscr,
 				std::vector<HelpItem>(help_items.begin(), help_items.end()),
 				argv0,
@@ -178,7 +178,7 @@ static int main_internal(int argc, const char *const *argv)
 	std::srand(std::time(nullptr));
 
 	int status;
-	std::optional<Args> args_option = args_parse(
+	std::optional<Args> args_option = parse_args(
 		status, std::vector<std::string>(argv, argv + argc),
 		std::cout, std::cerr);
 	if (!args_option)
@@ -206,7 +206,7 @@ static int main_internal(int argc, const char *const *argv)
 
 	bool first = true;
 	while(1) {
-		ui_draw(stdscr, game.klon, game.selmv, parsed_args);
+		draw_klondike(stdscr, game.klon, game.selmv, parsed_args);
 
 		if (first) {
 			int width, height;

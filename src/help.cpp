@@ -197,7 +197,7 @@ private:
 	}
 };
 
-void help_show(WINDOW *window, std::vector<HelpItem> help_items, const char *argv0, bool color)
+void show_help(WINDOW *window, std::vector<HelpItem> help_items, const char *argv0, bool color)
 {
 	int width, height;
 	getmaxyx(window, height, width);
@@ -212,7 +212,7 @@ void help_show(WINDOW *window, std::vector<HelpItem> help_items, const char *arg
 
 	printer.reset(pad);
 	printer.print_all_help(help_items, argv0);
-	scroll_showpad(window, pad);
+	show_pad_with_scrolling(window, pad);
 
 	delwin(pad);
 }

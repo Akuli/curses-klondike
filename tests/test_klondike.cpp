@@ -1,5 +1,5 @@
 #include "../src/card.hpp"
-#include "../src/klon.hpp"
+#include "../src/klondike.hpp"
 #include <cassert>
 
 
@@ -17,7 +17,7 @@ static int count_cards(Card *fst, int *total, int *visible)
 	return n;
 }
 
-void test_klon_init()
+void test_klondike_init()
 {
 	std::array<Card, 13*4> card_array;
 	Klondike klon;
@@ -60,7 +60,7 @@ static bool cards_match(Card *list1, Card *list2)
 	return true;
 }
 
-void test_klon_dup()
+void test_klondike_dup()
 {
 	Klondike kln1, kln2;
 	std::array<Card, 13*4> card_array1, card_array2;
@@ -76,7 +76,7 @@ void test_klon_dup()
 		assert(cards_match(kln1.tableau[t], kln2.tableau[t]));
 }
 
-void test_klon_canmove()
+void test_klondike_canmove()
 {
 	Klondike klon;
 	std::array<Card, 13*4> card_array;
@@ -115,7 +115,7 @@ static void init_movable_kln(Klondike *klon, int *srctab, int *dsttab, std::arra
 	}
 }
 
-void test_klon_move()
+void test_klondike_move()
 {
 	Klondike klon;
 	std::array<Card, 13*4> card_array;
@@ -153,7 +153,7 @@ static void discard_check(Klondike klon, int ndiscarded, int ds)
 	assert(dvis == ndiscarded);
 }
 
-void test_klon_stock2discard()
+void test_klondike_stock2discard()
 {
 	Klondike klon;
 	std::array<Card, 13*4> card_array;

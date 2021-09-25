@@ -24,11 +24,11 @@ int main()
 	RUN_TEST(test_cardlist_pop);
 	RUN_TEST(test_cardlist_push);
 
-	RUN_TEST(test_klon_init);
-	RUN_TEST(test_klon_dup);
-	RUN_TEST(test_klon_canmove);
-	RUN_TEST(test_klon_move);
-	RUN_TEST(test_klon_stock2discard);
+	RUN_TEST(test_klondike_init);
+	RUN_TEST(test_klondike_dup);
+	RUN_TEST(test_klondike_canmove);
+	RUN_TEST(test_klondike_move);
+	RUN_TEST(test_klondike_stock2discard);
 
 	RUN_TEST(test_args_help);
 	RUN_TEST(test_args_defaults);
