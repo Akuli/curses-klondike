@@ -76,7 +76,7 @@ public:
 			tokens.push_back(token.value());
 		}
 
-		if (!tokenize_ok || !this->check_tokens(tokens)) {
+		if (!tokenize_ok || !this->check_duplicate_tokens(tokens)) {
 			this->err << "Run '" << this->argv0 << " --help' for help." << std::endl;
 			status = 2;
 			return std::nullopt;
@@ -193,7 +193,7 @@ private:
 		return Token{ spec.value(), value };
 	}
 
-	bool check_tokens(const std::vector<Token>& tokens) const
+	bool check_duplicate_tokens(const std::vector<Token>& tokens) const
 	{
 		std::vector<std::string_view> names;
 		for (const Token& token : tokens)
