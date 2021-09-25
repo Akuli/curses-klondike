@@ -3,7 +3,7 @@
 
 #include <curses.h>
 #include "args.hpp"
-#include "klon.hpp"  // IWYU pragma: keep
+#include "klondike.hpp"  // IWYU pragma: keep
 #include "selectmove.hpp" // IWYU pragma: keep
 
 void draw_klondike(WINDOW *window, const Klondike& klon, const SelectionOrMove& selmv, const Args& args);

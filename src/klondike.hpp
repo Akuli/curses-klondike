@@ -1,7 +1,5 @@
-// klon = klondike
-
-#ifndef KLON_H
-#define KLON_H
+#ifndef KLONDIKE_H
+#define KLONDIKE_H
 
 #include "card.hpp" // IWYU pragma: keep
 #include <array>
@@ -67,4 +65,4 @@ struct Klondike {
 	bool win() const;
 };
 
-#endif  // KLON_H
+#endif  // KLONDIKE_H

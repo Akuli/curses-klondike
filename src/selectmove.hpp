@@ -2,7 +2,7 @@
 #define SELECTMOVE_H
 
 #include "card.hpp"  // IWYU pragma: keep
-#include "klon.hpp"
+#include "klondike.hpp"
 
 enum class SelDirection { LEFT, RIGHT, UP, DOWN };
 
