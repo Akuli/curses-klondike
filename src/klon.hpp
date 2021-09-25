@@ -36,27 +36,26 @@ struct Klondike {
 	// not a part of constructor because unnecessary with e.g. dup() method
 	void init(std::array<Card, 13*4>& card_array);
 
-	// copies everything from src to dest
-	// also creates new cards
+	// copies everything from src to dest, using new cards created from the array
 	// if source_card is non-nullptr, returns the corresponding card of dest
 	// if source_card is nullptr, returns nullptr
 	Card *dup(Klondike& dest, const Card *source_card, std::array<Card, 13*4>& card_array) const;
 
 	// returns whether a card can be moved to on top of dest
-	// use klon_stocktodiscard() instead for stock -> discard moves, this returns false for those
+	// use stock2discard() instead for stock -> discard moves, this returns false for those
 	// card must be a card in klon
 	bool can_move(const Card *card, CardPlace dest) const;
 
 	// replaces card with nullptr
-	// if card is someothercrd->next, someothercrd is returned
+	// if card is someothercard->next, someothercard is returned
 	// if discard != nullptr and card == top(discard), updates discardshow
 	Card *detach_card(const Card *card);
 
-	// moves the src card and ->next cards (if any) to dest
+	// moves the source card and ->next cards (if any) to dest
 	// if raw, accepts invalid moves (can_move) and never sets ->visible
 	void move(Card *card, CardPlace dest, bool raw);
 
-	// convenience function for moving a card to any foundation
+	// move card to any foundation
 	// does nothing if card is nullptr
 	bool move2foundation(Card *card);
 

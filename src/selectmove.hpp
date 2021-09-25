@@ -13,22 +13,19 @@ place where cards can be put but currently contains no cards
 
 possible values:
 
-	.card = nullptr, .place = 0
-		nothing selected
-
 	.card = nullptr, .place = KLON_STOCK
 		stock selected
 
-	.card = top(klon->discard), .place = KLON_DISCARD
+	.card = cardlist::top(klon.discard), .place = CardPlace::discard()
 		discard selected
 
-	.card = top(klon->foundations[n]), .place = KLON_FOUNDATION(n)
+	.card = cardlist::top(klon.foundations[n]), .place = CardPlace::foundation(n)
 		nth foundation selected
 
-	.card = klon->tableau[n] or some of its ->nexts, .card is visible, .place = KLON_TABLEAU(n)
+	.card = klon.tableau[n] or some of its ->nexts, .card is visible, .place = CardPlace::tableau(n)
 		nth tableau selected, including the specified card and all its ->nexts
 
-	.card = nullptr, .place = KLON_TABLEAU(n)
+	.card = nullptr, .place = CardPlace::tableau(n)
 		tableau n selected, but there are no cards in that tableau
 */
 struct Selection {
@@ -52,7 +49,7 @@ struct SelectionOrMove {
 	Move move;
 	bool ismove;
 
-	void select_top_card_or_move_to(const Klondike& klon, CardPlace plc);
+	void select_top_card_or_move_to(const Klondike& klon, CardPlace place);
 	void select_another_card(const Klondike& klon, SelDirection dir);
 	void begin_move();
 	void end_move(Klondike& klon);  // moves card if possible
