@@ -30,7 +30,7 @@ public:
 	}
 	int parse(std::vector<std::string> arg_vector) {
 		int status = -1;
-		std::optional<Args> args = args_parse(status, arg_vector, this->out, this->err);
+		std::optional<Args> args = parse_args(status, arg_vector, this->out, this->err);
 		if (args)
 			this->args = args.value();
 		return status;

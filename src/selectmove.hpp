@@ -1,5 +1,5 @@
-#ifndef SELMV_H
-#define SELMV_H
+#ifndef SELECTMOVE_H
+#define SELECTMOVE_H
 
 #include "card.hpp"  // IWYU pragma: keep
 #include "klon.hpp"
@@ -56,4 +56,4 @@ struct SelectionOrMove {
 };
 
 
-#endif  // SELMV_H
+#endif  // SELECTMOVE_H

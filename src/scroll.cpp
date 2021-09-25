@@ -74,7 +74,7 @@ struct Scroller {
 	}
 };
 
-void scroll_showpad(WINDOW *window, WINDOW *pad)
+void show_pad_with_scrolling(WINDOW *window, WINDOW *pad)
 {
 	Scroller scroller = { window, pad };
 	while(1) {

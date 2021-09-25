@@ -230,7 +230,7 @@ private:
 	}
 };
 
-std::optional<Args> args_parse(int& status, const std::vector<std::string>& args, std::ostream& out, std::ostream& err)
+std::optional<Args> parse_args(int& status, const std::vector<std::string>& args, std::ostream& out, std::ostream& err)
 {
 	Parser parser = { out, err, args[0] };
 

@@ -11,6 +11,6 @@ struct HelpItem {
 };
 
 // screen must be erased after calling this
-void help_show(WINDOW *win, std::vector<HelpItem> hkeys, const char *argv0, bool color);
+void show_help(WINDOW *win, std::vector<HelpItem> hkeys, const char *argv0, bool color);
 
 #endif  // HELP_H

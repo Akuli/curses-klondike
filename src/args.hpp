@@ -13,6 +13,6 @@ struct Args {
 };
 
 // program should exit with status when this returns nullopt
-std::optional<Args> args_parse(int& status, const std::vector<std::string>& args, std::ostream& out, std::ostream& err);
+std::optional<Args> parse_args(int& status, const std::vector<std::string>& args, std::ostream& out, std::ostream& err);
 
 #endif   // ARGS_H
