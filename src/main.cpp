@@ -159,14 +159,15 @@ struct Game {
 };
 
 
-static bool confirm_quit() {
+static bool confirm_yes_no(std::string prompt) {
+	prompt += " (y/n)";
+
 	while(1) {
 		int width, height;
 		getmaxyx(stdscr, height, width);
 
 		werase(stdscr);
-		std::string msg = "Do you really want to quit? (y/n)";
-		mvwaddstr(stdscr, height/2, (width - msg.length())/2, msg.c_str());
+		mvwaddstr(stdscr, height/2, (width - prompt.length())/2, prompt.c_str());
 		wrefresh(stdscr);
 
 		int key = getch();
@@ -242,13 +243,15 @@ static int main_internal(int argc, const char *const *argv)
 
 		int key = getch();
 		if (key == 'q') {
-			if (confirm_quit())
+			if (confirm_yes_no("Do you really want to quit?"))
 				return 0;
 		}
-		else if (key == 'n')
-			game = Game(std::move(game.card_array));
-		else
+		else if (key == 'n') {
+			if (confirm_yes_no("Do you really want to start a new game?"))
+				game = Game(std::move(game.card_array));
+		} else {
 			game.handle_key(key, parsed_args, argv[0]);
+		}
 	}
 }
 
