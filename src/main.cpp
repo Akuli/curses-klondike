@@ -159,6 +159,25 @@ struct Game {
 };
 
 
+static bool confirm_quit() {
+	while(1) {
+		int width, height;
+		getmaxyx(stdscr, height, width);
+
+		werase(stdscr);
+		std::string msg = "Do you really want to quit? (y/n)";
+		mvwaddstr(stdscr, height/2, (width - msg.length())/2, msg.c_str());
+		wrefresh(stdscr);
+
+		int key = getch();
+		if (key == 'y')
+			return true;
+		if (key == 'n')
+			return false;
+	}
+}
+
+
 class CursesSession {
 public:
 	CursesSession() {
@@ -220,9 +239,12 @@ static int main_internal(int argc, const char *const *argv)
 		}
 
 		refresh();
+
 		int key = getch();
-		if (key == 'q')
-			return 0;
+		if (key == 'q') {
+			if (confirm_quit())
+				return 0;
+		}
 		else if (key == 'n')
 			game = Game(std::move(game.card_array));
 		else
