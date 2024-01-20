@@ -172,7 +172,7 @@ private:
 			mvwprintw(this->window, this->y, 0,
 				"%*s%.*s:",
 				space_count, "",
-				item.key.length(), item.key.data());
+				int(item.key.length()), item.key.data());
 		}
 
 		this->print_wrapped_colored(std::string(item.desc), max_key_len + 2);
