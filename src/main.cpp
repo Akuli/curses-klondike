@@ -129,7 +129,7 @@ struct Game {
 
 		case KEY_NPAGE:
 			if (!this->selmv.ismove) {
-				while (this->selmv.sel.select_more(this->klon)) {}
+				while (this->selmv.sel.select_less(this->klon)) {}
 			}
 			break;
 
