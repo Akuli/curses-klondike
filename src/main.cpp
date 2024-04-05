@@ -112,7 +112,7 @@ struct Game {
 		case KEY_DOWN:
 			if (!this->selmv.ismove && key == KEY_UP && this->selmv.sel.select_more(this->klon))
 				break;
-			if (!this->selmv.ismove && key == KEY_DOWN && this->selmv.sel.select_more(this->klon))
+			if (!this->selmv.ismove && key == KEY_DOWN && this->selmv.sel.select_less(this->klon))
 				break;
 			// fall through
 
