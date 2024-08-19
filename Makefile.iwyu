@@ -1,5 +1,5 @@
 FLAGS += -Xiwyu --no_fwd_decls
-FLAGS += -w  # disable compiler warnings
+FLAGS += -w  # disable compiler warnings, only care about IWYU warnings/errors
 FLAGS += $(shell cat compile_flags.txt)
 
 # skip my weird glob implementation, too dynamic or something
