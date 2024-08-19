@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200112L  // for setenv(3)
 
-#include "args.hpp"
+#include "args.h"
+#if 0
 #include "card.hpp"
 #include "help.hpp"
 #include "klondike.hpp"
@@ -254,13 +255,14 @@ static int main_internal(int argc, const char *const *argv)
 		}
 	}
 }
+#endif
 
 int main(int argc, char **argv)
 {
-	// https://stackoverflow.com/q/222175
-	try {
-		return main_internal(argc, argv);
-	} catch(...) {
-		throw;
-	}
+	Args args;
+	int ret = parse_args(&args, (const char *const *)argv, stdout, stderr);
+	if (ret == -1)
+		printf("Program runs\n");
+	else
+		printf("Program exits with code %d\n", ret);
 }
