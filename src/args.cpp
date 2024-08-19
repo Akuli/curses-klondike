@@ -7,6 +7,7 @@ doesn't support --, but nobody needs it for this program imo
 #include "args.hpp"
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <deque>
 #include <iomanip>
 #include <memory>
