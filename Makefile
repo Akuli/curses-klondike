@@ -1,12 +1,14 @@
 # compile_flags.txt is for clangd
-CFLAGS += -Wall -Wextra -Wpedantic -Wno-unused-parameter $(shell cat compile_flags.txt) -MMD
+CFLAGS += -g -Wall -Wextra -Wpedantic -Wno-sign-compare $(shell cat compile_flags.txt) -MMD
 LDFLAGS += -lncursesw     # needs cursesw instead of curses for unicodes
 IWYU ?= iwyu
 
-SRC := $(wildcard src/*.c)
+#SRC := $(wildcard src/*.c)
+SRC := src/args.c src/main.c
 OBJ := $(SRC:src/%.c=obj/%.o)
 DEPENDS := $(OBJ:.o=.d)
-TESTS_SRC := $(wildcard tests/*.c)
+#TESTS_SRC := $(wildcard tests/*.c)
+TESTS_SRC := tests/run.c tests/test_args.c
 
 # valgrind is used in tests
 ifdef VALGRIND

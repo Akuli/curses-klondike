@@ -1,47 +1,73 @@
-#include "../src/args.hpp"
-#include <cassert>
-#include <cstdio>
-#include <cstdlib>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
+#include "../src/args.h"
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-static void read_file(std::ostringstream& f, const std::string& expected)
+static struct {
+    FILE *out;
+    FILE *err;
+    int returncode;
+    struct Args args;
+} test_results = {0};
+
+static void cleanup()
 {
-    if (f.str() != expected) {
-        std::cout << "\n\noutputs differ\n";
-        std::cout << "=== expected ===\n" << expected << std::endl;
-        std::cout << "=== actual ===\n"   << f.str()  << std::endl;
-        abort();
-    }
-    f = std::ostringstream();
+    if (test_results.out)
+        fclose(test_results.out);
+    if (test_results.err)
+        fclose(test_results.err);
 }
 
-class Tester {
-public:
-    std::ostringstream out;
-    std::ostringstream err;
-    Args args;
+static void run_parser(const char *const *argv)
+{
+    static bool cleanup_added = false;
+    if (!cleanup_added) {
+        atexit(cleanup);
+        cleanup_added = true;
+    }
 
-    ~Tester() {
-        read_file(this->out, "");
-        read_file(this->err, "");
+    if (!test_results.out)
+        test_results.out = tmpfile();
+    if (!test_results.err)
+        test_results.err = tmpfile();
+    assert(test_results.out && test_results.err);
+
+    rewind(test_results.out);
+    rewind(test_results.err);
+
+    test_results.returncode = parse_args(&test_results.args, argv, test_results.out, test_results.err);
+}
+
+static void read_file(FILE *f, const char *expected)
+{
+    long size = ftell(f);
+    assert(size >= 0);
+    rewind(f);
+    assert(ftell(f) == 0);
+
+    char *actual = malloc(size+1);
+    assert(actual);
+    size_t nread = fread(actual, 1, size, f);
+    assert(nread == size);
+    actual[size] = '\0';
+
+    if (strcmp(actual, expected)) {
+        printf("\n\noutputs differ\n");
+        printf("=== expected ===\n%s\n", expected);
+        printf("=== actual ===\n%s\n", actual);
+        abort();
     }
-    int parse(std::vector<std::string> arg_vector) {
-        int status = -1;
-        std::optional<Args> args = parse_args(status, arg_vector, this->out, this->err);
-        if (args)
-            this->args = args.value();
-        return status;
-    }
-};
+
+    free(actual);
+}
 
 void test_args_help()
 {
-    Tester t;
-    assert(t.parse(std::vector<std::string>{ "asdasd", "--help" }) == 0);
-    read_file(t.out,
+    run_parser((const char *[]){"asdasd", "--help", NULL});
+    assert(test_results.returncode == 0);
+
+    read_file(test_results.out,
         "Usage: asdasd [--help] [--no-colors] [--pick n] [--discard-hide]\n\n"
         "Options:\n"
         "  --help          show this help message and exit\n"
@@ -53,70 +79,68 @@ void test_args_help()
 
 void test_args_defaults()
 {
-    Tester t;
-    assert(t.parse(std::vector<std::string>{ "asdasd" }) == -1);
-    assert(t.args.color);
-    assert(t.args.pick == 3);
-    assert(!t.args.discardhide);
+    run_parser((const char *[]){"asdasd", NULL});
+    assert(test_results.returncode == -1);  // keep going
+
+    assert(test_results.args.color);
+    assert(test_results.args.pick == 3);
+    assert(!test_results.args.discardhide);
 }
 
 void test_args_no_defaults()
 {
-    Tester t;
-    assert(t.parse(std::vector<std::string>{ "asdasd", "--no-color", "--pick=2", "--discard-hide" }) == -1);
-    assert(!t.args.color);
-    assert(t.args.pick == 2);
-    assert(t.args.discardhide);
+    run_parser((const char *[]){ "asdasd", "--no-color", "--pick=2", "--discard-hide", NULL });
+    assert(test_results.returncode == -1);  // keep going
+
+    assert(!test_results.args.color);
+    assert(test_results.args.pick == 2);
+    assert(test_results.args.discardhide);
 }
 
 void test_args_errors()
 {
-    Tester t;
-    std::string help = "\nRun 'asdasd --help' for help.\n";
-
     // TODO: test ambiguous option if there will ever be an ambiguous option
 
-    assert(t.parse(std::vector<std::string>{ "asdasd", "--wut" }) == 2);
-    read_file(t.err, "asdasd: unknown option '--wut'" + help);
+    run_parser((const char *[]){ "asdasd", "--wut", NULL }); assert(test_results.returncode == 2);
+    read_file(test_results.err, "asdasd: unknown option '--wut'\nRun 'asdasd --help' for help.\n");
 
-    assert(t.parse(std::vector<std::string>{ "asdasd", "wut" }) == 2);
-    read_file(t.err, "asdasd: unexpected argument: 'wut'" + help);
+    run_parser((const char *[]){ "asdasd", "wut", NULL }); assert(test_results.returncode == 2);
+    read_file(test_results.err, "asdasd: unexpected argument: 'wut'\nRun 'asdasd --help' for help.\n");
 
-    assert(t.parse(std::vector<std::string>{ "asdasd", "--no-colors", "lel" }) == 2);
-    read_file(t.err, "asdasd: use just '--no-colors', not '--no-colors something' or '--no-colors=something'" + help);
+    run_parser((const char *[]){ "asdasd", "--no-colors", "lel", NULL }); assert(test_results.returncode == 2);
+    read_file(test_results.err, "asdasd: use just '--no-colors', not '--no-colors something' or '--no-colors=something'\nRun 'asdasd --help' for help.\n");
 
-    assert(t.parse(std::vector<std::string>{ "asdasd", "--no-colors", "--no-colors" }) == 2);
-    read_file(t.err, "asdasd: repeated option '--no-colors'" + help);
+    run_parser((const char *[]){ "asdasd", "--no-colors", "--no-colors", NULL }); assert(test_results.returncode == 2);
+    read_file(test_results.err, "asdasd: repeated option '--no-colors'\nRun 'asdasd --help' for help.\n");
 
-    assert(t.parse(std::vector<std::string>{ "asdasd", "--no-colors", "--no-colors", "--no-colors", "--no-colors" }) == 2);
-    read_file(t.err, "asdasd: repeated option '--no-colors'" + help);
+    run_parser((const char *[]){ "asdasd", "--no-colors", "--no-colors", "--no-colors", "--no-colors", NULL }); assert(test_results.returncode == 2);
+    read_file(test_results.err, "asdasd: repeated option '--no-colors'\nRun 'asdasd --help' for help.\n");
 
-    assert(t.parse(std::vector<std::string>{ "asdasd", "--pick" }) == 2);
-    read_file(t.err, "asdasd: use '--pick n' or '--pick=n', not just '--pick'" + help);
+    run_parser((const char *[]){ "asdasd", "--pick", NULL }); assert(test_results.returncode == 2);
+    read_file(test_results.err, "asdasd: use '--pick n' or '--pick=n', not just '--pick'\nRun 'asdasd --help' for help.\n");
 
-    assert(t.parse(std::vector<std::string>{ "asdasd", "--pick", "a" }) == 2);
-    read_file(t.err, "asdasd: '--pick' wants an integer between 1 and 24, not 'a'" + help);
+    run_parser((const char *[]){ "asdasd", "--pick", "a", NULL }); assert(test_results.returncode == 2);
+    read_file(test_results.err, "asdasd: '--pick' wants an integer between 1 and 24, not 'a'\nRun 'asdasd --help' for help.\n");
 
-    assert(t.parse(std::vector<std::string>{ "asdasd", "--pick", "" }) == 2);
-    read_file(t.err, "asdasd: '--pick' wants an integer between 1 and 24, not ''" + help);
+    run_parser((const char *[]){ "asdasd", "--pick", "", NULL }); assert(test_results.returncode == 2);
+    read_file(test_results.err, "asdasd: '--pick' wants an integer between 1 and 24, not ''\nRun 'asdasd --help' for help.\n");
 
-    assert(t.parse(std::vector<std::string>{ "asdasd", "--pick", "1", "2" }) == 2);
-    read_file(t.err, "asdasd: unexpected argument: '2'" + help);
+    run_parser((const char *[]){ "asdasd", "--pick", "1", "2", NULL }); assert(test_results.returncode == 2);
+    read_file(test_results.err, "asdasd: unexpected argument: '2'\nRun 'asdasd --help' for help.\n");
 
-    assert(t.parse(std::vector<std::string>{ "asdasd", "--pick=a" }) == 2);
-    read_file(t.err, "asdasd: '--pick' wants an integer between 1 and 24, not 'a'" + help);
+    run_parser((const char *[]){ "asdasd", "--pick=a", NULL }); assert(test_results.returncode == 2);
+    read_file(test_results.err, "asdasd: '--pick' wants an integer between 1 and 24, not 'a'\nRun 'asdasd --help' for help.\n");
 
-    assert(t.parse(std::vector<std::string>{ "asdasd", "--pick=0" }) == 2);
-    read_file(t.err, "asdasd: '--pick' wants an integer between 1 and 24, not '0'" + help);
+    run_parser((const char *[]){ "asdasd", "--pick=0", NULL }); assert(test_results.returncode == 2);
+    read_file(test_results.err, "asdasd: '--pick' wants an integer between 1 and 24, not '0'\nRun 'asdasd --help' for help.\n");
 
-    assert(t.parse(std::vector<std::string>{ "asdasd", "--pick=1" }) == -1);
-    assert(t.args.pick == 1);
+    run_parser((const char *[]){ "asdasd", "--pick=1", NULL }); assert(test_results.returncode == -1);
+    assert(test_results.args.pick == 1);
 }
 
 void test_args_nused_bug()
 {
-    Tester t;
-    assert(t.parse(std::vector<std::string>{ "asdasd", "--pick=1", "--no-color" }) == -1);
-    assert(t.args.pick == 1);
-    assert(!t.args.color);  // the bug was that --no-color got ignored
+    run_parser((const char *[]){ "asdasd", "--pick=1", "--no-color", NULL });
+    assert(test_results.args.pick == 1);
+    assert(!test_results.args.color);  // the bug was that --no-color got ignored
 }

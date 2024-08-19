@@ -259,10 +259,12 @@ static int main_internal(int argc, const char *const *argv)
 
 int main(int argc, char **argv)
 {
-    Args args;
+    (void) argc;   // silence unused argument warning, argv is NULL terminated
+
+    struct Args args;
     int ret = parse_args(&args, (const char *const *)argv, stdout, stderr);
     if (ret == -1)
-        printf("Program runs\n");
+        printf("Program runs, color=%d pick=%d discardhide=%d\n", args.color, args.pick ,args.discardhide);
     else
         printf("Program exits with code %d\n", ret);
 }
