@@ -5,9 +5,9 @@
 #include <stdio.h>
 
 struct Args {
-	bool color;
-	int pick;
-	bool discardhide;
+    bool color;
+    int pick;
+    bool discardhide;
 };
 
 /*
@@ -15,7 +15,7 @@ Parses command-line arguments, e.g. "--pick 10".
 
 Usage:
 
-	int status = parse_args(&args, (const char *[]){"./cursesklon", "--pick", "3", NULL}, stdout, stderr);
+    int status = parse_args(&args, (const char *[]){"./cursesklon", "--pick", "3", NULL}, stdout, stderr);
 
 The argc passed to main() is not used. It is unnecessary because C standard
 specifies that argv ends with NULL.

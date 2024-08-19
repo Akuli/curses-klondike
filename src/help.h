@@ -6,8 +6,8 @@
 #include <vector>
 
 struct HelpItem {
-	std::string_view key;
-	std::string_view desc;
+    std::string_view key;
+    std::string_view desc;
 };
 
 // screen must be erased after calling this
