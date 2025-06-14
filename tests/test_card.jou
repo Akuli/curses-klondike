@@ -112,5 +112,5 @@ def main() -> int:
     test_cardlist_push()
     dot()
 
-    printf("\n\nok\n")
+    printf(" ok\n")
     return 0
