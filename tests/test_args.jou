@@ -4,6 +4,7 @@ import "stdlib/mem.jou"
 import "stdlib/str.jou"
 import "stdlib/process.jou"
 import "../src/args.jou"
+import "./util.jou"
 
 declare tmpfile() -> FILE*
 
@@ -156,24 +157,15 @@ def test_nused_bug() -> None:
 
 def main() -> int:
     test_help()
-    printf(".")
-    fflush(stdout)
-
+    dot()
     test_defaults()
-    printf(".")
-    fflush(stdout)
-
+    dot()
     test_no_defaults()
-    printf(".")
-    fflush(stdout)
-
+    dot()
     test_errors()
-    printf(".")
-    fflush(stdout)
-
+    dot()
     test_nused_bug()
-    printf(".")
-    fflush(stdout)
+    dot()
 
     printf("\n\nok\n")
     return 0

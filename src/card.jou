@@ -1,0 +1,118 @@
+@public
+enum Suit:
+    Spade
+    Heart
+    Diamond
+    Club
+
+@public
+enum Color:
+    Red
+    Black
+
+
+@public
+def color_pair_number(color: Color) -> int:
+    return (color as int) + 1  # must be >=1
+
+
+@public
+def suit_to_color(suit: Suit) -> Color:
+    match suit:
+        case Suit.Spade | Suit.Club:
+            return Color.Black
+        case Suit.Heart | Suit.Diamond:
+            return Color.Red
+
+
+@public
+def suit_to_string(suit: Suit) -> byte*:
+    match suit:
+        case Suit.Spade:
+            return "♠"
+        case Suit.Heart:
+            return "♥"
+        case Suit.Diamond:
+            return "♦"
+        case Suit.Club:
+            return "♣"
+
+
+@public
+def card_number_to_string(n: int) -> byte*:
+    assert 1 <= n and n <= 13
+    arr = [NULL, "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
+    return arr[n]
+
+
+@public
+class Card:
+    number: int  # between 1 and 13 (1=A, 11=J, 12=Q, 13=K)
+    suit: Suit
+    visible: bool
+    next: Card*  # the card that is on top of this card
+
+
+# Initialize and shuffle an array of cards, and build a linked list of them.
+@public
+def cardlist_init(cards: Card[52]*) -> Card*:
+    num_cards = 0
+    for s = 0; s < 4; s++:
+        for n = 1; n <= 13; n++:
+            (*cards)[num_cards++] = Card{number = n, suit = (s as Suit)}
+
+    assert num_cards == sizeof(*cards) / sizeof((*cards)[0])
+
+    # TODO: shuffle them
+
+    for i = 1; i < num_cards; i++:
+        (*cards)[i-1].next = &(*cards)[i]
+    (*cards)[num_cards - 1].next = NULL
+
+    return &(*cards)[0]
+
+
+# Return topmost card in a linked list of cards.
+# Special case to make some things easier: cardlist_top(NULL) == NULL
+# top(not null)->next is always NULL
+@public
+def cardlist_top(list: Card*) -> Card*:
+    return cardlist_top_n(list, 1)
+
+
+# card can be NULL
+def next_n_times(card: Card*, n: int) -> Card*:
+    while n --> 0 and card != NULL:
+        card = card->next
+    return card
+
+
+# Returns at most n topmost cards from a linked list as another linked list.
+# cardlist_top_n(NULL, n) == NULL
+@public
+def cardlist_top_n(list: Card*, n: int) -> Card*:
+    while next_n_times(list, n) != NULL:
+        list = list->next
+    return list
+
+
+# Removes and returns the card at the bottom of a card list.
+# There must be cards in the list.
+@public
+def cardlist_pop_from_bottom(list: Card**) -> Card*:
+    assert list != NULL
+    assert *list != NULL
+
+    result = *list
+    *list = (*list)->next
+    return result
+
+
+# Add 1 or more cards on top of an existing pile of cards.
+@public
+def cardlist_push_to_top(list: Card**, new_top: Card*) -> None:
+    assert list != NULL
+    if *list != NULL:
+        cardlist_top(*list)->next = new_top
+    else:
+        *list = new_top
