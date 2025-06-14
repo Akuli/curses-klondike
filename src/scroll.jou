@@ -1,0 +1,9 @@
+# Displays e.g. help in a scrollable way.
+
+import "./curses.jou"
+
+
+# See newpad() man page for more info about pads vs "normal" windows.
+@public
+def show_pad_with_scrolling(window: WINDOW*, pad: WINDOW*) -> None:
+    assert False

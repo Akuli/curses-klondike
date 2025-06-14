@@ -1,0 +1,39 @@
+@public
+class WINDOW:
+    pass
+
+@public
+declare mvaddstr(y: int, x: int, str: byte*) -> int
+@public
+declare mvwaddstr(win: WINDOW*, y: int, x: int, str: byte*) -> int
+@public
+declare mvwaddnstr(win: WINDOW*, y: int, x: int, str: byte*, n: int) -> int
+
+@public
+declare mvprintw(y: int, x: int, fmt: byte*, ...) -> int
+@public
+declare mvwprintw(win: WINDOW*, y: int, x: int, fmt: byte*, ...) -> int
+
+# In C, the type of "ch" is "chtype", aka "unsigned", aka uint32
+@public
+declare mvwhline(win: WINDOW*, y: int, x: int, ch: uint32, n: int) -> int
+
+# getmaxyx() is a macro, fortunately these are not
+@public
+declare getmaxx(win: WINDOW*) -> int
+@public
+declare getmaxy(win: WINDOW*) -> int
+
+@public
+declare COLOR_PAIR(n: int) -> int
+
+@public
+declare wattron(win: WINDOW*, attrs: int) -> int
+@public
+declare wattroff(win: WINDOW*, attrs: int) -> int
+
+@public
+declare newpad(nlines: int, ncols: int) -> WINDOW*
+
+@public
+declare delwin(win: WINDOW*) -> int
