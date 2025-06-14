@@ -37,3 +37,43 @@ declare newpad(nlines: int, ncols: int) -> WINDOW*
 
 @public
 declare delwin(win: WINDOW*) -> int
+
+@public
+declare copywin(
+    srcwin: WINDOW*,
+    dstwin: WINDOW*,
+    sminrow: int,
+    smincol: int,
+    dminrow: int,
+    dmincol: int,
+    dmaxrow: int,
+    dmaxcol: int,
+    overlay: int,
+) -> int
+
+@public
+declare werase(win: WINDOW*) -> int
+@public
+declare wclear(win: WINDOW*) -> int
+@public
+declare wrefresh(win: WINDOW*) -> int
+@public
+declare wgetch(win: WINDOW*) -> int
+@public
+declare getch() -> int
+
+@public
+const KEY_DOWN: int = 0o402
+@public
+const KEY_UP: int = 0o403
+@public
+const KEY_HOME: int = 0o406
+@public
+const KEY_NPAGE: int = 0o522
+@public
+const KEY_PPAGE: int = 0o523
+@public
+const KEY_END: int = 0o550
+
+@public
+const A_STANDOUT: int = 0x10000
