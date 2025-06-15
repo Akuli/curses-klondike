@@ -1,0 +1,193 @@
+import "stdlib/io.jou"
+import "stdlib/mem.jou"
+
+import "./util.jou"
+import "../src/card.jou"
+import "../src/klondike.jou"
+
+
+def count_cards(first: Card*) -> int:
+    n = 0
+    for card = first; card != NULL; card = card->next:
+        n++
+    return n
+
+
+def count_visible_cards(first: Card*) -> int:
+    n = 0
+    for card = first; card != NULL; card = card->next:
+        if card->visible:
+            n++
+    return n
+
+
+def test_init() -> None:
+    card_array: Card[52]
+    klon = Klondike{}
+    klon.init(&card_array)
+    assert klon.discardshow == 0
+
+    assert count_cards(klon.stock) == 13*4 - (1+2+3+4+5+6+7)
+    assert count_visible_cards(klon.stock) == 0
+
+    assert count_cards(klon.discard) == 0
+
+    for i = 0; i < 4; i++:
+        assert count_cards(klon.foundations[i]) == 0
+
+    for i = 0; i < 7; i++:
+        assert count_cards(klon.tableau[i]) == i+1
+        assert count_visible_cards(klon.tableau[i]) == 1
+        assert cardlist_top(klon.tableau[i])->visible
+
+
+def cards_match(list1: Card*, list2: Card*) -> bool:
+    a = list1
+    b = list2
+
+    while a != NULL or b != NULL:
+        assert a != b
+        if a == NULL or b == NULL:
+            # list lengths differ
+            return False
+        if a->number != b->number or a->suit != b->suit or a->visible != b->visible:
+            return False
+        a = a->next
+        b = b->next
+
+    return True
+
+
+def test_dup() -> None:
+    kln1 = Klondike{}
+    kln2 = Klondike{}
+    card_array1: Card[52]
+    card_array2: Card[52]
+    kln1.init(&card_array1)
+
+    dup_result = kln1.dup(&kln2, kln1.tableau[2]->next, &card_array2)
+    assert dup_result == kln2.tableau[2]->next
+
+    assert cards_match(kln1.stock, kln2.stock)
+    assert cards_match(kln1.discard, kln2.discard)
+    for i = 0; i < 4; i++:
+        assert cards_match(kln1.foundations[i], kln2.foundations[i])
+    for i = 0; i < 7; i++:
+        assert cards_match(kln1.tableau[i], kln2.tableau[i])
+
+
+def test_canmove() -> None:
+    card_array: Card[52]
+    klon = Klondike{}
+    klon.init(&card_array)
+
+    # non-visible cards can never be moved
+    assert not klon.tableau[2]->visible
+    assert not klon.can_move(klon.tableau[2], CardPlace{kind = CardPlaceKind.Stock})
+    assert not klon.can_move(klon.tableau[2], CardPlace{kind = CardPlaceKind.Discard})
+    assert not klon.can_move(klon.tableau[2], CardPlace{kind = CardPlaceKind.Foundation, number = 3})
+    assert not klon.can_move(klon.tableau[2], CardPlace{kind = CardPlaceKind.Tableau, number = 3})
+
+    # discarding is implemented separately
+    assert not klon.can_move(klon.stock, CardPlace{kind = CardPlaceKind.Discard})
+
+    # TODO: test rest of the code? problem is, how do i find e.g. ♠A or ♥Q
+
+
+# creates a game where a move is possible, sets move data to mvcrd and mvdst
+def init_movable_kln(klon: Klondike*, srctab: int*, dsttab: int*, card_array: Card[52]*) -> None:
+    while True:
+        memset(klon, 0, sizeof(*klon))
+        klon->init(card_array)
+
+        for i = 0; i < 7; i++:
+            for j = 0; j < 7; j++:
+                if i == j:
+                    continue
+                if klon->can_move(cardlist_top(klon->tableau[i]), CardPlace{kind = CardPlaceKind.Tableau, number = j}):
+                    *srctab = i
+                    *dsttab = j
+                    return
+
+
+def test_move() -> None:
+    klon: Klondike
+    card_array: Card[52]
+    srctab, dsttab: int
+    init_movable_kln(&klon, &srctab, &dsttab, &card_array)
+
+    klon.move(cardlist_top(klon.tableau[srctab]), CardPlace{kind = CardPlaceKind.Tableau, number = dsttab}, False)
+    for i = 0; i < 7; i++:
+        n = i+1
+        if i == srctab:
+            n--
+        if i == dsttab:
+            n++
+        assert count_cards(klon.tableau[i]) == n
+
+        if i == dsttab:
+            assert count_visible_cards(klon.tableau[i]) == 2
+        elif i == 0 and srctab == 0:
+            assert count_visible_cards(klon.tableau[i]) == 0
+        else:
+            assert count_visible_cards(klon.tableau[i]) == 1
+
+        if klon.tableau[i] != NULL:
+            assert cardlist_top(klon.tableau[i])->visible
+
+
+def discard_check(klon: Klondike, ndiscarded: int, ds: int) -> None:
+    assert klon.discardshow == ds
+
+    assert count_cards(klon.stock) == 13*4 - (1+2+3+4+5+6+7) - ndiscarded
+    assert count_visible_cards(klon.stock) == 0
+
+    assert count_cards(klon.discard) == ndiscarded
+    assert count_visible_cards(klon.discard) == ndiscarded
+
+
+def test_stock2discard() -> None:
+    klon = Klondike{}
+    card_array: Card[52]
+    klon.init(&card_array)
+    discard_check(klon, 0, 0)
+
+    savestock = klon.stock
+
+    klon.stock2discard(1)
+    discard_check(klon, 1, 1)
+
+    klon.stock2discard(2)
+    discard_check(klon, 3, 2)
+
+    for n = 4; n <= 13*4 - (1+2+3+4+5+6+7) - 1; n++:
+        klon.stock2discard(1)
+        discard_check(klon, n, 1)
+
+    klon.stock2discard(1)
+    discard_check(klon, 13*4 - (1+2+3+4+5+6+7), 1)
+
+    # value given here is not meaningful, all cards move regardless
+    klon.stock2discard(13*4 - (1+2+3+4+5+6+7))
+    discard_check(klon, 0, 0)
+
+    # make sure that the order of the cards doesn't reverse
+    assert klon.stock == savestock
+
+    # TODO: test with less than 13*4 - (1+2+3+4+5+6+7) stock cards? e.g. 0 stock cards
+
+
+def main() -> int:
+    test_init()
+    dot()
+    test_dup()
+    dot()
+    test_canmove()
+    dot()
+    test_move()
+    dot()
+    test_stock2discard()
+    dot()
+
+    printf(" ok\n")
+    return 0
