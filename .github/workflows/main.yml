@@ -28,11 +28,4 @@ jobs:
     - name: Compile main executable
       run: jou -o cursesklon src/main.jou
     - name: Run with --help option
-      run: jou -o main src/main.jou
-
-  iwyu:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - run: sudo apt update && sudo apt install $APT_PACKAGES iwyu
-    - run: make -j2 -k iwyu
+      run: ./cursesklon --help
