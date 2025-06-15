@@ -18,14 +18,20 @@ If you don't like colors, use the `--no-colors` option:
     ```
     sudo apt install libncurses5-dev libncursesw5-dev
     ```
-3. Download and compile the code:
+3. Download the code:
     ```
     git clone https://github.com/Akuli/curses-klondike
+    cd curses-klondike
     ```
 4. Compile and run:
     ```
-    cd curses-klondike
     jou src/main.jou
+    ```
+5. Compile into an executable file (if you want):
+    ```
+    jou -o cursesklon src/main.jou
+    ./cursesklon --help   # Show help
+    ./cursesklon          # Run game
     ```
 
 
