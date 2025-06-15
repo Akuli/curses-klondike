@@ -1,5 +1,5 @@
 # compile_flags.txt is for clangd
-CXXFLAGS += -Wall -Wextra -Wpedantic -Wno-unused-parameter $(shell cat compile_flags.txt) -MMD
+CXXFLAGS += -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-deprecated-declarations $(shell cat compile_flags.txt) -MMD
 LDFLAGS += -lncursesw     # needs cursesw instead of curses for unicodes
 IWYU ?= iwyu
 

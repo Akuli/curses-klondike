@@ -10,7 +10,6 @@ doesn't support --, but nobody needs it for this program imo
 #include <cstddef>
 #include <deque>
 #include <iomanip>
-#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
