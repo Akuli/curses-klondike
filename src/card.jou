@@ -106,6 +106,7 @@ def cardlist_pop_from_bottom(list: Card**) -> Card*:
 
     result = *list
     *list = (*list)->next
+    result->next = NULL
     return result
 
 
