@@ -1,6 +1,14 @@
+assert not WINDOWS
+
+link "-lncursesw"  # needs cursesw instead of curses for unicodes
+
+
 @public
 class WINDOW:
     pass
+
+@public
+declare global stdscr: WINDOW*
 
 @public
 declare mvaddstr(y: int, x: int, str: byte*) -> int
@@ -24,6 +32,12 @@ declare getmaxx(win: WINDOW*) -> int
 @public
 declare getmaxy(win: WINDOW*) -> int
 
+@public
+declare has_colors() -> bool
+@public
+declare start_color() -> int
+@public
+declare init_pair(pair: int16, f: int16, b: int16) -> int
 @public
 declare COLOR_PAIR(n: int) -> int
 
@@ -58,14 +72,37 @@ declare wclear(win: WINDOW*) -> int
 @public
 declare wrefresh(win: WINDOW*) -> int
 @public
+declare refresh() -> int
+@public
 declare wgetch(win: WINDOW*) -> int
 @public
+declare cbreak() -> int
+@public
+declare noecho() -> int
+@public
+declare curs_set(visibility: int) -> int
+@public
+declare keypad(win: WINDOW*, bf: bool) -> int
+
+@public
 declare getch() -> int
+
+@public
+declare initscr() -> WINDOW*
+@public
+declare endwin() -> int
+
+@public
+const ERR: int = -1
 
 @public
 const KEY_DOWN: int = 0o402
 @public
 const KEY_UP: int = 0o403
+@public
+const KEY_LEFT: int = 0o404
+@public
+const KEY_RIGHT: int = 0o405
 @public
 const KEY_HOME: int = 0o406
 @public
@@ -77,3 +114,10 @@ const KEY_END: int = 0o550
 
 @public
 const A_STANDOUT: int = 0x10000
+
+@public
+const COLOR_BLACK: int16 = 0
+@public
+const COLOR_RED: int16 = 1
+@public
+const COLOR_WHITE: int16 = 7

@@ -38,6 +38,7 @@ def get_visible_top_card(klon: Klondike, place: CardPlace) -> Card*:
             return NULL
 
 
+@public
 enum SelDirection:
     Left
     Right
