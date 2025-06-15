@@ -14,7 +14,6 @@ doesn't support --, but nobody needs it for this program imo
 #include <optional>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <vector>
 
 enum class OptionType { YESNO, INT };
