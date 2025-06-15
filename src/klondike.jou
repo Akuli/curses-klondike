@@ -1,0 +1,225 @@
+import "stdlib/mem.jou"
+import "./card.jou"
+
+
+def copy_cards(src: Card*, dest: Card**, source_card: Card*, dest_card: Card**, list: Card**) -> None:
+    *dest = NULL
+    for pass; src != NULL; src = src->next:
+        copy = cardlist_pop_from_bottom(list)
+        if src == source_card:
+            *dest_card = copy
+        *copy = *src
+        copy->next = NULL
+        cardlist_push_to_top(dest, copy)
+
+
+# A card place cannot be represented as a card, or as a pointer to a card,
+# because there may be no cards in a card place.
+#
+# TODO: would a double pointer work? Card**
+enum CardPlaceKind:
+    Stock
+    Discard
+    Foundation
+    Tableau
+
+class CardPlace:
+    kind: CardPlaceKind
+    number: int  # only meaningful for foundation (0 <= number < 4) and tableau (0 <= number < 7)
+
+
+class Klondike:
+    # https://www.denexa.com/wp-content/uploads/2015/11/klondike.png
+    # These point to just one card. Use ->next to access others.
+    stock: Card*           # TOPMOST card or NULL
+    discard: Card*         # bottommost card or NULL
+    discardshow: int       # number of cards shown in discard, or 0 if discard is NULL
+    foundations: Card*[4]  # bottommost cards or NULLs
+    tableau: Card*[7]      # bottommost cards or NULLs
+
+    def init(self, card_array: Card[52]*) -> None:
+        list = cardlist_init(card_array)
+
+        for i = 0; i < 7; i++:
+            self->tableau[i] = NULL
+            for j = 0; j < i+1; j++:
+                cardlist_push_to_top(&self->tableau[i], cardlist_pop_from_bottom(&list))
+            cardlist_top(self->tableau[i])->visible = True
+
+        self->stock = list
+        self->discard = NULL
+        self->discardshow = 0
+        for i = 0; i < 4; i++:
+            self->foundations[i] = NULL
+
+    # Copies everything from src to dest, using new cards created from the array.
+    # If source_card is non-NULL, returns the corresponding card of dest.
+    # If source_card is NULL, returns NULL.
+    def dup(self, dest: Klondike*, source_card: Card*, card_array: Card[52]*) -> Card*:
+        dest_card: Card* = NULL
+        list = cardlist_init(card_array)
+        copy_cards(self->stock, &dest->stock, source_card, &dest_card, &list)
+        copy_cards(self->discard, &dest->discard, source_card, &dest_card, &list)
+        dest->discardshow = self->discardshow
+        for i = 0; i < 4; i++:
+            copy_cards(self->foundations[i], &dest->foundations[i], source_card, &dest_card, &list)
+        for i = 0; i < 7; i++:
+            copy_cards(self->tableau[i], &dest->tableau[i], source_card, &dest_card, &list)
+
+        assert list == NULL  # all cards used
+        return dest_card
+
+    def card_in_some_tableau(self, card: Card*) -> bool:
+        for i = 0; i < 7; i++:
+            for c = self->tableau[i]; c != NULL; c = c->next:
+                if c == card:
+                    return True
+        return False
+
+    # Returns whether a card can be moved to on top of dest.
+    # Use stock2discard() instead for stock -> discard moves, this returns false for those.
+    # card must be a card in klon
+    def can_move(self, card: Card*, dest: CardPlace) -> bool:
+        # invisible cards can never be moved
+        if not card->visible:
+            return False
+
+        # the only way how a stack of multiple cards is allowed to move is tableau -> tableau
+        if (
+            card->next != NULL
+            and not (dest.kind == CardPlaceKind.Tableau and self->card_in_some_tableau(card))
+        ):
+            return False
+
+        match dest.kind:
+            case CardPlaceKind.Stock | CardPlaceKind.Discard:
+                # taking cards stock to discard is handled by stock2discard() and not allowed here
+                return False
+
+            case CardPlaceKind.Foundation:
+                assert 0 <= dest.number and dest.number < 4
+                if self->foundations[dest.number] == NULL:
+                    # Only A can be placed into an empty foundation
+                    return card->number == 1
+                top = cardlist_top(self->foundations[dest.number])
+                return card->suit == top->suit and card->number == top->number + 1
+
+            case CardPlaceKind.Tableau:
+                assert 0 <= dest.number and dest.number < 7
+                if self->tableau[dest.number] == NULL:
+                    # Only K can be placed into an empty foundation
+                    return card->number == 13
+                top = cardlist_top(self->tableau[dest.number])
+                return (
+                    suit_to_color(card->suit) != suit_to_color(top->suit)
+                    and card->number == top->number - 1
+                )
+
+    # Temporarily removes a card and anything stacked on top of it from the game.
+    #
+    # Returns the card whose `->next` the given card was, if any.
+    def detach_card(self, card: Card*) -> Card*:
+        assert card != NULL
+
+        # a doubly linked list would make this easier and many other things harder :)
+        card_lists = [
+            &self->stock,
+            &self->discard,
+            &self->foundations[0],
+            &self->foundations[1],
+            &self->foundations[2],
+            &self->foundations[3],
+            &self->tableau[0],
+            &self->tableau[1],
+            &self->tableau[2],
+            &self->tableau[3],
+            &self->tableau[4],
+            &self->tableau[5],
+            &self->tableau[6],
+        ]
+
+        for i = 0; i < sizeof(card_lists)/sizeof(card_lists[0]); i++:
+            list = card_lists[i]
+
+            # special case: no card has card as ->next
+            if *list == card:
+                if list == &self->discard:
+                    self->discardshow = 0
+                *list = NULL
+                return NULL
+
+            for prev = *list; prev != NULL and prev->next != NULL; prev = prev->next:
+                if prev->next == card:
+                    if list == &self->discard and self->discardshow > 1:
+                        self->discardshow--
+                    prev->next = NULL
+                    return prev
+
+        assert False  # card not found
+
+    # Moves the source card and ->next cards (if any) to dest.
+    # If raw, accepts invalid moves (can_move) and never sets ->visible
+    def move(self, card: Card*, dest: CardPlace, raw: bool) -> None:
+        if not raw:
+            assert self->can_move(card, dest)
+
+        prev = self->detach_card(card)
+
+        if prev != NULL and not raw:
+            # Expose the card under the card being moved
+            prev->visible = True
+
+        match dest.kind:
+            case CardPlaceKind.Stock:
+                dest_pointer = &self->stock
+            case CardPlaceKind.Discard:
+                dest_pointer = &self->discard
+            case CardPlaceKind.Foundation:
+                dest_pointer = &self->foundations[dest.number]
+            case CardPlaceKind.Tableau:
+                dest_pointer = &self->tableau[dest.number]
+
+        cardlist_push_to_top(dest_pointer, card)
+
+    # Move card to any foundation if possible. Does nothing if card is NULL.
+    def move2foundation(self, card: Card*) -> bool:
+        if card != NULL:
+            for i = 0; i < 4; i++:
+                if self->can_move(card, CardPlace{kind = CardPlaceKind.Foundation, number = i}):
+                    self->move(card, CardPlace{kind = CardPlaceKind.Foundation, number = i}, False)
+                    return True
+        return False
+
+    # Takes cards stock --> discard, or if stock is empty, puts all discardeds to stock.
+    # Pick is the value of the --pick option
+    def stock2discard(self, pick: int) -> None:
+        if self->stock == NULL:
+            # Discard to stock
+            for card = self->discard; card != NULL; card = card->next:
+                assert card->visible
+                card->visible = False
+
+            memswap(&self->stock, &self->discard, sizeof(self->discard))
+            self->discardshow = 0
+
+        else:
+            # Stock to discard
+            for i = 0; i < pick and self->stock != NULL; i++:
+                moving_card = cardlist_pop_from_bottom(&self->stock)
+                assert not moving_card->visible
+                moving_card->visible = True
+                cardlist_push_to_top(&self->discard, moving_card)
+
+            # We moved i cards, show all of them
+            self->discardshow = i
+
+    # Check if player won
+    def win(self) -> bool:
+        for i = 0; i < 4; i++:
+            n = 0
+            for card = self->foundations[i]; card != NULL; card = card->next:
+                n++
+            # n can be >13 when cards are being moved, cannot "assert n <= 13" here
+            if n < 13:
+                return False
+        return True
