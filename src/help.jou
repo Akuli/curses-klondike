@@ -154,8 +154,11 @@ class Printer:
                 remaining_width -= PICTURE_WIDTH
                 remaining_width -= 3  # more space between picture_lines and helps
 
+            # Don't get stuck if terminal is very narrow. Won't look good anyway.
+            remaining_width = max(5, remaining_width)
+
             # Grab as much text as we can fit into the space.
-            # Allow one newline character at the end.
+            # Stop after a newline character, so we take "foo\n" from "foo\nbar\n".
             end = string
             while remaining_width > 0 and *end != '\0' and (end == string or end[-1] != '\n'):
                 end++
@@ -163,22 +166,23 @@ class Printer:
                     end++
                 remaining_width--
 
-            # If splitting in the middle of a word, let's not do that
-            if *end != '\0' and not is_ascii_whitespace(*end):
+            assert end > string
+
+            if *end != '\0':
+                # Not everything fits.
+                # If splitting in the middle of a word, let's not do that.
+                # Instead, take everything including the space.
                 end2 = end
-                while end2 > string and *end2 != ' ':
+                while end2 > string and not is_ascii_whitespace(end2[-1]):
                     end2--
                 if end2 > string:
                     end = end2
 
             assert end > string
 
-            self->print_colored(x_offset, string, ((end as long) - (string as long)) as int)
+            self->print_colored(x_offset, string, ((end as int64) - (string as int64)) as int)
             self->y++
-
-            for p = string; p < end; p++:
-                if not utf8_continuation(*p):
-                    x_offset++
+            string = end
 
     def print_help_item(self, key_column_width: int, item: HelpItem) -> None:
         if self->window != NULL:
