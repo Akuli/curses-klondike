@@ -13,7 +13,7 @@ If you don't like colors, use the `--no-colors` option:
 ## Setup
 
 1. Install Jou version 2025-04-29-0400 using [Jou's instructions](https://github.com/Akuli/jou/blob/2025-04-29-0400/README.md#setup).
-    Other versions may also work.
+    Newer versions of Jou may also work.
 2. Install curses:
     ```
     sudo apt install libncurses5-dev libncursesw5-dev
