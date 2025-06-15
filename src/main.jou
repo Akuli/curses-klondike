@@ -87,7 +87,7 @@ class Game:
             case KEY_UP | KEY_DOWN:
                 if (not self->selmv.is_move) and key == KEY_UP and self->selmv.selection.select_more(&self->klon):
                     pass  # Successfully selected more
-                elif (not self->selmv.is_move) and key == KEY_UP and self->selmv.selection.select_less(&self->klon):
+                elif (not self->selmv.is_move) and key == KEY_DOWN and self->selmv.selection.select_less(&self->klon):
                     pass  # Successfully selected less
                 else:
                     self->selmv.select_another_card(&self->klon, curses_key_to_seldirection(key))
