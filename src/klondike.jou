@@ -17,17 +17,20 @@ def copy_cards(src: Card*, dest: Card**, source_card: Card*, dest_card: Card**, 
 # because there may be no cards in a card place.
 #
 # TODO: would a double pointer work? Card**
+@public
 enum CardPlaceKind:
     Stock
     Discard
     Foundation
     Tableau
 
+@public
 class CardPlace:
     kind: CardPlaceKind
     number: int  # only meaningful for foundation (0 <= number < 4) and tableau (0 <= number < 7)
 
 
+@public
 class Klondike:
     # https://www.denexa.com/wp-content/uploads/2015/11/klondike.png
     # These point to just one card. Use ->next to access others.
