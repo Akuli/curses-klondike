@@ -65,6 +65,7 @@ enum SelDirection:
 #
 #    card = NULL, place = tableau n
 #        tableau n selected, but there are no cards in that tableau
+@public
 class Selection:
     card: Card*
     place: CardPlace
@@ -97,6 +98,8 @@ class Move:
     src: CardPlace
     dest: CardPlace
 
+
+@public
 class SelectionOrMove:
     is_move: bool
     union:
