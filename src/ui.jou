@@ -3,8 +3,6 @@ import "stdlib/str.jou"
 import "./state.jou"
 import "./curses.jou"
 import "./card.jou"
-import "./selectmove.jou"
-import "./klondike.jou"
 
 
 const CARD_WIDTH: int = 7
@@ -129,22 +127,29 @@ def draw_card(app_state: AppState*, card: Card*, left: int, top: int, selected: 
         if app_state->args.color:
             wattroff(stdscr, attributes)
 
-# Unlike a simple for loop, this handles overflow.
+
+# This function handles:
+#   - Overflow: If there's not enough room to show all cards, we "compress"
+#     them and show only a little bit.
+#   - Moving cards: we want to show the state as if the move happened, even
+#     though it didn't really happen yet.
 def draw_card_stack(app_state: AppState*, bottom_card: Card*, left: int, top: int, first_selected: Card*) -> None:
-    if bottom_card == NULL:
+    # How many cards are we going to draw?
+    # TODO: moving
+    n = 0
+    for card = bottom_card; card != NULL; card = card->next:
+        n++
+
+    if n == 0:
         return
 
     # The text (number and suit) of bottom_card is at top+1.
     # Let's figure out where it is for the topmost card.
-    top_text_y = top+1
-    card_count_excluding_bottom = 0
-    for card = bottom_card->next; card != NULL; card = card->next:
-        top_text_y += Y_OFFSET_BIG
-        card_count_excluding_bottom++
+    top_text_y = top + 1 + (n-1) * Y_OFFSET_BIG
 
     # We can make all cards visible by displaying some cards with a smaller offset.
     # We'll display visible_card_count cards with the bigger offset.
-    visible_card_count = card_count_excluding_bottom
+    visible_card_count = n-1
     while top_text_y >= getmaxy(stdscr):
         top_text_y -= Y_OFFSET_BIG
         top_text_y += Y_OFFSET_SMALL
@@ -153,7 +158,7 @@ def draw_card_stack(app_state: AppState*, bottom_card: Card*, left: int, top: in
     # to give some extra room that wouldn't be really necessary, but is nicer.
     # Without the if, cards get stacked even when there's enough room.
     # TODO: I don't like this behaviour anymore, change it
-    if visible_card_count != card_count_excluding_bottom:
+    if visible_card_count != n-1:
         visible_card_count--
 
     # Let's draw the cards
@@ -244,7 +249,8 @@ def draw_tableau(app_state: AppState*) -> None:
             y += Y_OFFSET_SMALL
 
 
-def draw_game(app_state: AppState*) -> None:
+@public
+def draw_klondike(app_state: AppState*) -> None:
     werase(stdscr)
 
     draw_card(app_state, app_state->klon.stock, ui_x(0), ui_y(0), app_state->selmv.selection.place.is_stock())
@@ -263,19 +269,3 @@ def draw_game(app_state: AppState*) -> None:
         msg = "you win :)"
         msg_width = strlen(msg) as int
         mvwaddstr(stdscr, getmaxy(stdscr)/2, (getmaxx(stdscr) - msg_width)/2, msg)
-
-
-@public
-def draw_klondike(app_state: AppState*) -> None:
-    if app_state->selmv.is_move:
-        # Temporarily create state after the move and show that
-        temp_cards: Card[52]
-        temp_klon = Klondike{}
-        temp_sel = Selection{card=app_state->klon.dup(&temp_klon, app_state->selmv.move.card, &temp_cards), place=app_state->selmv.move.dest}
-        temp_klon.move(temp_sel.card, temp_sel.place, True)
-
-        drawer.klon = &temp_klon
-        drawer.sel = &temp_sel
-        drawer.draw_game()
-    else:
-        drawer.draw_game()
