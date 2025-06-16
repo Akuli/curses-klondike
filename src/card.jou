@@ -1,3 +1,7 @@
+import "./rand.jou"
+import "stdlib/mem.jou"
+
+
 @public
 enum Suit:
     Spade
@@ -54,6 +58,15 @@ class Card:
     next: Card*  # the card that is on top of this card
 
 
+def shuffle(cards: Card*, n: int) -> None:
+    while n > 1:
+        # Choose a random card to be last
+        r = rand() % n
+        memswap(&cards[r], &cards[n-1], sizeof(cards[0]))
+        # Shuffle the rest
+        n--
+
+
 # Initialize and shuffle an array of cards, and build a linked list of them.
 @public
 def cardlist_init(cards: Card[52]*) -> Card*:
@@ -63,8 +76,7 @@ def cardlist_init(cards: Card[52]*) -> Card*:
             (*cards)[num_cards++] = Card{number = n, suit = (s as Suit)}
 
     assert num_cards == sizeof(*cards) / sizeof((*cards)[0])
-
-    # TODO: shuffle them
+    shuffle(*cards, num_cards)
 
     for i = 1; i < num_cards; i++:
         (*cards)[i-1].next = &(*cards)[i]
