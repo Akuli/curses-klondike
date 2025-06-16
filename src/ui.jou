@@ -1,7 +1,7 @@
 import "stdlib/str.jou"
 
+import "./state.jou"
 import "./curses.jou"
-import "./args.jou"
 import "./card.jou"
 import "./selectmove.jou"
 import "./klondike.jou"

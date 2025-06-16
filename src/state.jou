@@ -1,0 +1,17 @@
+@public
+class Args:
+    color: bool
+    pick: int
+    discardhide: bool
+
+
+@public
+class AppState:
+    args: Args
+
+    # For error messages and such
+    program_name: byte*
+
+    # Has initscr() been called successfully? If yes, we need to restore
+    # terminal to its original state with endwin() when exiting.
+    screen_inited: bool

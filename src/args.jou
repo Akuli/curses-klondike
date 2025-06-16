@@ -6,12 +6,7 @@ import "stdlib/str.jou"
 import "stdlib/mem.jou"
 import "stdlib/list.jou"
 
-
-@public
-class Args:
-    color: bool
-    pick: int
-    discardhide: bool
+import "./state.jou"
 
 
 enum OptionType:
