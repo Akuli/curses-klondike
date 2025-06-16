@@ -42,6 +42,13 @@ class CardPlace:
     def is_tableau(self, n: int) -> bool:
         return self->kind == CardPlaceKind.Tableau and self->number == n
 
+    def equals(self: CardPlace, other: CardPlace) -> bool:
+        match self.kind:
+            case CardPlaceKind.Stock | CardPlaceKind.Discard:
+                return self.kind == other.kind
+            case CardPlaceKind.Foundation | CardPlaceKind.Tableau:
+                return self.kind == other.kind and self.number == other.number
+
 
 @public
 class Klondike:

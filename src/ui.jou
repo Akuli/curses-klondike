@@ -1,6 +1,7 @@
 import "stdlib/str.jou"
 
 import "./state.jou"
+import "./klondike.jou"
 import "./curses.jou"
 import "./card.jou"
 
@@ -128,19 +129,72 @@ def draw_card(app_state: AppState*, card: Card*, left: int, top: int, selected: 
             wattroff(stdscr, attributes)
 
 
+# For iterating through cards at a certain place. Takes moves into account.
+#
+# Usage:
+#
+#   card: Card* = NULL
+#   while next_card(app_state, place, &card):
+#       ...
+def next_card(app_state: AppState*, place: CardPlace, card: Card**) -> bool:
+    match place.kind:
+        case CardPlaceKind.Stock:
+            first_card_at_place = app_state->klon.stock
+        case CardPlaceKind.Discard:
+            first_card_at_place = app_state->klon.discard
+        case CardPlaceKind.Foundation:
+            first_card_at_place = app_state->klon.foundations[place.number]
+        case CardPlaceKind.Tableau:
+            first_card_at_place = app_state->klon.tableau[place.number]
+
+    if app_state->selmv.is_move and not app_state->selmv.move.src.equals(app_state->selmv.move.dest):
+        assert app_state->selmv.move.card != NULL
+
+        if *card == NULL:
+            # Start of iteration
+            *card = first_card_at_place
+            if *card == NULL and place.equals(app_state->selmv.move.dest):
+                # Start from moving cards, we need to include them anyway
+                *card = app_state->selmv.move.card
+        elif *card == cardlist_top(app_state->selmv.move.card):
+            # Got to end of moving cards, this is really truly the end.
+            # It is important to always stop here.
+            assert (*card)->next == NULL
+            *card = NULL
+        else:
+            *card = (*card)->next
+            if *card == NULL and place.equals(app_state->selmv.move.dest):
+                # Switch from cards that are already there to moving cards
+                *card = app_state->selmv.move.card
+
+    else:
+        # No moves. Normal linked list iteration.
+        if *card == NULL:
+            *card = first_card_at_place
+        else:
+            *card = (*card)->next
+
+    return *card != NULL
+
+
 # This function handles:
 #   - Overflow: If there's not enough room to show all cards, we "compress"
 #     them and show only a little bit.
 #   - Moving cards: we want to show the state as if the move happened, even
 #     though it didn't really happen yet.
-def draw_card_stack(app_state: AppState*, bottom_card: Card*, left: int, top: int, first_selected: Card*) -> None:
+def draw_card_stack(app_state: AppState*, place: CardPlace, skip_count: int, left: int, top: int, first_selected: Card*) -> None:
+    starting_card: Card* = NULL
+    while skip_count --> 0:
+        next_card(app_state, place, &starting_card)
+
     # How many cards are we going to draw?
     # TODO: moving
+    card = starting_card
     n = 0
-    for card = bottom_card; card != NULL; card = card->next:
+    while next_card(app_state, place, &card):
         n++
 
-    if n == 0:
+    if n <= 0:
         return
 
     # The text (number and suit) of bottom_card is at top+1.
@@ -164,7 +218,8 @@ def draw_card_stack(app_state: AppState*, bottom_card: Card*, left: int, top: in
     # Let's draw the cards
     selected = False
     y = top
-    for card = bottom_card; card != NULL; card = card->next:
+    card = starting_card
+    while next_card(app_state, place, &card):
         if card == first_selected:
             selected = True
         draw_card(app_state, card, left, y, selected)
@@ -200,6 +255,7 @@ def decide_what_to_hide(app_state: AppState*) -> DiscardHide:
 
 def draw_discard(app_state: AppState*) -> None:
     show_count = app_state->klon.discardshow
+    # TODO: check all uses of app_state->selmv.selection, they are sus...
     if app_state->selmv.selection.place.is_discard() and app_state->selmv.is_move:
         show_count++
 
@@ -239,14 +295,21 @@ def draw_tableau(app_state: AppState*) -> None:
             )
             continue
 
-        y = ui_y(1)
+        n = 0
         for card = app_state->klon.tableau[x]; card != NULL; card = card->next:
             if card->visible:
-                draw_card_stack(app_state, card, ui_x(x), y, app_state->selmv.selection.card)
+                draw_card_stack(
+                    app_state,
+                    CardPlace{kind = CardPlaceKind.Tableau, number = x},
+                    n,
+                    ui_x(x),
+                    ui_y(1) + n*Y_OFFSET_SMALL,
+                    app_state->selmv.selection.card,
+                )
                 break
 
-            draw_card(app_state, card, ui_x(x), y, False)
-            y += Y_OFFSET_SMALL
+            draw_card(app_state, card, ui_x(x), ui_y(1) + n*Y_OFFSET_SMALL, False)
+            n++
 
 
 @public
