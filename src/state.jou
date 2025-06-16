@@ -1,3 +1,8 @@
+import "./klondike.jou"
+import "./card.jou"
+import "./selectmove.jou"
+
+
 @public
 class Args:
     color: bool
@@ -15,3 +20,15 @@ class AppState:
     # Has initscr() been called successfully? If yes, we need to restore
     # terminal to its original state with endwin() when exiting.
     screen_inited: bool
+
+    # The main game state
+    klon: Klondike
+
+    # What user is currently doing
+    selmv: SelectionOrMove
+
+    # This is where cards are actually stored.
+    #
+    # Rarely accessed directly. It is much more common to pass around pointers
+    # to the individual cards.
+    card_array: Card[52]

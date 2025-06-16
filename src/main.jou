@@ -6,111 +6,22 @@ import "./curses.jou"
 import "./rand.jou"
 
 import "./state.jou"
+import "./handle_key.jou"
 import "./selectmove.jou"
 import "./card.jou"
 import "./klondike.jou"
 import "./args.jou"
-import "./help.jou"
 import "./ui.jou"
 
 
-def curses_key_to_seldirection(key: int) -> SelDirection:
-    match key:
-        case KEY_LEFT:
-            return SelDirection.Left
-        case KEY_RIGHT:
-            return SelDirection.Right
-        case KEY_UP:
-            return SelDirection.Up
-        case KEY_DOWN:
-            return SelDirection.Down
-        case _:
-            assert False
+def new_game(app_state: AppState*) -> None:
+    app_state->klon = Klondike{}
+    app_state->klon.init(&app_state->card_array)
 
-
-def new_game(card_array: Card[52]*) -> Game:
-    result = Game{card_array = card_array}
-    result.klon.init(card_array)
-    result.selmv = SelectionOrMove{
+    app_state->selmv = SelectionOrMove{
         is_move = False,
         selection = Selection{place = CardPlace{kind = CardPlaceKind.Stock}},
     }
-    return result
-
-
-class Game:
-    klon: Klondike
-    selmv: SelectionOrMove
-    card_array: Card[52]*
-
-    def handle_key(self, key: int, args: Args, argv0: byte*) -> None:
-        match key:
-            ##########################################################################
-            ### If you change these, please update the key bindings shown in help! ###
-            ##########################################################################
-            case 'h':
-                show_help(stdscr, argv0, args.color)
-            case 's':
-                if not self->selmv.is_move:
-                    self->klon.stock2discard(args.pick)
-
-                    # if you change this, think about what if the discard card was selected?
-                    # then the moved card ended up on top of the old discarded card
-                    # and we have 2 cards selected, so you need to handle that
-                    self->selmv.select_top_card_or_move_to(&self->klon, CardPlace{kind = CardPlaceKind.Discard})
-            case 'd':
-                if not self->selmv.is_move:
-                    self->selmv.select_top_card_or_move_to(&self->klon, CardPlace{kind = CardPlaceKind.Discard})
-            case 'f':
-                if (
-                    (not self->selmv.is_move)
-                    and self->selmv.selection.card != NULL
-                    and self->klon.move2foundation(self->selmv.selection.card)
-                ):
-                    self->selmv.select_top_card_or_move_to(&self->klon, self->selmv.selection.place)
-            case 'g':
-                if not self->selmv.is_move:
-                    # Try discard -> foundation
-                    moved = self->klon.move2foundation(cardlist_top(self->klon.discard))
-                    if not moved:
-                        # Try tableau -> foundation
-                        for i = 0; i < 7 and not moved; i++:
-                            if self->klon.move2foundation(cardlist_top(self->klon.tableau[i])):
-                                moved = True
-                                break
-
-                    if moved:
-                        # update sel.card if needed
-                        self->selmv.select_top_card_or_move_to(&self->klon, self->selmv.selection.place)
-
-            case 27:  # esc key, didn't find a KEY_foo constant for this in curses headers
-                self->selmv.is_move = False
-            case KEY_UP | KEY_DOWN:
-                if (not self->selmv.is_move) and key == KEY_UP and self->selmv.selection.select_more(&self->klon):
-                    pass  # Successfully selected more
-                elif (not self->selmv.is_move) and key == KEY_DOWN and self->selmv.selection.select_less(&self->klon):
-                    pass  # Successfully selected less
-                else:
-                    self->selmv.select_another_card(&self->klon, curses_key_to_seldirection(key))
-            case KEY_LEFT | KEY_RIGHT:
-                self->selmv.select_another_card(&self->klon, curses_key_to_seldirection(key))
-            case KEY_PPAGE:
-                if not self->selmv.is_move:
-                    while self->selmv.selection.select_more(&self->klon):
-                        pass
-            case KEY_NPAGE:
-                if not self->selmv.is_move:
-                    while self->selmv.selection.select_less(&self->klon):
-                        pass
-            case '\n':
-                if self->selmv.is_move:
-                    self->selmv.end_move(&self->klon)
-                elif self->selmv.selection.place.is_stock():
-                    self->klon.stock2discard(args.pick)
-                elif self->selmv.selection.card != NULL and self->selmv.selection.card->visible:
-                    self->selmv.begin_move()
-            case '1' | '2' | '3' | '4' | '5' | '6' | '7':
-                self->selmv.select_top_card_or_move_to(&self->klon, CardPlace{kind = CardPlaceKind.Tableau, number = key - '1'})
 
 
 def confirm_yes_no(prompt: byte*) -> bool:
@@ -184,12 +95,11 @@ def main(argc: int, argv: byte**) -> int:
     if keypad(stdscr, True) == ERR:
         fail(&app_state, "keypad() failed")
 
-    card_array: Card[52]
-    game = new_game(&card_array)
+    new_game(&app_state)
 
     first = True
     while True:
-        draw_klondike(stdscr, &game.klon, &game.selmv, &app_state.args)
+        draw_klondike(stdscr, &app_state.klon, &app_state.selmv, &app_state.args)
 
         if first:
             height = getmaxy(stdscr)
@@ -208,6 +118,6 @@ def main(argc: int, argv: byte**) -> int:
                     return 0
             case 'n':
                 if confirm_yes_no("Do you really want to start a new game?"):
-                    game = new_game(&card_array)
+                    new_game(&app_state)
             case _:
-                game.handle_key(key, app_state.args, app_state.program_name)
+                handle_key(&app_state, key)

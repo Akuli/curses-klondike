@@ -146,7 +146,7 @@ def discard_check(klon: Klondike, ndiscarded: int, ds: int) -> None:
     assert count_visible_cards(klon.discard) == ndiscarded
 
 
-def test_stock2discard() -> None:
+def test_stock_to_discard() -> None:
     klon = Klondike{}
     card_array: Card[52]
     klon.init(&card_array)
@@ -154,21 +154,20 @@ def test_stock2discard() -> None:
 
     savestock = klon.stock
 
-    klon.stock2discard(1)
+    klon.stock_to_discard(1)
     discard_check(klon, 1, 1)
 
-    klon.stock2discard(2)
+    klon.stock_to_discard(2)
     discard_check(klon, 3, 2)
 
     for n = 4; n <= 13*4 - (1+2+3+4+5+6+7) - 1; n++:
-        klon.stock2discard(1)
+        klon.stock_to_discard(1)
         discard_check(klon, n, 1)
 
-    klon.stock2discard(1)
+    klon.stock_to_discard(1)
     discard_check(klon, 13*4 - (1+2+3+4+5+6+7), 1)
 
-    # value given here is not meaningful, all cards move regardless
-    klon.stock2discard(13*4 - (1+2+3+4+5+6+7))
+    klon.discard_to_stock()
     discard_check(klon, 0, 0)
 
     # make sure that the order of the cards doesn't reverse
@@ -186,7 +185,7 @@ def main() -> int:
     dot()
     test_move()
     dot()
-    test_stock2discard()
+    test_stock_to_discard()
     dot()
 
     printf(" ok\n")
