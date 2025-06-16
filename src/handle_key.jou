@@ -1,0 +1,161 @@
+# This file defines what happens when keys are pressed in game.
+#
+# Key presses in the help view (press h) and some other things have nothing to
+# do with this file.
+
+import "stdlib/str.jou"
+import "stdlib/process.jou"
+
+import "./curses.jou"
+import "./state.jou"
+import "./card.jou"
+import "./klondike.jou"
+import "./selectmove.jou"
+import "./help.jou"
+
+
+# Takes cards stock --> discard, or if stock is empty, puts all discardeds to stock.
+def stock_to_discard(app_state: AppState*) -> None:
+    if app_state->selmv.is_move:
+        return
+
+    if app_state->klon.stock == NULL:
+        # No cards in stock
+        app_state->klon.discard_to_stock()
+    else:
+        app_state->klon.stock_to_discard(app_state->args.pick)
+
+    # Make sure that whatever ends up in discard place is selected
+    app_state->selmv.select_top_card_or_move_to(&app_state->klon, CardPlace{kind = CardPlaceKind.Discard})
+
+
+def select_discard(app_state: AppState*) -> None:
+    if app_state->selmv.is_move:
+        return
+
+    # TODO: this is much harder than it should be
+    app_state->selmv.select_top_card_or_move_to(&app_state->klon, CardPlace{kind = CardPlaceKind.Discard})
+
+
+def move_selected_to_foundation(app_state: AppState*) -> None:
+    if app_state->selmv.is_move:
+        return
+
+    if app_state->selmv.selection.card != NULL:
+        moved = app_state->klon.move2foundation(app_state->selmv.selection.card)
+        if moved:
+            # Select whatever is just below the card that just moved to a foundation
+            app_state->selmv.select_top_card_or_move_to(&app_state->klon, app_state->selmv.selection.place)
+
+
+def move_anything_to_foundation(app_state: AppState*) -> None:
+    if app_state->selmv.is_move:
+        return
+
+    # Try discard -> foundation
+    moved = app_state->klon.move2foundation(cardlist_top(app_state->klon.discard))
+    if not moved:
+        # Try tableau -> foundation
+        for i = 0; i < 7; i++:
+            if app_state->klon.move2foundation(cardlist_top(app_state->klon.tableau[i])):
+                moved = True
+                break
+
+    if moved:
+        # Select whatever is just below the card that just moved to a foundation
+        app_state->selmv.select_top_card_or_move_to(&app_state->klon, app_state->selmv.selection.place)
+
+
+def select_more(app_state: AppState*) -> bool:
+    if app_state->selmv.is_move:
+        return False
+
+    return app_state->selmv.selection.select_more(&app_state->klon)
+
+
+def select_less(app_state: AppState*) -> bool:
+    if app_state->selmv.is_move:
+        return False
+
+    return app_state->selmv.selection.select_less(&app_state->klon)
+
+
+@public
+def new_game(app_state: AppState*) -> None:
+    app_state->klon = Klondike{}
+    app_state->klon.init(&app_state->card_array)
+
+    app_state->selmv = SelectionOrMove{
+        is_move = False,
+        selection = Selection{place = CardPlace{kind = CardPlaceKind.Stock}},
+    }
+
+
+def confirm_yes_no(prompt: byte*) -> bool:
+    prompt_len = (strlen(prompt) + strlen(" (y/n)")) as int
+
+    while True:
+        width = getmaxx(stdscr)
+        height = getmaxy(stdscr)
+
+        werase(stdscr)
+        mvwprintw(stdscr, height/2, (width - prompt_len)/2, "%s (y/n)", prompt)
+        wrefresh(stdscr)
+
+        match getch():
+            case 'y':
+                return True
+            case 'n':
+                return False
+
+
+@public
+def handle_key(app_state: AppState*, key: int) -> None:
+    match key:
+        ##########################################################################
+        ### If you change these, please update the key bindings shown in help! ###
+        ##########################################################################
+        case 'h':
+            show_help(stdscr, app_state->program_name, app_state->args.color)
+        case 'q':
+            if confirm_yes_no("Do you really want to quit?"):
+                endwin()
+                exit(0)
+        case 'n':
+            if confirm_yes_no("Do you really want to start a new game?"):
+                new_game(app_state)
+        case 's':
+            stock_to_discard(app_state)
+        case 'd':
+            select_discard(app_state)
+        case 'f':
+            move_selected_to_foundation(app_state)
+        case 'g':
+            move_anything_to_foundation(app_state)
+        case '\n':
+            if app_state->selmv.is_move:
+                app_state->selmv.end_move(&app_state->klon)
+            elif app_state->selmv.selection.place.is_stock():
+                stock_to_discard(app_state)
+            elif app_state->selmv.selection.card != NULL and app_state->selmv.selection.card->visible:
+                app_state->selmv.begin_move()
+        case 27:  # esc key, didn't find a KEY_foo constant for this in curses headers
+            app_state->selmv.is_move = False
+        case KEY_LEFT:
+            app_state->selmv.select_another_card(&app_state->klon, SelDirection.Left)
+        case KEY_RIGHT:
+            app_state->selmv.select_another_card(&app_state->klon, SelDirection.Right)
+        case KEY_UP:
+            if not select_more(app_state):
+                app_state->selmv.select_another_card(&app_state->klon, SelDirection.Up)
+        case KEY_DOWN:
+            if not select_less(app_state):
+                app_state->selmv.select_another_card(&app_state->klon, SelDirection.Down)
+        case KEY_PPAGE:
+            while select_more(app_state):
+                pass
+        case KEY_NPAGE:
+            while select_less(app_state):
+                pass
+        case '1' | '2' | '3' | '4' | '5' | '6' | '7':
+            app_state->selmv.select_top_card_or_move_to(&app_state->klon, CardPlace{kind = CardPlaceKind.Tableau, number = key - '1'})

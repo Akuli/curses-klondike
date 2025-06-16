@@ -1,4 +1,3 @@
-import "stdlib/mem.jou"
 import "./card.jou"
 
 
@@ -207,28 +206,26 @@ class Klondike:
                     return True
         return False
 
-    # Takes cards stock --> discard, or if stock is empty, puts all discardeds to stock.
-    # Pick is the value of the --pick option
-    def stock2discard(self, pick: int) -> None:
-        if self->stock == NULL:
-            # Discard to stock
-            for card = self->discard; card != NULL; card = card->next:
-                assert card->visible
-                card->visible = False
+    # Takes cards stock --> discard. Pick is the value of the --pick option.
+    def stock_to_discard(self, pick: int) -> None:
+        for i = 0; i < pick and self->stock != NULL; i++:
+            moving_card = cardlist_pop_from_bottom(&self->stock)
+            assert not moving_card->visible
+            moving_card->visible = True
+            cardlist_push_to_top(&self->discard, moving_card)
 
-            memswap(&self->stock, &self->discard, sizeof(self->discard))
-            self->discardshow = 0
+        # We moved i cards, show all of them
+        self->discardshow = i
 
-        else:
-            # Stock to discard
-            for i = 0; i < pick and self->stock != NULL; i++:
-                moving_card = cardlist_pop_from_bottom(&self->stock)
-                assert not moving_card->visible
-                moving_card->visible = True
-                cardlist_push_to_top(&self->discard, moving_card)
+    def discard_to_stock(self) -> None:
+        assert self->stock == NULL  # no more cards in stock
+        for card = self->discard; card != NULL; card = card->next:
+            assert card->visible
+            card->visible = False
 
-            # We moved i cards, show all of them
-            self->discardshow = i
+        self->stock = self->discard
+        self->discard = NULL
+        self->discardshow = 0
 
     # Check if player won
     def win(self) -> bool:
