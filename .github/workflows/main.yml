@@ -15,10 +15,15 @@ jobs:
     - uses: actions/checkout@v2
     - name: Install dependencies (mostly Jou dependencies)
       run: sudo apt install -y libncurses5-dev libncursesw5-dev llvm-19-dev clang-19 make valgrind
-    - name: Download Jou
-      run: git clone --branch $JOU_VERSION https://github.com/Akuli/jou
-    - name: Compile Jou
-      run: (cd jou && make -j2)
+    - name: Cache Jou compiler
+      id: cache-jou
+      uses: actions/cache@v4
+      with:
+        path: jou
+        key: jou-${{ runner.os }}-${{ env.JOU_VERSION }}-${{ hashFiles('.github/workflows/main.yml') }}
+    - name: Download and compile Jou
+      if: steps.cache-jou.outputs.cache-hit != 'true'
+      run: git clone --branch $JOU_VERSION https://github.com/Akuli/jou && cd jou && make -j2
     - name: Add Jou to PATH
       run: echo "$(pwd)/jou" >> $GITHUB_PATH
     - name: Run tests
