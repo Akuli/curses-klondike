@@ -103,9 +103,9 @@ class Move:
 @public
 class SelectionOrMove:
     is_move: bool
-    union:
-        selection: Selection
-        move: Move
+    # Not a union, canceling with Esc key reverts back to what was selected
+    selection: Selection
+    move: Move
 
     def select_top_card_or_move_to(self, klon: Klondike*, place: CardPlace) -> None:
         if self->is_move:

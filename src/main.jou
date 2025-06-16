@@ -1,4 +1,3 @@
-import "stdlib/str.jou"
 import "stdlib/io.jou"
 import "stdlib/process.jou"
 
@@ -7,39 +6,9 @@ import "./rand.jou"
 
 import "./state.jou"
 import "./handle_key.jou"
-import "./selectmove.jou"
 import "./card.jou"
-import "./klondike.jou"
 import "./args.jou"
 import "./ui.jou"
-
-
-def new_game(app_state: AppState*) -> None:
-    app_state->klon = Klondike{}
-    app_state->klon.init(&app_state->card_array)
-
-    app_state->selmv = SelectionOrMove{
-        is_move = False,
-        selection = Selection{place = CardPlace{kind = CardPlaceKind.Stock}},
-    }
-
-
-def confirm_yes_no(prompt: byte*) -> bool:
-    prompt_len = (strlen(prompt) + strlen(" (y/n)")) as int
-
-    while True:
-        width = getmaxx(stdscr)
-        height = getmaxy(stdscr)
-
-        werase(stdscr)
-        mvwprintw(stdscr, height/2, (width - prompt_len)/2, "%s (y/n)", prompt)
-        wrefresh(stdscr)
-
-        match getch():
-            case 'y':
-                return True
-            case 'n':
-                return False
 
 
 def fail(app_state: AppState*, msg: byte*) -> noreturn:
@@ -109,15 +78,4 @@ def main(argc: int, argv: byte**) -> int:
             first = False
 
         refresh()
-
-        key = getch()
-        match key:
-            case 'q':
-                if confirm_yes_no("Do you really want to quit?"):
-                    endwin()
-                    return 0
-            case 'n':
-                if confirm_yes_no("Do you really want to start a new game?"):
-                    new_game(&app_state)
-            case _:
-                handle_key(&app_state, key)
+        handle_key(&app_state, getch())

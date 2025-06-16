@@ -3,8 +3,10 @@
 # Key presses in the help view (press h) and some other things have nothing to
 # do with this file.
 
-import "./curses.jou"
+import "stdlib/str.jou"
+import "stdlib/process.jou"
 
+import "./curses.jou"
 import "./state.jou"
 import "./card.jou"
 import "./klondike.jou"
@@ -27,18 +29,84 @@ def stock_to_discard(app_state: AppState*) -> None:
     app_state->selmv.select_top_card_or_move_to(&app_state->klon, CardPlace{kind = CardPlaceKind.Discard})
 
 
-def curses_key_to_seldirection(key: int) -> SelDirection:
-    match key:
-        case KEY_LEFT:
-            return SelDirection.Left
-        case KEY_RIGHT:
-            return SelDirection.Right
-        case KEY_UP:
-            return SelDirection.Up
-        case KEY_DOWN:
-            return SelDirection.Down
-        case _:
-            assert False
+def select_discard(app_state: AppState*) -> None:
+    if app_state->selmv.is_move:
+        return
+
+    # TODO: this is much harder than it should be
+    app_state->selmv.select_top_card_or_move_to(&app_state->klon, CardPlace{kind = CardPlaceKind.Discard})
+
+
+def move_selected_to_foundation(app_state: AppState*) -> None:
+    if app_state->selmv.is_move:
+        return
+
+    if app_state->selmv.selection.card != NULL:
+        moved = app_state->klon.move2foundation(app_state->selmv.selection.card)
+        if moved:
+            # Select whatever is just below the card that just moved to a foundation
+            app_state->selmv.select_top_card_or_move_to(&app_state->klon, app_state->selmv.selection.place)
+
+
+def move_anything_to_foundation(app_state: AppState*) -> None:
+    if app_state->selmv.is_move:
+        return
+
+    # Try discard -> foundation
+    moved = app_state->klon.move2foundation(cardlist_top(app_state->klon.discard))
+    if not moved:
+        # Try tableau -> foundation
+        for i = 0; i < 7; i++:
+            if app_state->klon.move2foundation(cardlist_top(app_state->klon.tableau[i])):
+                moved = True
+                break
+
+    if moved:
+        # Select whatever is just below the card that just moved to a foundation
+        app_state->selmv.select_top_card_or_move_to(&app_state->klon, app_state->selmv.selection.place)
+
+
+def select_more(app_state: AppState*) -> bool:
+    if app_state->selmv.is_move:
+        return False
+
+    return app_state->selmv.selection.select_more(&app_state->klon)
+
+
+def select_less(app_state: AppState*) -> bool:
+    if app_state->selmv.is_move:
+        return False
+
+    return app_state->selmv.selection.select_less(&app_state->klon)
+
+
+@public
+def new_game(app_state: AppState*) -> None:
+    app_state->klon = Klondike{}
+    app_state->klon.init(&app_state->card_array)
+
+    app_state->selmv = SelectionOrMove{
+        is_move = False,
+        selection = Selection{place = CardPlace{kind = CardPlaceKind.Stock}},
+    }
+
+
+def confirm_yes_no(prompt: byte*) -> bool:
+    prompt_len = (strlen(prompt) + strlen(" (y/n)")) as int
+
+    while True:
+        width = getmaxx(stdscr)
+        height = getmaxy(stdscr)
+
+        werase(stdscr)
+        mvwprintw(stdscr, height/2, (width - prompt_len)/2, "%s (y/n)", prompt)
+        wrefresh(stdscr)
+
+        match getch():
+            case 'y':
+                return True
+            case 'n':
+                return False
 
 
 @public
@@ -49,52 +117,39 @@ def handle_key(app_state: AppState*, key: int) -> None:
         ##########################################################################
         case 'h':
             show_help(stdscr, app_state->program_name, app_state->args.color)
+        case 'q':
+            if confirm_yes_no("Do you really want to quit?"):
+                endwin()
+                exit(0)
+        case 'n':
+            if confirm_yes_no("Do you really want to start a new game?"):
+                new_game(app_state)
         case 's':
             stock_to_discard(app_state)
         case 'd':
-            if not app_state->selmv.is_move:
-                app_state->selmv.select_top_card_or_move_to(&app_state->klon, CardPlace{kind = CardPlaceKind.Discard})
+            select_discard(app_state)
         case 'f':
-            if (
-                (not app_state->selmv.is_move)
-                and app_state->selmv.selection.card != NULL
-                and app_state->klon.move2foundation(app_state->selmv.selection.card)
-            ):
-                app_state->selmv.select_top_card_or_move_to(&app_state->klon, app_state->selmv.selection.place)
+            move_selected_to_foundation(app_state)
         case 'g':
-            if not app_state->selmv.is_move:
-                # Try discard -> foundation
-                moved = app_state->klon.move2foundation(cardlist_top(app_state->klon.discard))
-                if not moved:
-                    # Try tableau -> foundation
-                    for i = 0; i < 7 and not moved; i++:
-                        if app_state->klon.move2foundation(cardlist_top(app_state->klon.tableau[i])):
-                            moved = True
-                            break
-
-                if moved:
-                    # update sel.card if needed
-                    app_state->selmv.select_top_card_or_move_to(&app_state->klon, app_state->selmv.selection.place)
-
+            move_anything_to_foundation(app_state)
         case 27:  # esc key, didn't find a KEY_foo constant for this in curses headers
             app_state->selmv.is_move = False
-        case KEY_UP | KEY_DOWN:
-            if (not app_state->selmv.is_move) and key == KEY_UP and app_state->selmv.selection.select_more(&app_state->klon):
-                pass  # Successfully selected more
-            elif (not app_state->selmv.is_move) and key == KEY_DOWN and app_state->selmv.selection.select_less(&app_state->klon):
-                pass  # Successfully selected less
-            else:
-                app_state->selmv.select_another_card(&app_state->klon, curses_key_to_seldirection(key))
-        case KEY_LEFT | KEY_RIGHT:
-            app_state->selmv.select_another_card(&app_state->klon, curses_key_to_seldirection(key))
+        case KEY_UP:
+            if not select_more(app_state):
+                app_state->selmv.select_another_card(&app_state->klon, SelDirection.Up)
+        case KEY_DOWN:
+            if not select_less(app_state):
+                app_state->selmv.select_another_card(&app_state->klon, SelDirection.Down)
+        case KEY_LEFT:
+            app_state->selmv.select_another_card(&app_state->klon, SelDirection.Left)
+        case KEY_RIGHT:
+            app_state->selmv.select_another_card(&app_state->klon, SelDirection.Right)
         case KEY_PPAGE:
-            if not app_state->selmv.is_move:
-                while app_state->selmv.selection.select_more(&app_state->klon):
-                    pass
+            while select_more(app_state):
+                pass
         case KEY_NPAGE:
-            if not app_state->selmv.is_move:
-                while app_state->selmv.selection.select_less(&app_state->klon):
-                    pass
+            while select_less(app_state):
+                pass
         case '\n':
             if app_state->selmv.is_move:
                 app_state->selmv.end_move(&app_state->klon)
@@ -104,4 +159,3 @@ def handle_key(app_state: AppState*, key: int) -> None:
                 app_state->selmv.begin_move()
         case '1' | '2' | '3' | '4' | '5' | '6' | '7':
             app_state->selmv.select_top_card_or_move_to(&app_state->klon, CardPlace{kind = CardPlaceKind.Tableau, number = key - '1'})
-
