@@ -74,7 +74,7 @@ class Selection:
     # returns true if something was done, false otherwise
     def select_more(self, klon: Klondike*) -> bool:
         if self->place.kind == CardPlaceKind.Tableau:
-            for card = klon->tableau[self->place.number]; card != NULL and card->next != NULL; card++:
+            for card = klon->tableau[self->place.number]; card != NULL and card->next != NULL; card = card->next:
                 if self->card == card->next and card->visible:
                     self->card = card
                     return True
