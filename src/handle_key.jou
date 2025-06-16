@@ -132,24 +132,6 @@ def handle_key(app_state: AppState*, key: int) -> None:
             move_selected_to_foundation(app_state)
         case 'g':
             move_anything_to_foundation(app_state)
-        case 27:  # esc key, didn't find a KEY_foo constant for this in curses headers
-            app_state->selmv.is_move = False
-        case KEY_UP:
-            if not select_more(app_state):
-                app_state->selmv.select_another_card(&app_state->klon, SelDirection.Up)
-        case KEY_DOWN:
-            if not select_less(app_state):
-                app_state->selmv.select_another_card(&app_state->klon, SelDirection.Down)
-        case KEY_LEFT:
-            app_state->selmv.select_another_card(&app_state->klon, SelDirection.Left)
-        case KEY_RIGHT:
-            app_state->selmv.select_another_card(&app_state->klon, SelDirection.Right)
-        case KEY_PPAGE:
-            while select_more(app_state):
-                pass
-        case KEY_NPAGE:
-            while select_less(app_state):
-                pass
         case '\n':
             if app_state->selmv.is_move:
                 app_state->selmv.end_move(&app_state->klon)
@@ -157,5 +139,23 @@ def handle_key(app_state: AppState*, key: int) -> None:
                 stock_to_discard(app_state)
             elif app_state->selmv.selection.card != NULL and app_state->selmv.selection.card->visible:
                 app_state->selmv.begin_move()
+        case 27:  # esc key, didn't find a KEY_foo constant for this in curses headers
+            app_state->selmv.is_move = False
+        case KEY_LEFT:
+            app_state->selmv.select_another_card(&app_state->klon, SelDirection.Left)
+        case KEY_RIGHT:
+            app_state->selmv.select_another_card(&app_state->klon, SelDirection.Right)
+        case KEY_UP:
+            if not select_more(app_state):
+                app_state->selmv.select_another_card(&app_state->klon, SelDirection.Up)
+        case KEY_DOWN:
+            if not select_less(app_state):
+                app_state->selmv.select_another_card(&app_state->klon, SelDirection.Down)
+        case KEY_PPAGE:
+            while select_more(app_state):
+                pass
+        case KEY_NPAGE:
+            while select_less(app_state):
+                pass
         case '1' | '2' | '3' | '4' | '5' | '6' | '7':
             app_state->selmv.select_top_card_or_move_to(&app_state->klon, CardPlace{kind = CardPlaceKind.Tableau, number = key - '1'})
