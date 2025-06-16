@@ -5,19 +5,27 @@ on:
   pull_request:
 
 env:
-  APT_PACKAGES: "make g++ libncurses5-dev libncursesw5-dev"
+  # Please keep this in sync with README
+  JOU_VERSION: "2025-04-29-0400"
 
 jobs:
-  build-and-test:
+  compile_and_test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - run: sudo apt update && sudo apt install $APT_PACKAGES
-    - run: CXXFLAGS=-Werror make -j2
-
-  iwyu:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - run: sudo apt update && sudo apt install $APT_PACKAGES iwyu
-    - run: make -j2 -k iwyu
+    - name: Install dependencies (mostly Jou dependencies)
+      run: sudo apt install -y libncurses5-dev libncursesw5-dev llvm-19-dev clang-19 make valgrind
+    - name: Download Jou
+      run: git clone --branch $JOU_VERSION https://github.com/Akuli/jou
+    - name: Compile Jou
+      run: (cd jou && make -j2)
+    - name: Add Jou to PATH
+      run: echo "$(pwd)/jou" >> $GITHUB_PATH
+    - name: Run tests
+      run: ./run_tests.sh
+    - name: Run tests with valgrind
+      run: ./run_tests.sh --valgrind
+    - name: Compile main executable
+      run: jou -o cursesklon src/main.jou
+    - name: Run with --help option
+      run: ./cursesklon --help

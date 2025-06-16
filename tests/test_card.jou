@@ -1,0 +1,116 @@
+import "../src/card.jou"
+import "./util.jou"
+import "stdlib/io.jou"
+import "stdlib/mem.jou"
+import "stdlib/str.jou"
+
+
+def test_number_to_string() -> None:
+    assert strcmp(card_number_to_string(1), "A") == 0
+    assert strcmp(card_number_to_string(2), "2") == 0
+    assert strcmp(card_number_to_string(9), "9") == 0
+    assert strcmp(card_number_to_string(10), "10") == 0
+    assert strcmp(card_number_to_string(11), "J") == 0
+    assert strcmp(card_number_to_string(12), "Q") == 0
+    assert strcmp(card_number_to_string(13), "K") == 0
+
+
+def test_cardlist_init() -> None:
+    got: int[13][4]
+    memset(got, 0, sizeof(got))
+
+    cards: Card[52]
+    first = cardlist_init(&cards)
+    for c = first; c != NULL; c = c->next:
+        got[c->suit as int][c->number - 1]++
+
+    for s = 0; s < 4; s++:
+        for n = 0; n < 13; n++:
+            assert got[s][n] == 1
+
+
+def abc_cards(a: Card*, b: Card*, c: Card*, linked: bool) -> None:
+    *a = Card{number = 1, suit = Suit.Spade, visible = True}
+    *b = Card{number = 2, suit = Suit.Diamond, visible = False}
+    *c = Card{number = 3, suit = Suit.Heart, visible = True}
+
+    if linked:
+        a->next = b
+        b->next = c
+
+
+def test_cardlist_top() -> None:
+    a, b, c: Card
+    abc_cards(&a, &b, &c, True)
+
+    assert cardlist_top(&a) == &c
+    assert cardlist_top(cardlist_top(&a)) == &c
+
+    assert cardlist_top_n(&a, 0) == NULL
+    assert cardlist_top_n(&a, 1) == &c
+    assert cardlist_top_n(&a, 2) == &b
+    assert cardlist_top_n(&a, 3) == &a
+    assert cardlist_top_n(&a, 4) == &a
+
+    assert cardlist_top_n(&b, 0) == NULL
+    assert cardlist_top_n(&b, 1) == &c
+    assert cardlist_top_n(&b, 2) == &b
+    assert cardlist_top_n(&b, 3) == &b
+    assert cardlist_top_n(&b, 4) == &b
+
+    assert cardlist_top_n(&c, 0) == NULL
+    assert cardlist_top_n(&c, 1) == &c
+    assert cardlist_top_n(&c, 2) == &c
+    assert cardlist_top_n(&c, 3) == &c
+    assert cardlist_top_n(&c, 4) == &c
+
+
+def test_cardlist_pop() -> None:
+    a, b, c: Card
+    abc_cards(&a, &b, &c, True)
+
+    p = &a
+    assert cardlist_pop_from_bottom(&p) == &a
+    assert p == &b
+    assert cardlist_pop_from_bottom(&p) == &b
+    assert p == &c
+    assert cardlist_pop_from_bottom(&p) == &c
+    assert p == NULL
+
+
+def test_cardlist_push() -> None:
+    a, b, c: Card
+    abc_cards(&a, &b, &c, False)
+
+    p: Card* = NULL
+
+    cardlist_push_to_top(&p, &a)
+    assert p == &a
+    assert p->next == NULL
+
+    cardlist_push_to_top(&p, &b)
+    assert p == &a
+    assert p->next == &b
+    assert p->next->next == NULL
+
+    cardlist_push_to_top(&p, &c)
+    assert p == &a
+    assert p->next == &b
+    assert p->next->next == &c
+    assert p->next->next->next == NULL
+
+
+def main() -> int:
+    test_number_to_string()
+    dot()
+    test_cardlist_init()
+    dot()
+    test_cardlist_top()
+    dot()
+    test_cardlist_pop()
+    dot()
+    test_cardlist_push()
+    dot()
+
+    printf(" ok\n")
+    return 0

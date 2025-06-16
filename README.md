@@ -1,8 +1,7 @@
 # Curses klondike
 
-This is a text-based [klondike] game written in C++ using curses.
-
-[klondike]: https://en.wikipedia.org/wiki/Klondike_(solitaire)
+This is a text-based [klondike](https://en.wikipedia.org/wiki/Klondike_(solitaire)) game
+written in [my Jou programming language](https://github.com/Akuli/jou) using curses.
 
 ![screenshot](screenshot.png)
 
@@ -10,16 +9,30 @@ If you don't like colors, use the `--no-colors` option:
 
 ![screenshot](screenshot-nocolors.png)
 
-If you have apt, you can install all dependencies like this:
 
-    $ sudo apt install git make g++ libncurses5-dev libncursesw5-dev
+## Setup
 
-Then you can download my code, compile it and run.
-
-    $ git clone https://github.com/Akuli/curses-klondike
-    $ cd curses-klondike
-    $ make -j2
-    $ ./cursesklon
+1. Install Jou version 2025-04-29-0400 using [Jou's instructions](https://github.com/Akuli/jou/blob/2025-04-29-0400/README.md#setup).
+    Newer versions of Jou may also work.
+2. Install curses:
+    ```
+    sudo apt install libncurses5-dev libncursesw5-dev
+    ```
+3. Download the code:
+    ```
+    git clone https://github.com/Akuli/curses-klondike
+    cd curses-klondike
+    ```
+4. Compile and run:
+    ```
+    jou src/main.jou
+    ```
+5. Compile into an executable file (if you want):
+    ```
+    jou -o cursesklon src/main.jou
+    ./cursesklon --help   # Show help
+    ./cursesklon          # Run game
+    ```
 
 
 ## FAQ
