@@ -87,21 +87,103 @@ class Box:
         mvwaddstr(window, self->bottom() - 1, self->right() - 1, border.lower_right)
 
 
+# ui_x() and ui_y() convert coordinates from card counts to curses coordinates
+def ui_x(x_count: int) -> int:
+    # Evenly spaced 7 columns, each column's width is CARD_WIDTH/2
+    #
+    # space per column = terminal_width/7
+    # center of column = space per column * (x_count + 1/2)
+    # result = center of column - CARD_WIDTH/2
+    #
+    # Simplifying it gives this.
+    return ((2*x_count + 1)*getmaxx(stdscr) - 7*CARD_WIDTH) / (2*7)
+
+def ui_y(y_count: int) -> int:
+    return y_count * CARD_HEIGHT
+
+
+# newwin() doesn't work because partially erasing borders is surprisingly tricky
+# partial erasing is needed for cards that are on top of cards
+# since we can't use subwindow borders, they're not very helpful
+def draw_card(app_state: AppState*, card: Card*, left: int, top: int, selected: bool) -> None:
+    box = Box{left=left, top=top, width=CARD_WIDTH, height=CARD_HEIGHT, selected=selected}
+    if card != NULL or selected:
+        if card != NULL and not card->visible:
+            background = '?'
+        else:
+            background = ' '
+        box.draw(stdscr, background)
+
+    if card != NULL and card->visible:
+        attributes = COLOR_PAIR(color_pair_number(suit_to_color(card->suit)))
+        if app_state->args.color:
+            wattron(stdscr, attributes)
+
+        number_string = card_number_to_string(card->number)
+        suit_string = suit_to_string(card->suit)
+        mvaddstr(top+1, left+1, number_string)
+        mvaddstr(box.bottom()-2, box.right() - 1 - (strlen(number_string) as int), number_string)
+        mvaddstr(top+1, box.right()-2, suit_string)
+        mvaddstr(box.bottom()-2, left+1, suit_string)
+
+        if app_state->args.color:
+            wattroff(stdscr, attributes)
+
+# Unlike a simple for loop, this handles overflow.
+def draw_card_stack(app_state: AppState*, bottom_card: Card*, left: int, top: int, first_selected: Card*) -> None:
+    if bottom_card == NULL:
+        return
+
+    # The text (number and suit) of bottom_card is at top+1.
+    # Let's figure out where it is for the topmost card.
+    top_text_y = top+1
+    card_count_excluding_bottom = 0
+    for card = bottom_card->next; card != NULL; card = card->next:
+        top_text_y += Y_OFFSET_BIG
+        card_count_excluding_bottom++
+
+    # We can make all cards visible by displaying some cards with a smaller offset.
+    # We'll display visible_card_count cards with the bigger offset.
+    visible_card_count = card_count_excluding_bottom
+    while top_text_y >= getmaxy(stdscr):
+        top_text_y -= Y_OFFSET_BIG
+        top_text_y += Y_OFFSET_SMALL
+        visible_card_count--
+
+    # to give some extra room that wouldn't be really necessary, but is nicer.
+    # Without the if, cards get stacked even when there's enough room.
+    # TODO: I don't like this behaviour anymore, change it
+    if visible_card_count != card_count_excluding_bottom:
+        visible_card_count--
+
+    # Let's draw the cards
+    selected = False
+    y = top
+    for card = bottom_card; card != NULL; card = card->next:
+        if card == first_selected:
+            selected = True
+        draw_card(app_state, card, left, y, selected)
+        if visible_card_count --> 0:
+            y += Y_OFFSET_BIG
+        else:
+            y += Y_OFFSET_SMALL
+
+
 # See https://github.com/Akuli/curses-klondike/issues/2
 enum DiscardHide:
     HideAll
     ShowLastOnly
     ShowAll
 
-def decide_what_to_hide(selmv: SelectionOrMove*, command_line_option: bool) -> DiscardHide:
-    if not command_line_option:
+def decide_what_to_hide(app_state: AppState*) -> DiscardHide:
+    if not app_state->args.discardhide:
         return DiscardHide.ShowAll
 
-    if not selmv->is_move:
+    if not app_state->selmv.is_move:
         return DiscardHide.ShowLastOnly
 
-    if selmv->move.src.is_discard():
-        if selmv->move.dest.is_discard():
+    if app_state->selmv.move.src.is_discard():
+        if app_state->selmv.move.dest.is_discard():
             # Move from discard to discard, show as if not moving at all
             return DiscardHide.ShowLastOnly
         else:
@@ -111,188 +193,85 @@ def decide_what_to_hide(selmv: SelectionOrMove*, command_line_option: bool) -> D
     return DiscardHide.ShowLastOnly
 
 
-class Drawer:
-    window: WINDOW*
-    klon: Klondike*
-    sel: Selection*
-    moving: bool
-    color: bool
-    discard_hide: DiscardHide
-    discard_x_offset: int
+def draw_discard(app_state: AppState*) -> None:
+    show_count = app_state->klon.discardshow
+    if app_state->selmv.selection.place.is_discard() and app_state->selmv.is_move:
+        show_count++
 
-    def terminal_width(self) -> int:
-        return getmaxx(self->window)
+    x = ui_x(1)
+    for card = cardlist_top_n(app_state->klon.discard, show_count); card != NULL; card = card->next:
+        temp = *card
+        assert temp.visible
+        match decide_what_to_hide(app_state):
+            case DiscardHide.ShowAll:
+                temp.visible = True
+            case DiscardHide.HideAll:
+                temp.visible = False
+            case DiscardHide.ShowLastOnly:
+                temp.visible = card->next == NULL
 
-    def terminal_height(self) -> int:
-        return getmaxy(self->window)
+        draw_card(app_state, &temp, x, ui_y(0), app_state->selmv.selection.place.is_discard() and card->next == NULL)
+        if app_state->args.discardhide:
+            x++
+        else:
+            x += X_OFFSET
 
-    # ui_x() and ui_y() convert coordinates from card counts to curses coordinates
-    def ui_x(self, x_count: int) -> int:
-        # evenly spaced 7 columns, centered
-        #
-        # space per column = terminal_width/7
-        # center of column = space per column * (x_count + 1/2)
-        # result = center of column - CARD_WIDTH/2
-        #
-        # Simplifying it gives this.
-        return ((2*x_count + 1)*self->terminal_width() - 7*CARD_WIDTH) / (2*7)
+    if app_state->klon.discard == NULL:
+        # nothing was drawn yet, show where discarded cards would be
+        draw_card(app_state, NULL, ui_x(1), ui_y(0), app_state->selmv.selection.place.is_discard())
 
-    def ui_y(self, y_count: int) -> int:
-        return y_count * CARD_HEIGHT
 
-    # newwin() doesn't work because partially erasing borders is surprisingly tricky
-    # partial erasing is needed for cards that are on top of cards
-    # since we can't use subwindow borders, they're not very helpful
-    def draw_card(self, card: Card*, left: int, top: int, selected: bool) -> None:
-        box = Box{left=left, top=top, width=CARD_WIDTH, height=CARD_HEIGHT, selected=selected}
-        if card != NULL or selected:
-            if card != NULL and not card->visible:
-                background = '?'
-            else:
-                background = ' '
-            box.draw(self->window, background)
-
-        if card != NULL and card->visible:
-            attributes = COLOR_PAIR(color_pair_number(suit_to_color(card->suit)))
-            if self->color:
-                wattron(self->window, attributes)
-
-            number_string = card_number_to_string(card->number)
-            suit_string = suit_to_string(card->suit)
-            mvaddstr(top+1, left+1, number_string)
-            mvaddstr(box.bottom()-2, box.right() - 1 - (strlen(number_string) as int), number_string)
-            mvaddstr(top+1, box.right()-2, suit_string)
-            mvaddstr(box.bottom()-2, left+1, suit_string)
-
-            if self->color:
-                wattroff(self->window, attributes)
-
-    # Unlike a simple for loop, this handles overflow.
-    def draw_card_stack(self, bottom_card: Card*, left: int, top: int, first_selected: Card*) -> None:
-        if bottom_card == NULL:
-            return
-
-        # The text (number and suit) of bottom_card is at top+1.
-        # Let's figure out where it is for the topmost card.
-        top_text_y = top+1
-        card_count_excluding_bottom = 0
-        for card = bottom_card->next; card != NULL; card = card->next:
-            top_text_y += Y_OFFSET_BIG
-            card_count_excluding_bottom++
-
-        # We can make all cards visible by displaying some cards with a smaller offset.
-        # We'll display visible_card_count cards with the bigger offset.
-        visible_card_count = card_count_excluding_bottom
-        while top_text_y >= self->terminal_height():
-            top_text_y -= Y_OFFSET_BIG
-            top_text_y += Y_OFFSET_SMALL
-            visible_card_count--
-
-        # to give some extra room that wouldn't be really necessary, but is nicer.
-        # Without the if, cards get stacked even when there's enough room.
-        # TODO: I don't like self behaviour anymore, change it
-        if  visible_card_count != card_count_excluding_bottom:
-            visible_card_count--
-
-        # Let's draw the cards
-        selected = False
-        y = top
-        for card = bottom_card; card != NULL; card = card->next:
-            if card == first_selected:
-                selected = True
-            self->draw_card(card, left, y, selected)
-            if visible_card_count --> 0:
-                y += Y_OFFSET_BIG
-            else:
-                y += Y_OFFSET_SMALL
-
-    def draw_discard(self) -> None:
-        show_count = self->klon->discardshow
-        if self->sel->place.is_discard() and self->moving:
-            show_count++
-
-        x = self->ui_x(1)
-        for card = cardlist_top_n(self->klon->discard, show_count); card != NULL; card = card->next:
-            temp = *card
-            assert temp.visible
-            match self->discard_hide:
-                case DiscardHide.ShowAll:
-                    temp.visible = True
-                case DiscardHide.HideAll:
-                    temp.visible = False
-                case DiscardHide.ShowLastOnly:
-                    temp.visible = card->next == NULL
-
-            self->draw_card(&temp, x, self->ui_y(0), self->sel->place.is_discard() and card->next == NULL)
-            x += self->discard_x_offset
-
-        if self->klon->discard == NULL:   # nothing was drawn, but if the discard is selected, at least draw that
-            self->draw_card(NULL, self->ui_x(1), self->ui_y(0), self->sel->place.is_discard())
-
-    def draw_tableau(self) -> None:
-        for x = 0; x < 7; x++:
-            if self->klon->tableau[x] == NULL:
-                # draw a border if the tableau item is selected
-                self->draw_card(
-                    NULL,
-                    self->ui_x(x),
-                    self->ui_y(1),
-                    self->sel->place.is_tableau(x)
-                )
-                continue
-
-            y = self->ui_y(1)
-            for card = self->klon->tableau[x]; card != NULL; card = card->next:
-                if card->visible:
-                    self->draw_card_stack(card, self->ui_x(x), y, self->sel->card)
-                    break
-
-                self->draw_card(card, self->ui_x(x), y, False)
-                y += Y_OFFSET_SMALL
-
-    def draw_game(self) -> None:
-        werase(self->window)
-
-        self->draw_card(self->klon->stock, self->ui_x(0), self->ui_y(0), self->sel->place.is_stock())
-        self->draw_discard()
-        for i = 0; i < 4; i++:
-            self->draw_card(
-                cardlist_top(self->klon->foundations[i]),
-                self->ui_x(3+i),
-                self->ui_y(0),
-                self->sel->place.is_foundation(i)
+def draw_tableau(app_state: AppState*) -> None:
+    for x = 0; x < 7; x++:
+        if app_state->klon.tableau[x] == NULL:
+            # draw a border if the tableau item is selected
+            draw_card(
+                app_state,
+                NULL,
+                ui_x(x),
+                ui_y(1),
+                app_state->selmv.selection.place.is_tableau(x)
             )
-        self->draw_tableau()
+            continue
 
-        if self->klon->win():
-            msg = "you win :)"
-            msg_width = strlen(msg) as int
-            mvwaddstr(self->window, self->terminal_height()/2, (self->terminal_width() - msg_width)/2, msg)
+        y = ui_y(1)
+        for card = app_state->klon.tableau[x]; card != NULL; card = card->next:
+            if card->visible:
+                draw_card_stack(app_state, card, ui_x(x), y, app_state->selmv.selection.card)
+                break
+
+            draw_card(app_state, card, ui_x(x), y, False)
+            y += Y_OFFSET_SMALL
+
+
+def draw_game(app_state: AppState*) -> None:
+    werase(stdscr)
+
+    draw_card(app_state, app_state->klon.stock, ui_x(0), ui_y(0), app_state->selmv.selection.place.is_stock())
+    draw_discard(app_state)
+    for i = 0; i < 4; i++:
+        draw_card(
+            app_state,
+            cardlist_top(app_state->klon.foundations[i]),
+            ui_x(3+i),
+            ui_y(0),
+            app_state->selmv.selection.place.is_foundation(i)
+        )
+    draw_tableau(app_state)
+
+    if app_state->klon.win():
+        msg = "you win :)"
+        msg_width = strlen(msg) as int
+        mvwaddstr(stdscr, getmaxy(stdscr)/2, (getmaxx(stdscr) - msg_width)/2, msg)
 
 
 @public
-def draw_klondike(window: WINDOW*, klon: Klondike*, selmv: SelectionOrMove*, args: Args*) -> None:
-    discard_hide = decide_what_to_hide(selmv, args->discardhide)
-    if args->discardhide:
-        discard_x_offset = 1
-    else:
-        discard_x_offset = X_OFFSET
-
-    drawer = Drawer{
-        window=window,
-        klon=klon,
-        sel=&selmv->selection,
-        moving=selmv->is_move,
-        color=args->color,
-        discard_hide=discard_hide,
-        discard_x_offset=discard_x_offset,
-    }
-
-    if selmv->is_move:
+def draw_klondike(app_state: AppState*) -> None:
+    if app_state->selmv.is_move:
         # Temporarily create state after the move and show that
         temp_cards: Card[52]
         temp_klon = Klondike{}
-        temp_sel = Selection{card=klon->dup(&temp_klon, selmv->move.card, &temp_cards), place=selmv->move.dest}
+        temp_sel = Selection{card=app_state->klon.dup(&temp_klon, app_state->selmv.move.card, &temp_cards), place=app_state->selmv.move.dest}
         temp_klon.move(temp_sel.card, temp_sel.place, True)
 
         drawer.klon = &temp_klon
