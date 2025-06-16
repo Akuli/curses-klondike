@@ -5,6 +5,7 @@ import "stdlib/process.jou"
 import "./curses.jou"
 import "./rand.jou"
 
+import "./state.jou"
 import "./selectmove.jou"
 import "./card.jou"
 import "./klondike.jou"
@@ -130,10 +131,10 @@ def confirm_yes_no(prompt: byte*) -> bool:
                 return False
 
 
-def fail(screen_inited: bool, program_name: byte*, msg: byte*) -> noreturn:
-    if screen_inited:
+def fail(app_state: AppState*, msg: byte*) -> noreturn:
+    if app_state->screen_inited:
         endwin()
-    fprintf(stderr, "%s: %s\n", program_name, msg)
+    fprintf(stderr, "%s: %s\n", app_state->program_name, msg)
     exit(1)
 
 
@@ -145,16 +146,15 @@ const LC_ALL: int = 6  # TODO: probably something else on macos
 
 
 def main(argc: int, argv: byte**) -> int:
-    screen_inited = False
+    app_state = AppState{program_name = argv[0]}
 
     # displaying unicodes correctly needs setlocale here AND cursesw instead of curses in makefile
     if setlocale(LC_ALL, "") == NULL:
-        fail(screen_inited, argv[0], "setlocale() failed")
+        fail(&app_state, "setlocale() failed")
 
     srand(time(NULL) as uint32)
 
-    args: Args
-    status = parse_args(argv, &args, stdout, stderr)
+    status = parse_args(argv, &app_state.args, stdout, stderr)
     if status != CONTINUE_TO_PROGRAM:
         return status
 
@@ -162,34 +162,34 @@ def main(argc: int, argv: byte**) -> int:
     # see also ESCDELAY in a man page named "ncurses"
     # setting to "0" works, but feels like a hack, so i used same as in stackoverflow
     if setenv("ESCDELAY", "25", False as int) < 0:
-        fail(screen_inited, argv[0], "setenv() failed")
+        fail(&app_state, "setenv() failed")
 
     if initscr() == NULL:
-        fail(screen_inited, argv[0], "initscr() failed")
-    screen_inited = True
+        fail(&app_state, "initscr() failed")
+    app_state.screen_inited = True
 
-    args.color = (args.color and has_colors() and start_color() != ERR)
-    if args.color:
+    app_state.args.color = (app_state.args.color and has_colors() and start_color() != ERR)
+    if app_state.args.color:
         if init_pair(color_pair_number(Color.Red), COLOR_RED, COLOR_BLACK) == ERR:
-            fail(screen_inited, argv[0], "init_pair() failed")
+            fail(&app_state, "init_pair() failed")
         if init_pair(color_pair_number(Color.Black), COLOR_WHITE, COLOR_BLACK) == ERR:
-            fail(screen_inited, argv[0], "init_pair() failed")
+            fail(&app_state, "init_pair() failed")
 
     if cbreak() == ERR:
-        fail(screen_inited, argv[0], "cbreak() failed")
+        fail(&app_state, "cbreak() failed")
     if noecho() == ERR:
-        fail(screen_inited, argv[0], "noecho() failed")
+        fail(&app_state, "noecho() failed")
     if curs_set(0) == ERR:
-        fail(screen_inited, argv[0], "curs_set() failed")
+        fail(&app_state, "curs_set() failed")
     if keypad(stdscr, True) == ERR:
-        fail(screen_inited, argv[0], "keypad() failed")
+        fail(&app_state, "keypad() failed")
 
     card_array: Card[52]
     game = new_game(&card_array)
 
     first = True
     while True:
-        draw_klondike(stdscr, &game.klon, &game.selmv, &args)
+        draw_klondike(stdscr, &game.klon, &game.selmv, &app_state.args)
 
         if first:
             height = getmaxy(stdscr)
@@ -210,4 +210,4 @@ def main(argc: int, argv: byte**) -> int:
                 if confirm_yes_no("Do you really want to start a new game?"):
                     game = new_game(&card_array)
             case _:
-                game.handle_key(key, args, argv[0])
+                game.handle_key(key, app_state.args, app_state.program_name)
