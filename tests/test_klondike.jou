@@ -142,6 +142,36 @@ def test_stock_to_discard() -> None:
     # TODO: test with less than 13*4 - (1+2+3+4+5+6+7) stock cards? e.g. 0 stock cards
 
 
+def test_stock_to_discard_visibility_with_discard_hide() -> None:
+    klon = Klondike{}
+    card_array: Card[52]
+    klon.init(&card_array)
+
+    klon.stock_to_discard(Args{pick = 3, discardhide = True})
+    klon.stock_to_discard(Args{pick = 3, discardhide = True})
+
+    # Only the topmost card should be visible
+    assert cardlist_top(klon.discard)->visible
+    n = 0
+    for c = klon.discard; c != NULL; c = c->next:
+        if c->visible:
+            n++
+    assert n == 1
+
+
+def test_stock_to_discard_visibility_without_discard_hide() -> None:
+    klon = Klondike{}
+    card_array: Card[52]
+    klon.init(&card_array)
+
+    klon.stock_to_discard(Args{pick = 3, discardhide = False})
+    klon.stock_to_discard(Args{pick = 3, discardhide = False})
+
+    # All cards should be visible
+    for c = klon.discard; c != NULL; c = c->next:
+        assert c->visible
+
+
 def main() -> int:
     test_init()
     dot()
@@ -150,6 +180,10 @@ def main() -> int:
     test_move()
     dot()
     test_stock_to_discard()
+    dot()
+    test_stock_to_discard_visibility_with_discard_hide()
+    dot()
+    test_stock_to_discard_visibility_without_discard_hide()
     dot()
 
     printf(" ok\n")
