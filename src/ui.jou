@@ -147,28 +147,50 @@ def next_card(app_state: AppState*, place: CardPlace, card: Card**) -> bool:
         case CardPlaceKind.Tableau:
             first_card_at_place = app_state->klon.tableau[place.number]
 
-    if app_state->selmv.is_move and not app_state->selmv.move.src.equals(app_state->selmv.move.dest):
-        assert app_state->selmv.move.card != NULL
+    if app_state->selmv.is_move:
+        moving_card = app_state->selmv.move.card
+        assert moving_card != NULL
+    else:
+        moving_card = NULL
 
+    if (
+        app_state->selmv.is_move
+        and not app_state->selmv.move.src.equals(app_state->selmv.move.dest)
+        and place.equals(app_state->selmv.move.src)
+    ):
+        # Cards are being moved away from here. Iterate until we hit the moving card.
         if *card == NULL:
-            # Start of iteration
             *card = first_card_at_place
-            if *card == NULL and place.equals(app_state->selmv.move.dest):
-                # Start from moving cards, we need to include them anyway
-                *card = app_state->selmv.move.card
-        elif *card == cardlist_top(app_state->selmv.move.card):
-            # Got to end of moving cards, this is really truly the end.
-            # It is important to always stop here.
-            assert (*card)->next == NULL
-            *card = NULL
         else:
             *card = (*card)->next
-            if *card == NULL and place.equals(app_state->selmv.move.dest):
-                # Switch from cards that are already there to moving cards
-                *card = app_state->selmv.move.card
+
+        if *card == moving_card:
+            *card = NULL
+
+    elif (
+        app_state->selmv.is_move
+        and not app_state->selmv.move.src.equals(app_state->selmv.move.dest)
+        and place.equals(app_state->selmv.move.dest)
+    ):
+        # Cards are being moved here. Iterate first the cards that are already
+        # here, then the moving cards.
+        moving_card = app_state->selmv.move.card
+        assert moving_card != NULL
+
+        if *card == NULL:
+            if first_card_at_place != NULL:
+                *card = first_card_at_place
+            else:
+                # We only have moving cards, let's go through them
+                *card = moving_card
+        elif *card == cardlist_top(first_card_at_place):
+            # Switch to going through moving cards
+            *card = moving_card
+        else:
+            *card = (*card)->next
 
     else:
-        # No moves. Normal linked list iteration.
+        # No relevant moves. Normal linked list iteration.
         if *card == NULL:
             *card = first_card_at_place
         else:
