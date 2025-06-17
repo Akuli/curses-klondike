@@ -276,13 +276,24 @@ def decide_what_to_hide(app_state: AppState*) -> DiscardHide:
 
 
 def draw_discard(app_state: AppState*) -> None:
-    show_count = app_state->klon.discardshow
-    # TODO: check all uses of app_state->selmv.selection, they are sus...
-    if app_state->selmv.selection.place.is_discard() and app_state->selmv.is_move:
-        show_count++
+    if (
+        app_state->selmv.is_move
+        and app_state->selmv.move.src.is_discard()
+        and not app_state->selmv.move.dest.is_discard()
+    ):
+        # A card is being moved out of discard. Do not show it.
+        end_of_iteration = app_state->selmv.move.card
+    else:
+        end_of_iteration = NULL
+
+    if app_state->selmv.is_move:
+        select_last = app_state->selmv.move.dest.is_discard()
+    else:
+        select_last = app_state->selmv.selection.place.is_discard()
 
     x = ui_x(1)
-    for card = cardlist_top_n(app_state->klon.discard, show_count); card != NULL; card = card->next:
+    for card = cardlist_top_n(app_state->klon.discard, app_state->klon.discardshow); card != end_of_iteration; card = card->next:
+        # TODO: perhaps shouldn't need to make a temp copy?
         temp = *card
         assert temp.visible
         match decide_what_to_hide(app_state):
@@ -291,9 +302,9 @@ def draw_discard(app_state: AppState*) -> None:
             case DiscardHide.HideAll:
                 temp.visible = False
             case DiscardHide.ShowLastOnly:
-                temp.visible = card->next == NULL
+                temp.visible = card->next == end_of_iteration
 
-        draw_card(app_state, &temp, x, ui_y(0), app_state->selmv.selection.place.is_discard() and card->next == NULL)
+        draw_card(app_state, &temp, x, ui_y(0), card->next == end_of_iteration and select_last)
         if app_state->args.discardhide:
             x++
         else:
