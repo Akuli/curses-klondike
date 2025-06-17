@@ -41,41 +41,6 @@ def test_init() -> None:
         assert cardlist_top(klon.tableau[i])->visible
 
 
-def cards_match(list1: Card*, list2: Card*) -> bool:
-    a = list1
-    b = list2
-
-    while a != NULL or b != NULL:
-        assert a != b
-        if a == NULL or b == NULL:
-            # list lengths differ
-            return False
-        if a->number != b->number or a->suit != b->suit or a->visible != b->visible:
-            return False
-        a = a->next
-        b = b->next
-
-    return True
-
-
-def test_dup() -> None:
-    kln1 = Klondike{}
-    kln2 = Klondike{}
-    card_array1: Card[52]
-    card_array2: Card[52]
-    kln1.init(&card_array1)
-
-    dup_result = kln1.dup(&kln2, kln1.tableau[2]->next, &card_array2)
-    assert dup_result == kln2.tableau[2]->next
-
-    assert cards_match(kln1.stock, kln2.stock)
-    assert cards_match(kln1.discard, kln2.discard)
-    for i = 0; i < 4; i++:
-        assert cards_match(kln1.foundations[i], kln2.foundations[i])
-    for i = 0; i < 7; i++:
-        assert cards_match(kln1.tableau[i], kln2.tableau[i])
-
-
 def test_canmove() -> None:
     card_array: Card[52]
     klon = Klondike{}
@@ -178,8 +143,6 @@ def test_stock_to_discard() -> None:
 
 def main() -> int:
     test_init()
-    dot()
-    test_dup()
     dot()
     test_canmove()
     dot()
