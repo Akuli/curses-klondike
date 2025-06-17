@@ -212,10 +212,9 @@ def draw_discard(app_state: AppState*) -> None:
         num_picked--
 
     x = ui_x(1)
-    y = ui_y(0)
 
     for i = 0; i < ncards; i++:
-        draw_card(app_state, cards[i], x, y)
+        draw_card(app_state, cards[i], x, ui_y(0))
         if i >= ncards - num_picked:
             # Do not cover this with other cards
             if app_state->args.discardhide:
@@ -241,15 +240,14 @@ def draw_tableau(app_state: AppState*, number: int) -> None:
     cards: Card*[52]
     ncards = get_cards_after_moves(app_state, place, &cards)
 
-    x = ui_x(number)
     y = ui_y(1)
 
     for i = 0; i < ncards; i++:
         if cards[i]->visible:
-            draw_cards_with_compression(app_state, &cards[i], ncards - i, x, y)
+            draw_cards_with_compression(app_state, &cards[i], ncards - i, ui_x(number), y)
             break
 
-        draw_card(app_state, cards[i], x, y)
+        draw_card(app_state, cards[i], ui_x(number), y)
         y += Y_OFFSET_SMALL
 
 
