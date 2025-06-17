@@ -1,4 +1,6 @@
 import "stdlib/str.jou"
+import "stdlib/math.jou"
+import "stdlib/mem.jou"
 
 import "./state.jou"
 import "./klondike.jou"
@@ -129,14 +131,10 @@ def draw_card(app_state: AppState*, card: Card*, left: int, top: int, selected: 
             wattroff(stdscr, attributes)
 
 
-# For iterating through cards at a certain place. Takes moves into account.
+# For drawing cards at a certain place.
 #
-# Usage:
-#
-#   card: Card* = NULL
-#   while next_card(app_state, place, &card):
-#       ...
-def next_card(app_state: AppState*, place: CardPlace, card: Card**) -> bool:
+# Places results to the result array. Returns number of cards in it.
+def get_cards_after_moves(app_state: AppState*, place: CardPlace, result: Card*[52]*) -> int:
     match place.kind:
         case CardPlaceKind.Stock:
             first_card_at_place = app_state->klon.stock
@@ -147,56 +145,35 @@ def next_card(app_state: AppState*, place: CardPlace, card: Card**) -> bool:
         case CardPlaceKind.Tableau:
             first_card_at_place = app_state->klon.tableau[place.number]
 
-    if app_state->selmv.is_move:
-        moving_card = app_state->selmv.move.card
-        assert moving_card != NULL
-    else:
-        moving_card = NULL
+    i = 0
 
     if (
         app_state->selmv.is_move
         and not app_state->selmv.move.src.equals(app_state->selmv.move.dest)
         and place.equals(app_state->selmv.move.src)
     ):
-        # Cards are being moved away from here. Iterate until we hit the moving card.
-        if *card == NULL:
-            *card = first_card_at_place
-        else:
-            *card = (*card)->next
-
-        if *card == moving_card:
-            *card = NULL
-
+        # Cards are being moved away from here. Stop at the moving card.
+        for c = first_card_at_place; c != NULL; c = c->next:
+            if c == app_state->selmv.move.card:
+                break
+            (*result)[i++] = c
     elif (
         app_state->selmv.is_move
         and not app_state->selmv.move.src.equals(app_state->selmv.move.dest)
         and place.equals(app_state->selmv.move.dest)
     ):
-        # Cards are being moved here. Iterate first the cards that are already
-        # here, then the moving cards.
-        moving_card = app_state->selmv.move.card
-        assert moving_card != NULL
-
-        if *card == NULL:
-            if first_card_at_place != NULL:
-                *card = first_card_at_place
-            else:
-                # We only have moving cards, let's go through them
-                *card = moving_card
-        elif *card == cardlist_top(first_card_at_place):
-            # Switch to going through moving cards
-            *card = moving_card
-        else:
-            *card = (*card)->next
-
+        # Cards are being moved here. Add moved cards to end of result.
+        for c = first_card_at_place; c != NULL; c = c->next:
+            (*result)[i++] = c
+        for c = app_state->selmv.move.card; c != NULL; c = c->next:
+            (*result)[i++] = c
     else:
-        # No relevant moves. Normal linked list iteration.
-        if *card == NULL:
-            *card = first_card_at_place
-        else:
-            *card = (*card)->next
+        # Moves are irrelevant
+        for c = first_card_at_place; c != NULL; c = c->next:
+            (*result)[i++] = c
 
-    return *card != NULL
+    assert i < sizeof(*result) / sizeof((*result)[0])
+    return i
 
 
 # This function handles:
@@ -205,27 +182,23 @@ def next_card(app_state: AppState*, place: CardPlace, card: Card**) -> bool:
 #   - Moving cards: we want to show the state as if the move happened, even
 #     though it didn't really happen yet.
 def draw_card_stack(app_state: AppState*, place: CardPlace, skip_count: int, left: int, top: int, first_selected: Card*) -> None:
-    starting_card: Card* = NULL
-    while skip_count --> 0:
-        next_card(app_state, place, &starting_card)
+    cards: Card*[52]
+    ncards = get_cards_after_moves(app_state, place, &cards)
 
-    # How many cards are we going to draw?
-    # TODO: moving
-    card = starting_card
-    n = 0
-    while next_card(app_state, place, &card):
-        n++
+    skip_count = min(skip_count, ncards)
+    memmove(&cards[skip_count], &cards[0], sizeof(cards[0]) * (ncards - skip_count))
+    ncards -= skip_count
 
-    if n <= 0:
+    if ncards == 0:
         return
 
     # The text (number and suit) of bottom_card is at top+1.
     # Let's figure out where it is for the topmost card.
-    top_text_y = top + 1 + (n-1) * Y_OFFSET_BIG
+    top_text_y = top + 1 + (ncards-1) * Y_OFFSET_BIG
 
     # We can make all cards visible by displaying some cards with a smaller offset.
     # We'll display visible_card_count cards with the bigger offset.
-    visible_card_count = n-1
+    visible_card_count = ncards-1
     while top_text_y >= getmaxy(stdscr):
         top_text_y -= Y_OFFSET_BIG
         top_text_y += Y_OFFSET_SMALL
@@ -234,17 +207,16 @@ def draw_card_stack(app_state: AppState*, place: CardPlace, skip_count: int, lef
     # to give some extra room that wouldn't be really necessary, but is nicer.
     # Without the if, cards get stacked even when there's enough room.
     # TODO: I don't like this behaviour anymore, change it
-    if visible_card_count != n-1:
+    if visible_card_count != ncards-1:
         visible_card_count--
 
     # Let's draw the cards
     selected = False
     y = top
-    card = starting_card
-    while next_card(app_state, place, &card):
-        if card == first_selected:
+    for i = 0; i < ncards; i++:
+        if cards[i] == first_selected:
             selected = True
-        draw_card(app_state, card, left, y, selected)
+        draw_card(app_state, cards[i], left, y, selected)
         if visible_card_count --> 0:
             y += Y_OFFSET_BIG
         else:
@@ -276,22 +248,32 @@ def decide_what_to_hide(app_state: AppState*) -> DiscardHide:
 
 
 def draw_discard(app_state: AppState*) -> None:
-    # Where to start in the pile of discarded cards?
-    n = app_state->klon.discardshow
+    cards: Card*[52]
+    ncards = get_cards_after_moves(app_state, CardPlace{kind = CardPlaceKind.Discard}, &cards)
 
-    if (
-        app_state->selmv.is_move
-        and app_state->selmv.move.src.is_discard()
-        and not app_state->selmv.move.dest.is_discard()
-    ):
-        # A card is being moved out of discard. Do not show it.
-        end_of_iteration = app_state->selmv.move.card
-        # Prevent the pile appearing empty when moving away the last picked
-        # card, but there are more cards below it.
-        if n == 1:
-            n = 2
-    else:
-        end_of_iteration = NULL
+    # Show only the discarded cards that are meant to be visible.
+    #
+    # Getting this to work in all situations is tricky:
+    #   - No move
+    #   - A move, but not from discard (same as no moves)
+    #   - A move from discard to discard (same as no moves)
+    #   - A move from discard to somewhere else, no cards remain in discard
+    #   - A move from discard to somewhere else, only non-visible cards remain in discard
+    #   - A move from discard to somewhere else, visible cards remain in discard
+    shown_ncards = min(ncards, app_state->klon.discardshow)
+
+#    if (
+#        app_state->selmv.is_move
+#        and app_state->selmv.move.src.is_discard()
+#        and not app_state->selmv.move.dest.is_discard()
+#    ):
+#        # A card is being moved out of discard.
+#        #
+#        # Prevent the pile appearing empty when moving away the last picked
+#        # card, but there are more cards below it.
+#        
+#        if n == 1:
+#            n = 2
 
     if app_state->selmv.is_move:
         select_last = app_state->selmv.move.dest.is_discard()
@@ -299,19 +281,16 @@ def draw_discard(app_state: AppState*) -> None:
         select_last = app_state->selmv.selection.place.is_discard()
 
     x = ui_x(1)
-    for card = cardlist_top_n(app_state->klon.discard, n); card != end_of_iteration; card = card->next:
-        # TODO: perhaps shouldn't need to make a temp copy?
-        temp = *card
-        assert temp.visible
+    for i = ncards - shown_ncards; i < ncards; i++:
+        temp_copy = *cards[i]  # TODO: shouldn't be needed
         match decide_what_to_hide(app_state):
             case DiscardHide.ShowAll:
-                temp.visible = True
+                temp_copy.visible = True
             case DiscardHide.HideAll:
-                temp.visible = False
+                temp_copy.visible = False
             case DiscardHide.ShowLastOnly:
-                temp.visible = card->next == end_of_iteration
-
-        draw_card(app_state, &temp, x, ui_y(0), card->next == end_of_iteration and select_last)
+                temp_copy.visible = (i == ncards - 1)
+        draw_card(app_state, &temp_copy, x, ui_y(0), (i == ncards - 1) and select_last)
         if app_state->args.discardhide:
             x++
         else:
