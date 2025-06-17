@@ -276,6 +276,9 @@ def decide_what_to_hide(app_state: AppState*) -> DiscardHide:
 
 
 def draw_discard(app_state: AppState*) -> None:
+    # Where to start in the pile of discarded cards?
+    n = app_state->klon.discardshow
+
     if (
         app_state->selmv.is_move
         and app_state->selmv.move.src.is_discard()
@@ -283,6 +286,10 @@ def draw_discard(app_state: AppState*) -> None:
     ):
         # A card is being moved out of discard. Do not show it.
         end_of_iteration = app_state->selmv.move.card
+        # Prevent the pile appearing empty when moving away the last picked
+        # card, but there are more cards below it.
+        if n == 1:
+            n = 2
     else:
         end_of_iteration = NULL
 
@@ -292,7 +299,7 @@ def draw_discard(app_state: AppState*) -> None:
         select_last = app_state->selmv.selection.place.is_discard()
 
     x = ui_x(1)
-    for card = cardlist_top_n(app_state->klon.discard, app_state->klon.discardshow); card != end_of_iteration; card = card->next:
+    for card = cardlist_top_n(app_state->klon.discard, n); card != end_of_iteration; card = card->next:
         # TODO: perhaps shouldn't need to make a temp copy?
         temp = *card
         assert temp.visible
