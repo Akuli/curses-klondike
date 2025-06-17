@@ -1,4 +1,5 @@
 import "./card.jou"
+import "./state.jou"
 
 
 # A card place cannot be represented as a card, or as a pointer to a card,
@@ -45,7 +46,7 @@ class Klondike:
     # These point to just one card. Use ->next to access others.
     stock: Card*           # TOPMOST card or NULL
     discard: Card*         # bottommost card or NULL
-    discardshow: int       # number of cards shown in discard, or 0 if discard is NULL
+    num_picked: int        # number of cards in discard not fully covered by other cards
     foundations: Card*[4]  # bottommost cards or NULLs
     tableau: Card*[7]      # bottommost cards or NULLs
 
@@ -60,7 +61,7 @@ class Klondike:
 
         self->stock = list
         self->discard = NULL
-        self->discardshow = 0
+        self->num_picked = 0
         for i = 0; i < 4; i++:
             self->foundations[i] = NULL
 
@@ -139,14 +140,14 @@ class Klondike:
             # special case: no card has card as ->next
             if *list == card:
                 if list == &self->discard:
-                    self->discardshow = 0
+                    self->num_picked = 0
                 *list = NULL
                 return NULL
 
             for prev = *list; prev != NULL and prev->next != NULL; prev = prev->next:
                 if prev->next == card:
-                    if list == &self->discard and self->discardshow > 1:
-                        self->discardshow--
+                    if list == &self->discard and self->num_picked > 1:
+                        self->num_picked--
                     prev->next = NULL
                     return prev
 
@@ -154,6 +155,8 @@ class Klondike:
 
     # Moves the source card and ->next cards (if any) to dest.
     # If raw, accepts invalid moves (can_move) and never sets ->visible
+    #
+    # TODO: are raw moves still needed?
     def move(self, card: Card*, dest: CardPlace, raw: bool) -> None:
         if not raw:
             assert self->can_move(card, dest)
@@ -185,26 +188,34 @@ class Klondike:
                     return True
         return False
 
-    # Takes cards stock --> discard. Pick is the value of the --pick option.
-    def stock_to_discard(self, pick: int) -> None:
-        for i = 0; i < pick and self->stock != NULL; i++:
-            moving_card = cardlist_pop_from_bottom(&self->stock)
-            assert not moving_card->visible
-            moving_card->visible = True
-            cardlist_push_to_top(&self->discard, moving_card)
+    # Takes cards stock --> discard
+    def stock_to_discard(self, args: Args) -> None:
+        for i = 0; i < args.pick and self->stock != NULL; i++:
+            c = cardlist_pop_from_bottom(&self->stock)
+            assert not c->visible
+            cardlist_push_to_top(&self->discard, c)
 
         # We moved i cards, show all of them
-        self->discardshow = i
+        self->num_picked = i
+
+        if args.discardhide:
+            # Only the last card in discard is visible
+            for c = self->discard; c != NULL; c = c->next:
+                c->visible = (c->next == NULL)
+        else:
+            # Everything in discard is visible
+            for c = self->discard; c != NULL; c = c->next:
+                c->visible = True
 
     def discard_to_stock(self) -> None:
         assert self->stock == NULL  # no more cards in stock
-        for card = self->discard; card != NULL; card = card->next:
-            assert card->visible
-            card->visible = False
-
         self->stock = self->discard
         self->discard = NULL
-        self->discardshow = 0
+        self->num_picked = 0
+
+        # Stock cards are not visible
+        for c = self->stock; c != NULL; c = c->next:
+            c->visible = False
 
     # Check if player won
     def win(self) -> bool:
