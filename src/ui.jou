@@ -17,75 +17,41 @@ const Y_OFFSET_SMALL: int = 1
 const Y_OFFSET_BIG: int = 2
 
 
-# https://en.wikipedia.org/wiki/Box-drawing_character#Unicode
-class Border:
-    horizontal: byte*
-    vertical: byte*
-    upper_left: byte*
-    upper_right: byte*
-    lower_left: byte*
-    lower_right: byte*
+def card_sized_box(left: int, top: int, thick: bool, fill: byte*) -> None:
+    right = left + CARD_WIDTH
+    bottom = top + CARD_HEIGHT
 
+    # https://en.wikipedia.org/wiki/Box-drawing_character#Unicode
+    if thick:
+        horizontal = "═"
+        vertical = "║"
+        upper_left = "╔"
+        upper_right = "╗"
+        lower_left = "╚"
+        lower_right = "╝"
+    else:
+        horizontal = "─"
+        vertical = "│"
+        upper_left = "╭"
+        upper_right = "╮"
+        lower_left = "╰"
+        lower_right = "╯"
 
-# TODO: use `const` when that becomes possible
-def normal_border() -> Border:
-    return Border{
-        horizontal="─",
-        vertical="│",
-        upper_left="╭",
-        upper_right="╮",
-        lower_left="╰",
-        lower_right="╯",
-    }
+    mvaddstr(top, left, upper_left)
+    for x = left + 1; x < right - 1; x++:
+        mvaddstr(top, x, horizontal)
+    mvaddstr(top, right - 1, upper_right)
 
-def selected_border() -> Border:
-    return Border{
-        horizontal="═",
-        vertical="║",
-        upper_left="╔",
-        upper_right="╗",
-        lower_left="╚",
-        lower_right="╝",
-    }
+    for y = top + 1; y < bottom - 1; y++:
+        mvaddstr(y, left, vertical)
+        for x = left + 1; x < right - 1; x++:
+            mvaddstr(y, x, fill)
+        mvaddstr(y, right - 1, vertical)
 
-
-# curses box() is annoyingly for subwindows only
-class Box:
-    left: int
-    top: int
-    width: int
-    height: int
-    selected: bool
-
-    def right(self) -> int:
-        return self->left + self->width
-
-    def bottom(self) -> int:
-        return self->top + self->height
-
-    def draw(self, window: WINDOW*, background: byte) -> None:
-        if self->selected:
-            border = selected_border()
-        else:
-            border = normal_border()
-
-        mvwaddstr(window, self->top, self->left, border.upper_left)
-        for x = self->left + 1; x < self->right() - 1; x++:
-            mvwaddstr(window, self->top, x, border.horizontal)
-        mvwaddstr(window, self->top, self->right()-1, border.upper_right)
-
-        for y = self->top+1; y < self->bottom() - 1; y++:
-            mvwaddstr(window, y, self->left, border.vertical)
-            for x = self->left + 1; x < self->right() - 1; x++:
-                # TODO: use mvwaddch() instead?
-                s = [background, '\0']
-                mvwaddstr(window, y, x, s)
-            mvwaddstr(window, y, self->right() - 1, border.vertical)
-
-        mvwaddstr(window, self->bottom() - 1, self->left, border.lower_left)
-        for x = self->left + 1; x < self->right() - 1; x++:
-            mvwaddstr(window, self->bottom() - 1, x, border.horizontal)
-        mvwaddstr(window, self->bottom() - 1, self->right() - 1, border.lower_right)
+    mvaddstr(bottom - 1, left, lower_left)
+    for x = left + 1; x < right - 1; x++:
+        mvaddstr(bottom - 1, x, horizontal)
+    mvaddstr(bottom - 1, right - 1, lower_right)
 
 
 # ui_x() and ui_y() convert coordinates from card counts to curses coordinates
@@ -107,13 +73,11 @@ def ui_y(y_count: int) -> int:
 # partial erasing is needed for cards that are on top of cards
 # since we can't use subwindow borders, they're not very helpful
 def draw_card(app_state: AppState*, card: Card*, left: int, top: int, selected: bool) -> None:
-    box = Box{left=left, top=top, width=CARD_WIDTH, height=CARD_HEIGHT, selected=selected}
     if card != NULL or selected:
         if card != NULL and not card->visible:
-            background = '?'
+            card_sized_box(left, top, selected, "?")
         else:
-            background = ' '
-        box.draw(stdscr, background)
+            card_sized_box(left, top, selected, " ")
 
     if card != NULL and card->visible:
         attributes = COLOR_PAIR(color_pair_number(suit_to_color(card->suit)))
@@ -122,10 +86,10 @@ def draw_card(app_state: AppState*, card: Card*, left: int, top: int, selected: 
 
         number_string = card_number_to_string(card->number)
         suit_string = suit_to_string(card->suit)
-        mvaddstr(top+1, left+1, number_string)
-        mvaddstr(box.bottom()-2, box.right() - 1 - (strlen(number_string) as int), number_string)
-        mvaddstr(top+1, box.right()-2, suit_string)
-        mvaddstr(box.bottom()-2, left+1, suit_string)
+        mvaddstr(top + 1, left + 1, number_string)
+        mvaddstr(top + CARD_HEIGHT - 2, left + CARD_WIDTH - 1 - (strlen(number_string) as int), number_string)
+        mvaddstr(top + 1, left + CARD_WIDTH - 2, suit_string)
+        mvaddstr(top + CARD_HEIGHT - 2, left + 1, suit_string)
 
         if app_state->args.color:
             wattroff(stdscr, attributes)
