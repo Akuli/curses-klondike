@@ -172,8 +172,12 @@ def draw_cards_with_compression(app_state: AppState*, cards: Card**, ncards: int
     if ncards == 0:
         return
 
+    # Cards are alloed to go slightly beyond the bottom of screen.
+    # To implement that, let's pretend the bottom of screen is lower than it really is.
+    pretend_screen_height = getmaxy(stdscr) + CARD_HEIGHT/2
+
     bottom_with_no_compression = top + (ncards - 1)*Y_OFFSET_BIG + CARD_HEIGHT
-    overflow = bottom_with_no_compression - getmaxy(stdscr)
+    overflow = bottom_with_no_compression - pretend_screen_height
 
     # How many gaps between cards to compress? Zero or negative means compression is not needed.
     space_saved_by_one_comp = Y_OFFSET_BIG - Y_OFFSET_SMALL
