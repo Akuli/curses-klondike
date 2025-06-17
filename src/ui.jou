@@ -231,12 +231,9 @@ def draw_foundation(app_state: AppState*, number: int) -> None:
     cards: Card*[52]
     ncards = get_cards_after_moves(app_state, place, &cards)
 
-    x = ui_x(3 + number)
-    y = ui_y(0)
-
     if ncards != 0:
         # Draw only the last card
-        draw_card(app_state, cards[ncards - 1], x, y)
+        draw_card(app_state, cards[ncards - 1], ui_x(3 + number), ui_y(0))
 
 
 def draw_tableau(app_state: AppState*, number: int) -> None:
