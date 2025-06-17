@@ -253,20 +253,16 @@ def draw_tableau(app_state: AppState*, number: int) -> None:
         y += Y_OFFSET_SMALL
 
 
-def place_to_xy(place: CardPlace, x: int*, y: int*) -> None:
+def place_to_xy(place: CardPlace) -> int[2]:
     match place.kind:
         case CardPlaceKind.Stock:
-            *x = ui_x(0)
-            *y = ui_y(0)
+            return [ui_x(0), ui_y(0)]
         case CardPlaceKind.Discard:
-            *x = ui_x(1)
-            *y = ui_y(0)
+            return [ui_x(1), ui_y(0)]
         case CardPlaceKind.Foundation:
-            *x = ui_x(3 + place.number)
-            *y = ui_y(0)
+            return [ui_x(3 + place.number), ui_y(0)]
         case CardPlaceKind.Tableau:
-            *x = ui_x(place.number)
-            *y = ui_y(1)
+            return [ui_x(place.number), ui_y(1)]
 
 
 @public
@@ -282,9 +278,8 @@ def draw_klondike(app_state: AppState*) -> None:
 
     # If there are no cards wherever the selection is, draw the selection there
     if get_selected_card(app_state) == NULL:
-        x, y: int
-        place_to_xy(get_selected_place(app_state), &x, &y)
-        draw_card_border(x, y, True, NULL)
+        xy = place_to_xy(get_selected_place(app_state))
+        draw_card_border(xy[0], xy[1], True, NULL)
 
     if app_state->klon.win():
         msg = "you win :)"
