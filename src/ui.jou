@@ -103,7 +103,7 @@ def draw_card(app_state: AppState*, card: Card*, left: int, top: int) -> None:
     if card->visible:
         attributes = COLOR_PAIR(color_pair_number(suit_to_color(card->suit)))
         if app_state->args.color:
-            wattron(stdscr, attributes)
+            attron(attributes)
 
         number_string = card_number_to_string(card->number)
         suit_string = suit_to_string(card->suit)
@@ -113,7 +113,7 @@ def draw_card(app_state: AppState*, card: Card*, left: int, top: int) -> None:
         mvaddstr(top + CARD_HEIGHT - 2, left + 1, suit_string)
 
         if app_state->args.color:
-            wattroff(stdscr, attributes)
+            attroff(attributes)
 
 
 # For drawing cards at a certain place.
@@ -267,7 +267,7 @@ def place_to_xy(place: CardPlace) -> int[2]:
 
 @public
 def draw_klondike(app_state: AppState*) -> None:
-    werase(stdscr)
+    erase()
 
     draw_stock(app_state)
     draw_discard(app_state)
@@ -284,4 +284,4 @@ def draw_klondike(app_state: AppState*) -> None:
     if app_state->klon.win():
         msg = "you win :)"
         msg_width = strlen(msg) as int
-        mvwaddstr(stdscr, getmaxy(stdscr)/2, (getmaxx(stdscr) - msg_width)/2, msg)
+        mvaddstr(getmaxy(stdscr)/2, (getmaxx(stdscr) - msg_width)/2, msg)
