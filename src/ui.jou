@@ -17,7 +17,7 @@ const Y_OFFSET_SMALL: int = 1
 const Y_OFFSET_BIG: int = 2
 
 
-def card_sized_box(left: int, top: int, thick: bool, fill: byte*) -> None:
+def draw_card_border(left: int, top: int, thick: bool, fill: byte*) -> None:
     right = left + CARD_WIDTH
     bottom = top + CARD_HEIGHT
 
@@ -73,11 +73,13 @@ def ui_y(y_count: int) -> int:
 # partial erasing is needed for cards that are on top of cards
 # since we can't use subwindow borders, they're not very helpful
 def draw_card(app_state: AppState*, card: Card*, left: int, top: int, selected: bool) -> None:
+    assert card != NULL
+
     if card != NULL or selected:
         if card != NULL and not card->visible:
-            card_sized_box(left, top, selected, "?")
+            draw_card_border(left, top, selected, "?")
         else:
-            card_sized_box(left, top, selected, " ")
+            draw_card_border(left, top, selected, " ")
 
     if card != NULL and card->visible:
         attributes = COLOR_PAIR(color_pair_number(suit_to_color(card->suit)))
@@ -140,92 +142,109 @@ def get_cards_after_moves(app_state: AppState*, place: CardPlace, result: Card*[
     return i
 
 
-# This function handles:
-#   - Overflow: If there's not enough room to show all cards, we "compress"
-#     them and show only a little bit.
-#   - Moving cards: we want to show the state as if the move happened, even
-#     though it didn't really happen yet.
-def draw_card_stack(app_state: AppState*, place: CardPlace, skip_count: int, left: int, top: int, first_selected: Card*) -> None:
-    cards: Card*[52]
-    ncards = get_cards_after_moves(app_state, place, &cards)
+# Determines what card is selected, if any.
+#
+# When moving a pile of cards at once, the first (bottom) card in the pile
+# is returned.
+def get_selected_card(app_state: AppState*) -> Card*:
+    if app_state->selmv.is_move:
+        return app_state->selmv.move.card
+    else:
+        return app_state->selmv.selection.card
 
-    skip_count = min(skip_count, ncards)
-    memmove(&cards[skip_count], &cards[0], sizeof(cards[0]) * (ncards - skip_count))
-    ncards -= skip_count
 
+def get_selected_place(app_state: AppState*) -> CardPlace:
+    if app_state->selmv.is_move:
+        return app_state->selmv.move.dest
+    else:
+        return app_state->selmv.selection.place
+
+
+# Draws cards below each other.
+#
+# If there is enough room for all the cards, we draw the cards so that the user
+# can see what the cards are.
+#
+# If there is not enough room for all the cards, we draw them closer to each
+# other. I call this compressing or overflow handling.
+def draw_cards_with_compression(app_state: AppState*, cards: Card**, ncards: int, left: int, top: int) -> None:
     if ncards == 0:
-        return
+        return 0
 
-    # The text (number and suit) of bottom_card is at top+1.
-    # Let's figure out where it is for the topmost card.
-    top_text_y = top + 1 + (ncards-1) * Y_OFFSET_BIG
+    bottom_with_no_compression = top + (ncards - 1)*Y_OFFSET_BIG + CARD_HEIGHT
+    overflow = bottom_with_no_compression - getmaxy(stdscr)
 
-    # We can make all cards visible by displaying some cards with a smaller offset.
-    # We'll display visible_card_count cards with the bigger offset.
-    visible_card_count = ncards-1
-    while top_text_y >= getmaxy(stdscr):
-        top_text_y -= Y_OFFSET_BIG
-        top_text_y += Y_OFFSET_SMALL
-        visible_card_count--
+    # How many gaps between cards to compress? Zero or negative means compression is not needed.
+    space_saved_by_one_comp = Y_OFFSET_BIG - Y_OFFSET_SMALL
+    assert space_saved_by_one_comp == 1
+    num_comps = overflow
 
-    # to give some extra room that wouldn't be really necessary, but is nicer.
-    # Without the if, cards get stacked even when there's enough room.
-    # TODO: I don't like this behaviour anymore, change it
-    if visible_card_count != ncards-1:
-        visible_card_count--
-
-    # Let's draw the cards
     selected = False
-    y = top
     for i = 0; i < ncards; i++:
-        if cards[i] == first_selected:
+        if card == get_selected_card(app_state):
             selected = True
-        draw_card(app_state, cards[i], left, y, selected)
-        if visible_card_count --> 0:
-            y += Y_OFFSET_BIG
+        draw_card(app_state, card, left, top, selected)
+        if i >= ncards - num_comps - 1:
+            top += Y_OFFSET_SMALL
         else:
-            y += Y_OFFSET_SMALL
+            top += Y_OFFSET_BIG
 
 
-# See https://github.com/Akuli/curses-klondike/issues/2
-enum DiscardHide:
-    HideAll
-    ShowLastOnly
-    ShowAll
-
-def decide_what_to_hide(app_state: AppState*) -> DiscardHide:
-    if not app_state->args.discardhide:
-        return DiscardHide.ShowAll
-
-    if not app_state->selmv.is_move:
-        return DiscardHide.ShowLastOnly
-
-    if app_state->selmv.move.src.is_discard():
-        if app_state->selmv.move.dest.is_discard():
-            # Move from discard to discard, show as if not moving at all
-            return DiscardHide.ShowLastOnly
-        else:
-            # Visible card is being moved from discard somewhere else, show nothing more
-            return DiscardHide.HideAll
-
-    return DiscardHide.ShowLastOnly
+def draw_stock(app_state: AppState*) -> None:
+    draw_card(app_state, app_state->klon.stock, ui_x(0), ui_y(0), app_state->selmv.selection.place.is_stock())
 
 
 def draw_discard(app_state: AppState*) -> None:
-    cards: Card*[52]
-    ncards = get_cards_after_moves(app_state, CardPlace{kind = CardPlaceKind.Discard}, &cards)
+    pass  # TODO
 
-    # Show only the discarded cards that are meant to be visible.
-    #
-    # Getting this to work in all situations is tricky:
-    #   - No move
-    #   - A move, but not from discard (same as no moves)
-    #   - A move from discard to discard (same as no moves)
-    #   - A move from discard to somewhere else, no cards remain in discard
-    #   - A move from discard to somewhere else, only non-visible cards remain in discard
-    #   - A move from discard to somewhere else, visible cards remain in discard
-    shown_ncards = min(ncards, app_state->klon.discardshow)
 
+def draw_foundation(app_state: AppState*, number: i) -> None:
+    assert 0 <= number and number < 4
+
+    card = cardlist_top(app_state->klon.foundations[number])
+    selected = (get_selected_card(app_state) == card)
+    draw_card(app_state, card, ui_x(3 + number), ui_y(0), selected)
+
+
+## See https://github.com/Akuli/curses-klondike/issues/2
+#enum DiscardHide:
+#    HideAll
+#    ShowLastOnly
+#    ShowAll
+#
+#def decide_what_to_hide(app_state: AppState*) -> DiscardHide:
+#    if not app_state->args.discardhide:
+#        return DiscardHide.ShowAll
+#
+#    if not app_state->selmv.is_move:
+#        return DiscardHide.ShowLastOnly
+#
+#    if app_state->selmv.move.src.is_discard():
+#        if app_state->selmv.move.dest.is_discard():
+#            # Move from discard to discard, show as if not moving at all
+#            return DiscardHide.ShowLastOnly
+#        else:
+#            # Visible card is being moved from discard somewhere else, show nothing more
+#            return DiscardHide.HideAll
+#
+#    return DiscardHide.ShowLastOnly
+#
+#
+#def draw_discard(app_state: AppState*) -> None:
+#    cards: Card*[52]
+#    ncards = get_cards_after_moves(app_state, CardPlace{kind = CardPlaceKind.Discard}, &cards)
+#
+#    # Show only the discarded cards that are meant to be visible.
+#    #
+#    # Getting this to work in all situations is tricky:
+#    #   - No move
+#    #   - A move, but not from discard (same as no moves)
+#    #   - A move from discard to discard (same as no moves)
+#    #   - A move from discard to somewhere else, no cards remain in discard
+#    #   - A move from discard to somewhere else, only non-visible cards remain in discard
+#    #   - A move from discard to somewhere else, visible cards remain in discard
+#    shown_ncards = min(ncards, app_state->klon.discardshow)
+#
 #    if (
 #        app_state->selmv.is_move
 #        and app_state->selmv.move.src.is_discard()
@@ -238,78 +257,70 @@ def draw_discard(app_state: AppState*) -> None:
 #        
 #        if n == 1:
 #            n = 2
+#
+#    if app_state->selmv.is_move:
+#        select_last = app_state->selmv.move.dest.is_discard()
+#    else:
+#        select_last = app_state->selmv.selection.place.is_discard()
+#
+#    x = ui_x(1)
+#    for i = ncards - shown_ncards; i < ncards; i++:
+#        temp_copy = *cards[i]  # TODO: shouldn't be needed
+#        match decide_what_to_hide(app_state):
+#            case DiscardHide.ShowAll:
+#                temp_copy.visible = True
+#            case DiscardHide.HideAll:
+#                temp_copy.visible = False
+#            case DiscardHide.ShowLastOnly:
+#                temp_copy.visible = (i == ncards - 1)
+#        draw_card(app_state, &temp_copy, x, ui_y(0), (i == ncards - 1) and select_last)
+#        if app_state->args.discardhide:
+#            x++
+#        else:
+#            x += X_OFFSET
+#
+#    if app_state->klon.discard == NULL:
+#        # nothing was drawn yet, show where discarded cards would be
+#        draw_card(app_state, NULL, ui_x(1), ui_y(0), app_state->selmv.selection.place.is_discard())
+#
+#
+def draw_tableau(app_state: AppState*, number: int) -> None:
+    place = CardPlace{kind = CardPlaceKind.Tableau, number = number}
+    cards: Card*[52]
+    ncards = get_cards_after_moves(app_state, place, &cards)
 
-    if app_state->selmv.is_move:
-        select_last = app_state->selmv.move.dest.is_discard()
-    else:
-        select_last = app_state->selmv.selection.place.is_discard()
+    if ncards == 0:
+        if get_selected_place(app_state).equals(place):
+            draw_card_border(ui_x(number), ui_y(0), True, " ")
+        return
 
-    x = ui_x(1)
-    for i = ncards - shown_ncards; i < ncards; i++:
-        temp_copy = *cards[i]  # TODO: shouldn't be needed
-        match decide_what_to_hide(app_state):
-            case DiscardHide.ShowAll:
-                temp_copy.visible = True
-            case DiscardHide.HideAll:
-                temp_copy.visible = False
-            case DiscardHide.ShowLastOnly:
-                temp_copy.visible = (i == ncards - 1)
-        draw_card(app_state, &temp_copy, x, ui_y(0), (i == ncards - 1) and select_last)
-        if app_state->args.discardhide:
-            x++
-        else:
-            x += X_OFFSET
-
-    if app_state->klon.discard == NULL:
-        # nothing was drawn yet, show where discarded cards would be
-        draw_card(app_state, NULL, ui_x(1), ui_y(0), app_state->selmv.selection.place.is_discard())
-
-
-def draw_tableau(app_state: AppState*) -> None:
-    for x = 0; x < 7; x++:
-        if app_state->klon.tableau[x] == NULL:
-            # draw a border if the tableau item is selected
-            draw_card(
+    n = 0
+    for card = app_state->klon.tableau[x]; card != NULL; card = card->next:
+        if card->visible:
+            draw_card_stack(
                 app_state,
-                NULL,
+                CardPlace{kind = CardPlaceKind.Tableau, number = x},
+                n,
                 ui_x(x),
-                ui_y(1),
-                app_state->selmv.selection.place.is_tableau(x)
+                ui_y(1) + n*Y_OFFSET_SMALL,
+                app_state->selmv.selection.card,
             )
-            continue
+            break
 
-        n = 0
-        for card = app_state->klon.tableau[x]; card != NULL; card = card->next:
-            if card->visible:
-                draw_card_stack(
-                    app_state,
-                    CardPlace{kind = CardPlaceKind.Tableau, number = x},
-                    n,
-                    ui_x(x),
-                    ui_y(1) + n*Y_OFFSET_SMALL,
-                    app_state->selmv.selection.card,
-                )
-                break
-
-            draw_card(app_state, card, ui_x(x), ui_y(1) + n*Y_OFFSET_SMALL, False)
-            n++
+        draw_card(app_state, card, ui_x(x), ui_y(1) + n*Y_OFFSET_SMALL, False)
+        n++
 
 
 @public
 def draw_klondike(app_state: AppState*) -> None:
     werase(stdscr)
 
-    draw_card(app_state, app_state->klon.stock, ui_x(0), ui_y(0), app_state->selmv.selection.place.is_stock())
+    draw_stock(app_state)
     draw_discard(app_state)
     for i = 0; i < 4; i++:
-        draw_card(
-            app_state,
-            cardlist_top(app_state->klon.foundations[i]),
-            ui_x(3+i),
-            ui_y(0),
-            app_state->selmv.selection.place.is_foundation(i)
-        )
-    draw_tableau(app_state)
+        draw_foundation(app_state, i)
+    for i = 0; i < 7; i++:
+        draw_tableau(app_state, i)
 
     if app_state->klon.win():
         msg = "you win :)"
