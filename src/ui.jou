@@ -1,6 +1,4 @@
 import "stdlib/str.jou"
-import "stdlib/math.jou"
-import "stdlib/mem.jou"
 
 import "./state.jou"
 import "./klondike.jou"
@@ -44,8 +42,9 @@ def draw_card_border(left: int, top: int, thick: bool, fill: byte*) -> None:
 
     for y = top + 1; y < bottom - 1; y++:
         mvaddstr(y, left, vertical)
-        for x = left + 1; x < right - 1; x++:
-            mvaddstr(y, x, fill)
+        if fill != NULL:
+            for x = left + 1; x < right - 1; x++:
+                mvaddstr(y, x, fill)
         mvaddstr(y, right - 1, vertical)
 
     mvaddstr(bottom - 1, left, lower_left)
@@ -69,19 +68,39 @@ def ui_y(y_count: int) -> int:
     return y_count * CARD_HEIGHT
 
 
-# newwin() doesn't work because partially erasing borders is surprisingly tricky
-# partial erasing is needed for cards that are on top of cards
-# since we can't use subwindow borders, they're not very helpful
-def draw_card(app_state: AppState*, card: Card*, left: int, top: int, selected: bool) -> None:
+# Determines what card is selected, if any.
+#
+# When moving a pile of cards at once, the first (bottom) card in the pile
+# is returned.
+def get_selected_card(app_state: AppState*) -> Card*:
+    if app_state->selmv.is_move:
+        return app_state->selmv.move.card
+    else:
+        return app_state->selmv.selection.card
+
+
+def get_selected_place(app_state: AppState*) -> CardPlace:
+    if app_state->selmv.is_move:
+        return app_state->selmv.move.dest
+    else:
+        return app_state->selmv.selection.place
+
+
+def draw_card(app_state: AppState*, card: Card*, left: int, top: int) -> None:
     assert card != NULL
 
-    if card != NULL or selected:
-        if card != NULL and not card->visible:
-            draw_card_border(left, top, selected, "?")
-        else:
-            draw_card_border(left, top, selected, " ")
+    selected = False
+    for c = get_selected_card(app_state); c != NULL; c = c->next:
+        if c == card:
+            selected = True
+            break
 
-    if card != NULL and card->visible:
+    if card->visible:
+        draw_card_border(left, top, selected, " ")
+    else:
+        draw_card_border(left, top, selected, "?")
+
+    if card->visible:
         attributes = COLOR_PAIR(color_pair_number(suit_to_color(card->suit)))
         if app_state->args.color:
             wattron(stdscr, attributes)
@@ -142,24 +161,6 @@ def get_cards_after_moves(app_state: AppState*, place: CardPlace, result: Card*[
     return i
 
 
-# Determines what card is selected, if any.
-#
-# When moving a pile of cards at once, the first (bottom) card in the pile
-# is returned.
-def get_selected_card(app_state: AppState*) -> Card*:
-    if app_state->selmv.is_move:
-        return app_state->selmv.move.card
-    else:
-        return app_state->selmv.selection.card
-
-
-def get_selected_place(app_state: AppState*) -> CardPlace:
-    if app_state->selmv.is_move:
-        return app_state->selmv.move.dest
-    else:
-        return app_state->selmv.selection.place
-
-
 # Draws cards below each other.
 #
 # If there is enough room for all the cards, we draw the cards so that the user
@@ -169,7 +170,7 @@ def get_selected_place(app_state: AppState*) -> CardPlace:
 # other. I call this compressing or overflow handling.
 def draw_cards_with_compression(app_state: AppState*, cards: Card**, ncards: int, left: int, top: int) -> None:
     if ncards == 0:
-        return 0
+        return
 
     bottom_with_no_compression = top + (ncards - 1)*Y_OFFSET_BIG + CARD_HEIGHT
     overflow = bottom_with_no_compression - getmaxy(stdscr)
@@ -179,11 +180,8 @@ def draw_cards_with_compression(app_state: AppState*, cards: Card**, ncards: int
     assert space_saved_by_one_comp == 1
     num_comps = overflow
 
-    selected = False
     for i = 0; i < ncards; i++:
-        if card == get_selected_card(app_state):
-            selected = True
-        draw_card(app_state, card, left, top, selected)
+        draw_card(app_state, cards[i], left, top)
         if i >= ncards - num_comps - 1:
             top += Y_OFFSET_SMALL
         else:
@@ -191,19 +189,31 @@ def draw_cards_with_compression(app_state: AppState*, cards: Card**, ncards: int
 
 
 def draw_stock(app_state: AppState*) -> None:
-    draw_card(app_state, app_state->klon.stock, ui_x(0), ui_y(0), app_state->selmv.selection.place.is_stock())
+    place = CardPlace{kind = CardPlaceKind.Stock}
+    cards: Card*[52]
+    ncards = get_cards_after_moves(app_state, place, &cards)
+
+    if app_state->klon.stock != NULL:
+        draw_card(app_state, app_state->klon.stock, ui_x(0), ui_y(0))
 
 
 def draw_discard(app_state: AppState*) -> None:
     pass  # TODO
 
 
-def draw_foundation(app_state: AppState*, number: i) -> None:
+def draw_foundation(app_state: AppState*, number: int) -> None:
     assert 0 <= number and number < 4
 
-    card = cardlist_top(app_state->klon.foundations[number])
-    selected = (get_selected_card(app_state) == card)
-    draw_card(app_state, card, ui_x(3 + number), ui_y(0), selected)
+    place = CardPlace{kind = CardPlaceKind.Foundation, number = number}
+    cards: Card*[52]
+    ncards = get_cards_after_moves(app_state, place, &cards)
+
+    x = ui_x(3 + number)
+    y = ui_y(0)
+
+    if ncards != 0:
+        # Draw only the last card
+        draw_card(app_state, cards[ncards - 1], x, y)
 
 
 ## See https://github.com/Akuli/curses-klondike/issues/2
@@ -289,26 +299,32 @@ def draw_tableau(app_state: AppState*, number: int) -> None:
     cards: Card*[52]
     ncards = get_cards_after_moves(app_state, place, &cards)
 
-    if ncards == 0:
-        if get_selected_place(app_state).equals(place):
-            draw_card_border(ui_x(number), ui_y(0), True, " ")
-        return
+    x = ui_x(number)
+    y = ui_y(1)
 
-    n = 0
-    for card = app_state->klon.tableau[x]; card != NULL; card = card->next:
-        if card->visible:
-            draw_card_stack(
-                app_state,
-                CardPlace{kind = CardPlaceKind.Tableau, number = x},
-                n,
-                ui_x(x),
-                ui_y(1) + n*Y_OFFSET_SMALL,
-                app_state->selmv.selection.card,
-            )
+    for i = 0; i < ncards; i++:
+        if cards[i]->visible:
+            draw_cards_with_compression(app_state, &cards[i], ncards - i, x, y)
             break
 
-        draw_card(app_state, card, ui_x(x), ui_y(1) + n*Y_OFFSET_SMALL, False)
-        n++
+        draw_card(app_state, cards[i], x, y)
+        y += Y_OFFSET_SMALL
+
+
+def place_to_xy(place: CardPlace, x: int*, y: int*) -> None:
+    match place.kind:
+        case CardPlaceKind.Stock:
+            *x = ui_x(0)
+            *y = ui_y(0)
+        case CardPlaceKind.Discard:
+            *x = ui_x(1)
+            *y = ui_y(0)
+        case CardPlaceKind.Foundation:
+            *x = ui_x(3 + place.number)
+            *y = ui_y(0)
+        case CardPlaceKind.Tableau:
+            *x = ui_x(place.number)
+            *y = ui_y(1)
 
 
 @public
@@ -321,6 +337,12 @@ def draw_klondike(app_state: AppState*) -> None:
         draw_foundation(app_state, i)
     for i = 0; i < 7; i++:
         draw_tableau(app_state, i)
+
+    # If there are no cards wherever the selection is, draw the selection there
+    if get_selected_card(app_state) == NULL:
+        x, y: int
+        place_to_xy(get_selected_place(app_state), &x, &y)
+        draw_card_border(x, y, True, NULL)
 
     if app_state->klon.win():
         msg = "you win :)"

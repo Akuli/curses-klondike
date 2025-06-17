@@ -17,19 +17,19 @@ class CardPlace:
     kind: CardPlaceKind
     number: int  # only meaningful for foundation (0 <= number < 4) and tableau (0 <= number < 7)
 
-    def is_stock(self) -> bool:
-        return self->kind == CardPlaceKind.Stock
+    def is_stock(self: CardPlace) -> bool:
+        return self.kind == CardPlaceKind.Stock
 
-    def is_discard(self) -> bool:
-        return self->kind == CardPlaceKind.Discard
-
-    # TODO: delete this?
-    def is_foundation(self, n: int) -> bool:
-        return self->kind == CardPlaceKind.Foundation and self->number == n
+    def is_discard(self: CardPlace) -> bool:
+        return self.kind == CardPlaceKind.Discard
 
     # TODO: delete this?
-    def is_tableau(self, n: int) -> bool:
-        return self->kind == CardPlaceKind.Tableau and self->number == n
+    def is_foundation(self: CardPlace, n: int) -> bool:
+        return self.kind == CardPlaceKind.Foundation and self.number == n
+
+    # TODO: delete this?
+    def is_tableau(self: CardPlace, n: int) -> bool:
+        return self.kind == CardPlaceKind.Tableau and self.number == n
 
     def equals(self: CardPlace, other: CardPlace) -> bool:
         match self.kind:
