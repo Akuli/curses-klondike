@@ -59,9 +59,9 @@ def setup_curses(app_state: AppState*) -> None:
 
 
 def main(argc: int, argv: byte**) -> int:
-    app_state = AppState{program_name = argv[0]}
-
     srand(time(NULL) as uint32)
+
+    app_state = AppState{program_name = argv[0]}
 
     status = parse_args(argv, &app_state.args, stdout, stderr)
     if status != CONTINUE_TO_PROGRAM:
