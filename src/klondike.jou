@@ -1,15 +1,5 @@
 import "./card.jou"
-
-
-def copy_cards(src: Card*, dest: Card**, source_card: Card*, dest_card: Card**, list: Card**) -> None:
-    *dest = NULL
-    for pass; src != NULL; src = src->next:
-        copy = cardlist_pop_from_bottom(list)
-        if src == source_card:
-            *dest_card = copy
-        *copy = *src
-        copy->next = NULL
-        cardlist_push_to_top(dest, copy)
+import "./state.jou"
 
 
 # A card place cannot be represented as a card, or as a pointer to a card,
@@ -28,19 +18,26 @@ class CardPlace:
     kind: CardPlaceKind
     number: int  # only meaningful for foundation (0 <= number < 4) and tableau (0 <= number < 7)
 
-    def is_stock(self) -> bool:
-        return self->kind == CardPlaceKind.Stock
+    def is_stock(self: CardPlace) -> bool:
+        return self.kind == CardPlaceKind.Stock
 
-    def is_discard(self) -> bool:
-        return self->kind == CardPlaceKind.Discard
-
-    # TODO: delete this?
-    def is_foundation(self, n: int) -> bool:
-        return self->kind == CardPlaceKind.Foundation and self->number == n
+    def is_discard(self: CardPlace) -> bool:
+        return self.kind == CardPlaceKind.Discard
 
     # TODO: delete this?
-    def is_tableau(self, n: int) -> bool:
-        return self->kind == CardPlaceKind.Tableau and self->number == n
+    def is_foundation(self: CardPlace, n: int) -> bool:
+        return self.kind == CardPlaceKind.Foundation and self.number == n
+
+    # TODO: delete this?
+    def is_tableau(self: CardPlace, n: int) -> bool:
+        return self.kind == CardPlaceKind.Tableau and self.number == n
+
+    def equals(self: CardPlace, other: CardPlace) -> bool:
+        match self.kind:
+            case CardPlaceKind.Stock | CardPlaceKind.Discard:
+                return self.kind == other.kind
+            case CardPlaceKind.Foundation | CardPlaceKind.Tableau:
+                return self.kind == other.kind and self.number == other.number
 
 
 @public
@@ -49,7 +46,7 @@ class Klondike:
     # These point to just one card. Use ->next to access others.
     stock: Card*           # TOPMOST card or NULL
     discard: Card*         # bottommost card or NULL
-    discardshow: int       # number of cards shown in discard, or 0 if discard is NULL
+    num_picked: int        # number of cards in discard not fully covered by other cards
     foundations: Card*[4]  # bottommost cards or NULLs
     tableau: Card*[7]      # bottommost cards or NULLs
 
@@ -64,26 +61,9 @@ class Klondike:
 
         self->stock = list
         self->discard = NULL
-        self->discardshow = 0
+        self->num_picked = 0
         for i = 0; i < 4; i++:
             self->foundations[i] = NULL
-
-    # Copies everything from src to dest, using new cards created from the array.
-    # If source_card is non-NULL, returns the corresponding card of dest.
-    # If source_card is NULL, returns NULL.
-    def dup(self, dest: Klondike*, source_card: Card*, card_array: Card[52]*) -> Card*:
-        dest_card: Card* = NULL
-        list = cardlist_init(card_array)
-        copy_cards(self->stock, &dest->stock, source_card, &dest_card, &list)
-        copy_cards(self->discard, &dest->discard, source_card, &dest_card, &list)
-        dest->discardshow = self->discardshow
-        for i = 0; i < 4; i++:
-            copy_cards(self->foundations[i], &dest->foundations[i], source_card, &dest_card, &list)
-        for i = 0; i < 7; i++:
-            copy_cards(self->tableau[i], &dest->tableau[i], source_card, &dest_card, &list)
-
-        assert list == NULL  # all cards used
-        return dest_card
 
     def card_in_some_tableau(self, card: Card*) -> bool:
         for i = 0; i < 7; i++:
@@ -160,14 +140,14 @@ class Klondike:
             # special case: no card has card as ->next
             if *list == card:
                 if list == &self->discard:
-                    self->discardshow = 0
+                    self->num_picked = 0
                 *list = NULL
                 return NULL
 
             for prev = *list; prev != NULL and prev->next != NULL; prev = prev->next:
                 if prev->next == card:
-                    if list == &self->discard and self->discardshow > 1:
-                        self->discardshow--
+                    if list == &self->discard and self->num_picked > 1:
+                        self->num_picked--
                     prev->next = NULL
                     return prev
 
@@ -175,6 +155,8 @@ class Klondike:
 
     # Moves the source card and ->next cards (if any) to dest.
     # If raw, accepts invalid moves (can_move) and never sets ->visible
+    #
+    # TODO: are raw moves still needed?
     def move(self, card: Card*, dest: CardPlace, raw: bool) -> None:
         if not raw:
             assert self->can_move(card, dest)
@@ -206,26 +188,34 @@ class Klondike:
                     return True
         return False
 
-    # Takes cards stock --> discard. Pick is the value of the --pick option.
-    def stock_to_discard(self, pick: int) -> None:
-        for i = 0; i < pick and self->stock != NULL; i++:
-            moving_card = cardlist_pop_from_bottom(&self->stock)
-            assert not moving_card->visible
-            moving_card->visible = True
-            cardlist_push_to_top(&self->discard, moving_card)
+    # Takes cards stock --> discard
+    def stock_to_discard(self, args: Args) -> None:
+        for i = 0; i < args.pick and self->stock != NULL; i++:
+            c = cardlist_pop_from_bottom(&self->stock)
+            assert not c->visible
+            cardlist_push_to_top(&self->discard, c)
 
         # We moved i cards, show all of them
-        self->discardshow = i
+        self->num_picked = i
+
+        if args.discardhide:
+            # Only the last card in discard is visible
+            for c = self->discard; c != NULL; c = c->next:
+                c->visible = (c->next == NULL)
+        else:
+            # Everything in discard is visible
+            for c = self->discard; c != NULL; c = c->next:
+                c->visible = True
 
     def discard_to_stock(self) -> None:
         assert self->stock == NULL  # no more cards in stock
-        for card = self->discard; card != NULL; card = card->next:
-            assert card->visible
-            card->visible = False
-
         self->stock = self->discard
         self->discard = NULL
-        self->discardshow = 0
+        self->num_picked = 0
+
+        # Stock cards are not visible
+        for c = self->stock; c != NULL; c = c->next:
+            c->visible = False
 
     # Check if player won
     def win(self) -> bool:

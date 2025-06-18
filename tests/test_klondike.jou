@@ -3,6 +3,7 @@ import "stdlib/mem.jou"
 
 import "./util.jou"
 import "../src/card.jou"
+import "../src/state.jou"
 import "../src/klondike.jou"
 
 
@@ -25,7 +26,7 @@ def test_init() -> None:
     card_array: Card[52]
     klon = Klondike{}
     klon.init(&card_array)
-    assert klon.discardshow == 0
+    assert klon.num_picked == 0
 
     assert count_cards(klon.stock) == 13*4 - (1+2+3+4+5+6+7)
     assert count_visible_cards(klon.stock) == 0
@@ -39,41 +40,6 @@ def test_init() -> None:
         assert count_cards(klon.tableau[i]) == i+1
         assert count_visible_cards(klon.tableau[i]) == 1
         assert cardlist_top(klon.tableau[i])->visible
-
-
-def cards_match(list1: Card*, list2: Card*) -> bool:
-    a = list1
-    b = list2
-
-    while a != NULL or b != NULL:
-        assert a != b
-        if a == NULL or b == NULL:
-            # list lengths differ
-            return False
-        if a->number != b->number or a->suit != b->suit or a->visible != b->visible:
-            return False
-        a = a->next
-        b = b->next
-
-    return True
-
-
-def test_dup() -> None:
-    kln1 = Klondike{}
-    kln2 = Klondike{}
-    card_array1: Card[52]
-    card_array2: Card[52]
-    kln1.init(&card_array1)
-
-    dup_result = kln1.dup(&kln2, kln1.tableau[2]->next, &card_array2)
-    assert dup_result == kln2.tableau[2]->next
-
-    assert cards_match(kln1.stock, kln2.stock)
-    assert cards_match(kln1.discard, kln2.discard)
-    for i = 0; i < 4; i++:
-        assert cards_match(kln1.foundations[i], kln2.foundations[i])
-    for i = 0; i < 7; i++:
-        assert cards_match(kln1.tableau[i], kln2.tableau[i])
 
 
 def test_canmove() -> None:
@@ -137,7 +103,7 @@ def test_move() -> None:
 
 
 def discard_check(klon: Klondike, ndiscarded: int, ds: int) -> None:
-    assert klon.discardshow == ds
+    assert klon.num_picked == ds
 
     assert count_cards(klon.stock) == 13*4 - (1+2+3+4+5+6+7) - ndiscarded
     assert count_visible_cards(klon.stock) == 0
@@ -154,17 +120,17 @@ def test_stock_to_discard() -> None:
 
     savestock = klon.stock
 
-    klon.stock_to_discard(1)
+    klon.stock_to_discard(Args{pick = 1})
     discard_check(klon, 1, 1)
 
-    klon.stock_to_discard(2)
+    klon.stock_to_discard(Args{pick = 2})
     discard_check(klon, 3, 2)
 
     for n = 4; n <= 13*4 - (1+2+3+4+5+6+7) - 1; n++:
-        klon.stock_to_discard(1)
+        klon.stock_to_discard(Args{pick = 1})
         discard_check(klon, n, 1)
 
-    klon.stock_to_discard(1)
+    klon.stock_to_discard(Args{pick = 1})
     discard_check(klon, 13*4 - (1+2+3+4+5+6+7), 1)
 
     klon.discard_to_stock()
@@ -176,16 +142,48 @@ def test_stock_to_discard() -> None:
     # TODO: test with less than 13*4 - (1+2+3+4+5+6+7) stock cards? e.g. 0 stock cards
 
 
+def test_stock_to_discard_visibility_with_discard_hide() -> None:
+    klon = Klondike{}
+    card_array: Card[52]
+    klon.init(&card_array)
+
+    klon.stock_to_discard(Args{pick = 3, discardhide = True})
+    klon.stock_to_discard(Args{pick = 3, discardhide = True})
+
+    # Only the topmost card should be visible
+    assert cardlist_top(klon.discard)->visible
+    n = 0
+    for c = klon.discard; c != NULL; c = c->next:
+        if c->visible:
+            n++
+    assert n == 1
+
+
+def test_stock_to_discard_visibility_without_discard_hide() -> None:
+    klon = Klondike{}
+    card_array: Card[52]
+    klon.init(&card_array)
+
+    klon.stock_to_discard(Args{pick = 3, discardhide = False})
+    klon.stock_to_discard(Args{pick = 3, discardhide = False})
+
+    # All cards should be visible
+    for c = klon.discard; c != NULL; c = c->next:
+        assert c->visible
+
+
 def main() -> int:
     test_init()
-    dot()
-    test_dup()
     dot()
     test_canmove()
     dot()
     test_move()
     dot()
     test_stock_to_discard()
+    dot()
+    test_stock_to_discard_visibility_with_discard_hide()
+    dot()
+    test_stock_to_discard_visibility_without_discard_hide()
     dot()
 
     printf(" ok\n")

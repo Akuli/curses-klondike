@@ -23,7 +23,7 @@ def stock_to_discard(app_state: AppState*) -> None:
         # No cards in stock
         app_state->klon.discard_to_stock()
     else:
-        app_state->klon.stock_to_discard(app_state->args.pick)
+        app_state->klon.stock_to_discard(app_state->args)
 
     # Make sure that whatever ends up in discard place is selected
     app_state->selmv.select_top_card_or_move_to(&app_state->klon, CardPlace{kind = CardPlaceKind.Discard})

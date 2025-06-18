@@ -68,7 +68,7 @@ def main(argc: int, argv: byte**) -> int:
 
     first = True
     while True:
-        draw_klondike(stdscr, &app_state.klon, &app_state.selmv, &app_state.args)
+        draw_klondike(&app_state)
 
         if first:
             height = getmaxy(stdscr)

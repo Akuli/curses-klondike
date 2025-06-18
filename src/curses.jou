@@ -45,6 +45,10 @@ declare COLOR_PAIR(n: int) -> int
 declare wattron(win: WINDOW*, attrs: int) -> int
 @public
 declare wattroff(win: WINDOW*, attrs: int) -> int
+@public
+declare attron(attrs: int) -> int
+@public
+declare attroff(attrs: int) -> int
 
 @public
 declare newpad(nlines: int, ncols: int) -> WINDOW*
@@ -67,6 +71,8 @@ declare copywin(
 
 @public
 declare werase(win: WINDOW*) -> int
+@public
+declare erase() -> int
 @public
 declare wclear(win: WINDOW*) -> int
 @public
