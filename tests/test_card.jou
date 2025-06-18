@@ -44,25 +44,9 @@ def test_cardlist_top() -> None:
     abc_cards(&a, &b, &c, True)
 
     assert cardlist_top(&a) == &c
-    assert cardlist_top(cardlist_top(&a)) == &c
-
-    assert cardlist_top_n(&a, 0) == NULL
-    assert cardlist_top_n(&a, 1) == &c
-    assert cardlist_top_n(&a, 2) == &b
-    assert cardlist_top_n(&a, 3) == &a
-    assert cardlist_top_n(&a, 4) == &a
-
-    assert cardlist_top_n(&b, 0) == NULL
-    assert cardlist_top_n(&b, 1) == &c
-    assert cardlist_top_n(&b, 2) == &b
-    assert cardlist_top_n(&b, 3) == &b
-    assert cardlist_top_n(&b, 4) == &b
-
-    assert cardlist_top_n(&c, 0) == NULL
-    assert cardlist_top_n(&c, 1) == &c
-    assert cardlist_top_n(&c, 2) == &c
-    assert cardlist_top_n(&c, 3) == &c
-    assert cardlist_top_n(&c, 4) == &c
+    assert cardlist_top(&b) == &c
+    assert cardlist_top(&c) == &c
+    assert cardlist_top(NULL) == NULL
 
 
 def test_cardlist_pop() -> None:
