@@ -1,5 +1,4 @@
 import "stdlib/io.jou"
-import "stdlib/mem.jou"
 
 import "./util.jou"
 import "../src/card.jou"
@@ -22,10 +21,9 @@ def count_visible_cards(first: Card*) -> int:
     return n
 
 
-def test_init() -> None:
-    card_array: Card[52]
+def test_deal_cards() -> None:
     klon = Klondike{}
-    klon.init(&card_array)
+    klon.deal_cards()
     assert klon.num_picked == 0
 
     assert count_cards(klon.stock) == 13*4 - (1+2+3+4+5+6+7)
@@ -42,10 +40,9 @@ def test_init() -> None:
         assert cardlist_top(klon.tableau[i])->visible
 
 
-def test_canmove() -> None:
-    card_array: Card[52]
+def test_can_move() -> None:
     klon = Klondike{}
-    klon.init(&card_array)
+    klon.deal_cards()
 
     # non-visible cards can never be moved
     assert not klon.tableau[2]->visible
@@ -60,11 +57,10 @@ def test_canmove() -> None:
     # TODO: test rest of the code? problem is, how do i find e.g. ♠A or ♥Q
 
 
-# creates a game where a move is possible, sets move data to mvcrd and mvdst
-def init_movable_kln(klon: Klondike*, srctab: int*, dsttab: int*, card_array: Card[52]*) -> None:
+# Creates a game where some tableau->tableau move is possible
+def init_movable_kln(klon: Klondike*, srctab: int*, dsttab: int*) -> None:
     while True:
-        memset(klon, 0, sizeof(*klon))
-        klon->init(card_array)
+        klon->deal_cards()
 
         for i = 0; i < 7; i++:
             for j = 0; j < 7; j++:
@@ -78,9 +74,8 @@ def init_movable_kln(klon: Klondike*, srctab: int*, dsttab: int*, card_array: Ca
 
 def test_move() -> None:
     klon: Klondike
-    card_array: Card[52]
     srctab, dsttab: int
-    init_movable_kln(&klon, &srctab, &dsttab, &card_array)
+    init_movable_kln(&klon, &srctab, &dsttab)
 
     klon.move(cardlist_top(klon.tableau[srctab]), CardPlace{kind = CardPlaceKind.Tableau, number = dsttab}, False)
     for i = 0; i < 7; i++:
@@ -114,8 +109,7 @@ def discard_check(klon: Klondike, ndiscarded: int, ds: int) -> None:
 
 def test_stock_to_discard() -> None:
     klon = Klondike{}
-    card_array: Card[52]
-    klon.init(&card_array)
+    klon.deal_cards()
     discard_check(klon, 0, 0)
 
     savestock = klon.stock
@@ -144,8 +138,7 @@ def test_stock_to_discard() -> None:
 
 def test_stock_to_discard_visibility_with_discard_hide() -> None:
     klon = Klondike{}
-    card_array: Card[52]
-    klon.init(&card_array)
+    klon.deal_cards()
 
     klon.stock_to_discard(Args{pick = 3, discardhide = True})
     klon.stock_to_discard(Args{pick = 3, discardhide = True})
@@ -161,8 +154,7 @@ def test_stock_to_discard_visibility_with_discard_hide() -> None:
 
 def test_stock_to_discard_visibility_without_discard_hide() -> None:
     klon = Klondike{}
-    card_array: Card[52]
-    klon.init(&card_array)
+    klon.deal_cards()
 
     klon.stock_to_discard(Args{pick = 3, discardhide = False})
     klon.stock_to_discard(Args{pick = 3, discardhide = False})
@@ -173,9 +165,9 @@ def test_stock_to_discard_visibility_without_discard_hide() -> None:
 
 
 def main() -> int:
-    test_init()
+    test_deal_cards()
     dot()
-    test_canmove()
+    test_can_move()
     dot()
     test_move()
     dot()
