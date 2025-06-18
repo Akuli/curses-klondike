@@ -1,6 +1,7 @@
 assert not WINDOWS
 
-link "-lncursesw"  # needs cursesw instead of curses for unicodes
+# displaying unicodes correctly needs linking with ncursesw AND setlocale() when program starts
+link "-lncursesw"
 
 
 @public

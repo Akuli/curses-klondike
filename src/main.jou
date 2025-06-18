@@ -25,57 +25,57 @@ declare setlocale(category: int, locale: byte*) -> byte*
 const LC_ALL: int = 6  # TODO: probably something else on macos
 
 
-def main(argc: int, argv: byte**) -> int:
-    app_state = AppState{program_name = argv[0]}
-
-    # displaying unicodes correctly needs setlocale here AND cursesw instead of curses in makefile
+def setup_curses(app_state: AppState*) -> None:
+    # displaying unicodes correctly needs setlocale() here AND linking with ncursesw
     if setlocale(LC_ALL, "") == NULL:
-        fail(&app_state, "setlocale() failed")
-
-    srand(time(NULL) as uint32)
-
-    status = parse_args(argv, &app_state.args, stdout, stderr)
-    if status != CONTINUE_TO_PROGRAM:
-        return status
+        fail(app_state, "setlocale() failed")
 
     # https://stackoverflow.com/a/28020568
     # see also ESCDELAY in a man page named "ncurses"
     # setting to "0" works, but feels like a hack, so i used same as in stackoverflow
     if setenv("ESCDELAY", "25", False as int) < 0:
-        fail(&app_state, "setenv() failed")
+        fail(app_state, "setenv() failed")
 
     if initscr() == NULL:
-        fail(&app_state, "initscr() failed")
-    app_state.screen_inited = True
+        fail(app_state, "initscr() failed")
+    app_state->screen_inited = True
 
-    app_state.args.color = (app_state.args.color and has_colors() and start_color() != ERR)
-    if app_state.args.color:
+    app_state->args.color = (app_state->args.color and has_colors() and start_color() != ERR)
+    if app_state->args.color:
         if init_pair(color_pair_number(Color.Red), COLOR_RED, COLOR_BLACK) == ERR:
-            fail(&app_state, "init_pair() failed")
+            fail(app_state, "init_pair() failed")
         if init_pair(color_pair_number(Color.Black), COLOR_WHITE, COLOR_BLACK) == ERR:
-            fail(&app_state, "init_pair() failed")
+            fail(app_state, "init_pair() failed")
 
     if cbreak() == ERR:
-        fail(&app_state, "cbreak() failed")
+        fail(app_state, "cbreak() failed")
     if noecho() == ERR:
-        fail(&app_state, "noecho() failed")
+        fail(app_state, "noecho() failed")
     if curs_set(0) == ERR:
-        fail(&app_state, "curs_set() failed")
+        fail(app_state, "curs_set() failed")
     if keypad(stdscr, True) == ERR:
-        fail(&app_state, "keypad() failed")
+        fail(app_state, "keypad() failed")
 
+
+def main(argc: int, argv: byte**) -> int:
+    srand(time(NULL) as uint32)
+
+    app_state = AppState{program_name = argv[0]}
+
+    status = parse_args(argv, &app_state.args, stdout, stderr)
+    if status != CONTINUE_TO_PROGRAM:
+        return status
+
+    setup_curses(&app_state)
     new_game(&app_state)
 
-    first = True
+    draw_klondike(&app_state)
+    attron(A_STANDOUT)
+    mvaddstr(getmaxy(stdscr)-1, 0, "Press h for help.")
+    attroff(A_STANDOUT)
+    refresh()
+
     while True:
-        draw_klondike(&app_state)
-
-        if first:
-            height = getmaxy(stdscr)
-            wattron(stdscr, A_STANDOUT)
-            mvwaddstr(stdscr, height-1, 0, "Press h for help.")
-            wattroff(stdscr, A_STANDOUT)
-            first = False
-
-        refresh()
         handle_key(&app_state, getch())
+        draw_klondike(&app_state)
+        refresh()
