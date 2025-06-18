@@ -26,7 +26,7 @@ const LC_ALL: int = 6  # TODO: probably something else on macos
 
 
 def setup_curses(app_state: AppState*) -> None:
-    # displaying unicodes correctly needs setlocale here AND linking with cursesw
+    # displaying unicodes correctly needs setlocale() here AND linking with ncursesw
     if setlocale(LC_ALL, "") == NULL:
         fail(app_state, "setlocale() failed")
 
