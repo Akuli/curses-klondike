@@ -59,21 +59,7 @@ class Card:
 # top(not null)->next is always NULL
 @public
 def cardlist_top(list: Card*) -> Card*:
-    return cardlist_top_n(list, 1)
-
-
-# card can be NULL
-def next_n_times(card: Card*, n: int) -> Card*:
-    while n --> 0 and card != NULL:
-        card = card->next
-    return card
-
-
-# Returns at most n topmost cards from a linked list as another linked list.
-# cardlist_top_n(NULL, n) == NULL
-@public
-def cardlist_top_n(list: Card*, n: int) -> Card*:
-    while next_n_times(list, n) != NULL:
+    while list != NULL and list->next != NULL:
         list = list->next
     return list
 
