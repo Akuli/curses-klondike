@@ -50,8 +50,12 @@ class Klondike:
     foundations: Card*[4]  # bottommost cards or NULLs
     tableau: Card*[7]      # bottommost cards or NULLs
 
-    def init(self, card_array: Card[52]*) -> None:
-        list = cardlist_init(card_array)
+    # The cards are actually stored here, but usually referenced by pointers.
+    # Rarely accessed directly.
+    card_array: Card[52]
+
+    def init(self) -> None:
+        list = cardlist_init(&self->card_array)
 
         for i = 0; i < 7; i++:
             self->tableau[i] = NULL

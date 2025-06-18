@@ -83,7 +83,7 @@ def select_less(app_state: AppState*) -> bool:
 @public
 def new_game(app_state: AppState*) -> None:
     app_state->klon = Klondike{}
-    app_state->klon.init(&app_state->card_array)
+    app_state->klon.init()
 
     app_state->selmv = SelectionOrMove{
         is_move = False,
