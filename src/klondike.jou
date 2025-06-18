@@ -1,4 +1,7 @@
+import "stdlib/mem.jou"
+
 import "./card.jou"
+import "./rand.jou"
 import "./state.jou"
 
 
@@ -40,6 +43,15 @@ class CardPlace:
                 return self.kind == other.kind and self.number == other.number
 
 
+def shuffle(cards: Card*, n: int) -> None:
+    while n > 1:
+        # Choose a random card to be last
+        r = rand() % n
+        memswap(&cards[r], &cards[n-1], sizeof(cards[0]))
+        # Shuffle the rest
+        n--
+
+
 @public
 class Klondike:
     # https://www.denexa.com/wp-content/uploads/2015/11/klondike.png
@@ -54,20 +66,26 @@ class Klondike:
     # Rarely accessed directly.
     card_array: Card[52]
 
-    def init(self) -> None:
-        list = cardlist_init(&self->card_array)
+    def deal_cards(self) -> None:
+        memset(self, 0, sizeof(*self))
 
+        num_cards = 0
+        for s = 0; s < 4; s++:
+            for n = 1; n <= 13; n++:
+                self->card_array[num_cards++] = Card{number = n, suit = (s as Suit)}
+        assert num_cards == sizeof(self->card_array) / sizeof(self->card_array[0])
+
+        shuffle(self->card_array, num_cards)
+
+        card_index = 0
         for i = 0; i < 7; i++:
             self->tableau[i] = NULL
             for j = 0; j < i+1; j++:
-                cardlist_push_to_top(&self->tableau[i], cardlist_pop_from_bottom(&list))
+                cardlist_push_to_top(&self->tableau[i], &self->card_array[--num_cards])
             cardlist_top(self->tableau[i])->visible = True
 
-        self->stock = list
-        self->discard = NULL
-        self->num_picked = 0
-        for i = 0; i < 4; i++:
-            self->foundations[i] = NULL
+        while num_cards > 0:
+            cardlist_push_to_top(&self->stock, &self->card_array[--num_cards])
 
     def card_in_some_tableau(self, card: Card*) -> bool:
         for i = 0; i < 7; i++:

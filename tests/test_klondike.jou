@@ -1,5 +1,4 @@
 import "stdlib/io.jou"
-import "stdlib/mem.jou"
 
 import "./util.jou"
 import "../src/card.jou"
@@ -24,7 +23,7 @@ def count_visible_cards(first: Card*) -> int:
 
 def test_init() -> None:
     klon = Klondike{}
-    klon.init()
+    klon.deal_cards()
     assert klon.num_picked == 0
 
     assert count_cards(klon.stock) == 13*4 - (1+2+3+4+5+6+7)
@@ -43,7 +42,7 @@ def test_init() -> None:
 
 def test_canmove() -> None:
     klon = Klondike{}
-    klon.init()
+    klon.deal_cards()
 
     # non-visible cards can never be moved
     assert not klon.tableau[2]->visible
@@ -61,8 +60,7 @@ def test_canmove() -> None:
 # Creates a game where some tableau->tableau move is possible
 def init_movable_kln(klon: Klondike*, srctab: int*, dsttab: int*) -> None:
     while True:
-        memset(klon, 0, sizeof(*klon))
-        klon->init()
+        klon->deal_cards()
 
         for i = 0; i < 7; i++:
             for j = 0; j < 7; j++:
@@ -111,7 +109,7 @@ def discard_check(klon: Klondike, ndiscarded: int, ds: int) -> None:
 
 def test_stock_to_discard() -> None:
     klon = Klondike{}
-    klon.init()
+    klon.deal_cards()
     discard_check(klon, 0, 0)
 
     savestock = klon.stock
@@ -140,7 +138,7 @@ def test_stock_to_discard() -> None:
 
 def test_stock_to_discard_visibility_with_discard_hide() -> None:
     klon = Klondike{}
-    klon.init()
+    klon.deal_cards()
 
     klon.stock_to_discard(Args{pick = 3, discardhide = True})
     klon.stock_to_discard(Args{pick = 3, discardhide = True})
@@ -156,7 +154,7 @@ def test_stock_to_discard_visibility_with_discard_hide() -> None:
 
 def test_stock_to_discard_visibility_without_discard_hide() -> None:
     klon = Klondike{}
-    klon.init()
+    klon.deal_cards()
 
     klon.stock_to_discard(Args{pick = 3, discardhide = False})
     klon.stock_to_discard(Args{pick = 3, discardhide = False})

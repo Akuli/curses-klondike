@@ -1,7 +1,6 @@
 import "../src/card.jou"
 import "./util.jou"
 import "stdlib/io.jou"
-import "stdlib/mem.jou"
 import "stdlib/str.jou"
 
 
@@ -13,20 +12,6 @@ def test_number_to_string() -> None:
     assert strcmp(card_number_to_string(11), "J") == 0
     assert strcmp(card_number_to_string(12), "Q") == 0
     assert strcmp(card_number_to_string(13), "K") == 0
-
-
-def test_cardlist_init() -> None:
-    got: int[13][4]
-    memset(got, 0, sizeof(got))
-
-    cards: Card[52]
-    first = cardlist_init(&cards)
-    for c = first; c != NULL; c = c->next:
-        got[c->suit as int][c->number - 1]++
-
-    for s = 0; s < 4; s++:
-        for n = 0; n < 13; n++:
-            assert got[s][n] == 1
 
 
 def abc_cards(a: Card*, b: Card*, c: Card*, linked: bool) -> None:
@@ -102,8 +87,6 @@ def test_cardlist_push() -> None:
 
 def main() -> int:
     test_number_to_string()
-    dot()
-    test_cardlist_init()
     dot()
     test_cardlist_top()
     dot()
