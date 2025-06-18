@@ -25,7 +25,6 @@ declare setlocale(category: int, locale: byte*) -> byte*
 const LC_ALL: int = 6  # TODO: probably something else on macos
 
 
-
 def setup_curses(app_state: AppState*) -> None:
     # displaying unicodes correctly needs setlocale here AND linking with cursesw
     if setlocale(LC_ALL, "") == NULL:
