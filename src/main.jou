@@ -73,8 +73,9 @@ def main(argc: int, argv: byte**) -> int:
     attron(A_STANDOUT)
     mvaddstr(getmaxy(stdscr)-1, 0, "Press h for help.")
     attroff(A_STANDOUT)
+    refresh()
 
     while True:
-        refresh()
         handle_key(&app_state, getch())
         draw_klondike(&app_state)
+        refresh()
