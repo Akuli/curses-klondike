@@ -21,7 +21,7 @@ def count_visible_cards(first: Card*) -> int:
     return n
 
 
-def test_init() -> None:
+def test_deal_cards() -> None:
     klon = Klondike{}
     klon.deal_cards()
     assert klon.num_picked == 0
@@ -40,7 +40,7 @@ def test_init() -> None:
         assert cardlist_top(klon.tableau[i])->visible
 
 
-def test_canmove() -> None:
+def test_can_move() -> None:
     klon = Klondike{}
     klon.deal_cards()
 
@@ -165,9 +165,9 @@ def test_stock_to_discard_visibility_without_discard_hide() -> None:
 
 
 def main() -> int:
-    test_init()
+    test_deal_cards()
     dot()
-    test_canmove()
+    test_can_move()
     dot()
     test_move()
     dot()
