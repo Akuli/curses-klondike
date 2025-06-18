@@ -120,7 +120,7 @@ def handle_key(app_state: AppState*, key: int) -> None:
                 endwin()
                 exit(0)
         case 'n':
-            if confirm_yes_no("Do you really want to start a new game?"):
+            if app_state->klon.win() or confirm_yes_no("Do you really want to start a new game?"):
                 new_game(app_state)
         case 's':
             stock_to_discard(app_state)
