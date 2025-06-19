@@ -106,6 +106,7 @@ def move_to_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
         app_state->move_dest = new_place
 
 
+@public
 def select_or_move_to_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
     if app_state->move_dest == NULL:
         select_neighbor(app_state, dx, dy)
