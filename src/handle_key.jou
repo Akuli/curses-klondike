@@ -117,27 +117,15 @@ def handle_key(app_state: AppState*, key: int) -> None:
         case 27:  # esc key, didn't find a KEY_foo constant for this in curses headers
             app_state->move_dest = NULL
         case KEY_LEFT:
-            if app_state->move_dest == NULL:
-                select_neighbor(app_state, -1, 0)
-            else:
-                move_to_neighbor(app_state, -1, 0)
+            select_or_move_to_neighbor(app_state, -1, 0)
         case KEY_RIGHT:
-            if app_state->move_dest == NULL:
-                select_neighbor(app_state, 1, 0)
-            else:
-                move_to_neighbor(app_state, 1, 0)
+            select_or_move_to_neighbor(app_state, 1, 0)
         case KEY_UP:
-            if app_state->move_dest == NULL:
-                if not select_more(app_state):
-                    select_neighbor(app_state, 0, -1)
-            else:
-                move_to_neighbor(app_state, 0, -1)
+            if not select_more(app_state):
+                select_or_move_to_neighbor(app_state, 0, -1)
         case KEY_DOWN:
-            if app_state->move_dest == NULL:
-                if not select_less(app_state):
-                    select_neighbor(app_state, 0, 1)
-            else:
-                move_to_neighbor(app_state, 0, 1)
+            if not select_less(app_state):
+                select_or_move_to_neighbor(app_state, 0, 1)
         case KEY_PPAGE:
             while select_more(app_state):
                 pass
