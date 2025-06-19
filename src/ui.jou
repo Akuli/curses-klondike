@@ -68,29 +68,20 @@ def ui_y(y_count: int) -> int:
     return y_count * CARD_HEIGHT
 
 
-# Determines what card is selected, if any.
-#
-# When moving a pile of cards at once, the first (bottom) card in the pile
-# is returned.
-def get_selected_card(app_state: AppState*) -> Card*:
-    if app_state->selmv.is_move:
-        return app_state->selmv.move.card
+def get_selected_place(app_state: AppState*) -> Card**:
+    if app_state->move_dest == NULL:
+        # Selection mode
+        return app_state->sel_place
     else:
-        return app_state->selmv.selection.card
-
-
-def get_selected_place(app_state: AppState*) -> CardPlace:
-    if app_state->selmv.is_move:
-        return app_state->selmv.move.dest
-    else:
-        return app_state->selmv.selection.place
+        # Moving cards will appear at their destination
+        return app_state->move_dest
 
 
 def draw_card(app_state: AppState*, card: Card*, left: int, top: int) -> None:
     assert card != NULL
 
     selected = False
-    for c = get_selected_card(app_state); c != NULL; c = c->next:
+    for c = app_state->sel_card; c != NULL; c = c->next:
         if c == card:
             selected = True
             break
@@ -119,42 +110,32 @@ def draw_card(app_state: AppState*, card: Card*, left: int, top: int) -> None:
 # For drawing cards at a certain place.
 #
 # Places results to the result array. Returns number of cards in it.
-def get_cards_after_moves(app_state: AppState*, place: CardPlace, result: Card*[52]*) -> int:
-    match place.kind:
-        case CardPlaceKind.Stock:
-            first_card_at_place = app_state->klon.stock
-        case CardPlaceKind.Discard:
-            first_card_at_place = app_state->klon.discard
-        case CardPlaceKind.Foundation:
-            first_card_at_place = app_state->klon.foundations[place.number]
-        case CardPlaceKind.Tableau:
-            first_card_at_place = app_state->klon.tableau[place.number]
-
+def get_cards_after_moves(app_state: AppState*, place: Card**, result: Card*[52]*) -> int:
     i = 0
 
     if (
-        app_state->selmv.is_move
-        and not app_state->selmv.move.src.equals(app_state->selmv.move.dest)
-        and place.equals(app_state->selmv.move.src)
+        app_state->move_dest != NULL
+        and app_state->sel_place == place
+        and app_state->move_dest != place
     ):
         # Cards are being moved away from here. Stop at the moving card.
-        for c = first_card_at_place; c != NULL; c = c->next:
-            if c == app_state->selmv.move.card:
+        for c = *place; c != NULL; c = c->next:
+            if c == app_state->sel_card:
                 break
             (*result)[i++] = c
     elif (
-        app_state->selmv.is_move
-        and not app_state->selmv.move.src.equals(app_state->selmv.move.dest)
-        and place.equals(app_state->selmv.move.dest)
+        app_state->move_dest != NULL
+        and app_state->sel_place != place
+        and app_state->move_dest == place
     ):
         # Cards are being moved here. Add moved cards to end of result.
-        for c = first_card_at_place; c != NULL; c = c->next:
+        for c = *place; c != NULL; c = c->next:
             (*result)[i++] = c
-        for c = app_state->selmv.move.card; c != NULL; c = c->next:
+        for c = app_state->sel_card; c != NULL; c = c->next:
             (*result)[i++] = c
     else:
         # Moves are irrelevant
-        for c = first_card_at_place; c != NULL; c = c->next:
+        for c = *place; c != NULL; c = c->next:
             (*result)[i++] = c
 
     assert i < sizeof(*result) / sizeof((*result)[0])
@@ -198,15 +179,15 @@ def draw_stock(app_state: AppState*) -> None:
 
 
 def draw_discard(app_state: AppState*) -> None:
-    place = CardPlace{kind = CardPlaceKind.Discard}
+    place = &app_state->klon.discard
     cards: Card*[52]
     ncards = get_cards_after_moves(app_state, place, &cards)
 
     num_picked = app_state->klon.num_picked
     if (
-        app_state->selmv.is_move
-        and app_state->selmv.move.src.equals(place)
-        and not app_state->selmv.move.dest.equals(place)
+        app_state->move_dest != NULL
+        and app_state->sel_place == place
+        and app_state->move_dest != place
     ):
         # A card is being moved away from discard.
         num_picked--
@@ -226,7 +207,7 @@ def draw_discard(app_state: AppState*) -> None:
 def draw_foundation(app_state: AppState*, number: int) -> None:
     assert 0 <= number and number < 4
 
-    place = CardPlace{kind = CardPlaceKind.Foundation, number = number}
+    place = &app_state->klon.foundations[number]
     cards: Card*[52]
     ncards = get_cards_after_moves(app_state, place, &cards)
 
@@ -236,7 +217,7 @@ def draw_foundation(app_state: AppState*, number: int) -> None:
 
 
 def draw_tableau(app_state: AppState*, number: int) -> None:
-    place = CardPlace{kind = CardPlaceKind.Tableau, number = number}
+    place = &app_state->klon.tableau[number]
     cards: Card*[52]
     ncards = get_cards_after_moves(app_state, place, &cards)
 
@@ -251,16 +232,18 @@ def draw_tableau(app_state: AppState*, number: int) -> None:
         y += Y_OFFSET_SMALL
 
 
-def place_to_xy(place: CardPlace) -> int[2]:
-    match place.kind:
-        case CardPlaceKind.Stock:
-            return [ui_x(0), ui_y(0)]
-        case CardPlaceKind.Discard:
-            return [ui_x(1), ui_y(0)]
-        case CardPlaceKind.Foundation:
-            return [ui_x(3 + place.number), ui_y(0)]
-        case CardPlaceKind.Tableau:
-            return [ui_x(place.number), ui_y(1)]
+def place_to_xy(klon: Klondike*, place: Card**) -> int[2]:
+    if place == &klon->stock:
+        return [ui_x(0), ui_y(0)]
+    if place == &klon->discard:
+        return [ui_x(1), ui_y(0)]
+    if klon->is_foundation(place):
+        i = klon->foundation_number(place)
+        return [ui_x(3 + i), ui_y(0)]
+    if klon->is_tableau(place):
+        i = klon->tableau_number(place)
+        return [ui_x(i), ui_y(1)]
+    assert False
 
 
 @public
@@ -275,8 +258,8 @@ def draw_klondike(app_state: AppState*) -> None:
         draw_tableau(app_state, i)
 
     # If there are no cards wherever the selection is, draw the selection there
-    if get_selected_card(app_state) == NULL:
-        xy = place_to_xy(get_selected_place(app_state))
+    if app_state->sel_card == NULL:
+        xy = place_to_xy(&app_state->klon, get_selected_place(app_state))
         draw_card_border(xy[0], xy[1], True, NULL)
 
     if app_state->klon.win():
