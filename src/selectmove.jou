@@ -61,7 +61,11 @@ def select_top_card_or_move_to(app_state: AppState*, place: Card**) -> None:
     if app_state->move_dest == NULL:
         # Select top card
         app_state->sel_place = place
-        app_state->sel_card = cardlist_top(*place)
+        if place == &app_state->klon.stock:
+            # Doesn't make sense to select a card in stock, that also messes with UI
+            app_state->sel_card = NULL
+        else:
+            app_state->sel_card = cardlist_top(*place)
     else:
         # Set where we move it
         app_state->move_dest = place
