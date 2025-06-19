@@ -122,6 +122,6 @@ def end_move(app_state: AppState*) -> None:
     app_state->move_dest = NULL
 
     if app_state->klon.can_move(app_state->sel_card, place):
-        app_state->klon.move(app_state->sel_card, place, False)
+        app_state->klon.move(app_state->sel_card, place)
 
     select_top_card(app_state, place)

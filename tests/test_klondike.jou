@@ -77,7 +77,7 @@ def test_move() -> None:
     srctab, dsttab: int
     init_movable_kln(&klon, &srctab, &dsttab)
 
-    klon.move(cardlist_top(klon.tableau[srctab]), &klon.tableau[dsttab], False)
+    klon.move(cardlist_top(klon.tableau[srctab]), &klon.tableau[dsttab])
     for i = 0; i < 7; i++:
         n = i+1
         if i == srctab:
