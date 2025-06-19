@@ -79,6 +79,7 @@ class Klondike:
         return False
 
     # Returns whether a card can be moved to on top of dest.
+    # Dest must be one of: &stock, &discard, &foundations[i], &tableau[i]
     # Use stock2discard() instead for stock -> discard moves, this returns false for those.
     # card must be a card in klon
     def can_move(self, card: Card*, dest: Card**) -> bool:

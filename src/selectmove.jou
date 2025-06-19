@@ -43,27 +43,10 @@ enum SelDirection:
 #
 # A pointer to Card is not enough because it's possible to select a place where
 # cards can be put but currently contains no cards.
-#
-# Possible values:
-#
-#    card = NULL, place = stock
-#        stock selected
-#
-#    card = cardlist_top(klon.discard), place = discard
-#        discard selected
-#
-#    card = cardlist_top(klon.foundations[n]), place = foundation n
-#        nth foundation selected
-#
-#    card = klon.tableau[n] or some of its ->nexts, card is visible, place = tableau n
-#        nth tableau selected, including the specified card and all its ->nexts
-#
-#    card = NULL, place = tableau n
-#        tableau n selected, but there are no cards in that tableau
 @public
 class Selection:
     card: Card*
-    place: Card**  # &stock, &discard, &foundations[i] or &tableau[i]
+    place: Card**  # must be one of: &stock, &discard, &foundations[i], &tableau[i]
 
     # returns true if something was done, false otherwise
     def select_more(self, klon: Klondike*) -> bool:
@@ -87,11 +70,12 @@ class Selection:
         return False
 
 
-# represents card being moved src --> dest
+# Represents card being moved src --> dest.
+# When multiple cards move, that happens through the `->next` pointer.
 class Move:
     card: Card*
-    src: Card**
-    dest: Card**
+    src: Card**     # must be one of: &stock, &discard, &foundations[i], &tableau[i]
+    dest: Card**    # must be one of: &stock, &discard, &foundations[i], &tableau[i]
 
 
 @public
