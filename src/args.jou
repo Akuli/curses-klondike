@@ -3,8 +3,6 @@
 import "stdlib/ascii.jou"
 import "stdlib/io.jou"
 import "stdlib/str.jou"
-import "stdlib/mem.jou"
-import "stdlib/list.jou"
 
 import "./state.jou"
 
@@ -13,30 +11,31 @@ enum OptionType:
     YesNo
     Int
 
-
 class OptionSpec:
-    name: byte*
+    name: byte[100]
     metavar: byte*  # For example the "n" of "--pick n". Only for help messages. May be NULL.
     type: OptionType
     min: int
     max: int
     desc: byte*
 
-    # Prints e.g. "--pick 1" or "--pick=1"
+    # Returns e.g. "--pick 1" or "--pick=1"
     def name_with_metavar(self, sep: byte) -> byte[100]:
         assert sep == ' ' or sep == '='
 
+        if self->metavar == NULL:
+            return self->name
+
         result: byte[100]
-        if self->metavar != NULL:
-            snprintf(result, sizeof(result), "%s%c%s", self->name, sep, self->metavar)
-        else:
-            snprintf(result, sizeof(result), "%s", self->name)
+        snprintf(result, sizeof(result), "%s%c%s", self->name, sep, self->metavar)
         return result
 
 
 # TODO: use a compile-time constant when that is supported
-def get_option_specs() -> OptionSpec[4]:
-    return [
+global option_specs: OptionSpec[4]
+
+def init_option_specs() -> None:
+    option_specs = [
         OptionSpec{name="--help", type=OptionType.YesNo, desc="show this help message and exit"},
         OptionSpec{name="--no-colors", type=OptionType.YesNo, desc="don't use colors, even if the terminal supports colors"},
         OptionSpec{name="--pick", metavar="n", type=OptionType.Int, min=1, max=(13*4 - (1+2+3+4+5+6+7)), desc="pick n cards from stock at a time, default is 3"},
@@ -44,15 +43,57 @@ def get_option_specs() -> OptionSpec[4]:
     ]
 
 
-# Represents an option and a value, if any.
-# Needed because one arg token can come from 2 argv items: --pick 3
-# Or just 1: --no-colors, --pick=3
-class Token:
-    spec: OptionSpec*
-    value: byte*  # may be NULL
+class ParseState:
+    out: FILE*  # typically stdout, can also be a temporary file during tests
+    err: FILE*  # typically stderr, can also be a temporary file during tests
+    program_name: byte*
+    remaining_args: byte**  # never includes program name
+
+
+def print_help(state: ParseState*) -> None:
+    nspecs = sizeof(option_specs) / sizeof(option_specs[0])
+
+    fprintf(state->out, "Usage: %s", state->program_name)
+    for s = &option_specs[0]; s < &option_specs[nspecs]; s++:
+        name_with_metavar = s->name_with_metavar(' ')
+        fprintf(state->out, " [%s]", name_with_metavar)
+
+    fprintf(state->out, "\n\nOptions:\n")
+    for s = &option_specs[0]; s < &option_specs[nspecs]; s++:
+        name_with_metavar = s->name_with_metavar(' ')
+        fprintf(state->out, "  %-14s  %s\n", name_with_metavar, s->desc)
+
+
+# Finds an option by name
+#
+# Prints error message and returns NULL if not found.
+# Supports abbreviations when not ambiguous, e.g. "--discard-h" for "--discard-hide".
+def find_option_spec(state: ParseState*, name: byte*) -> OptionSpec*:
+    nspecs = sizeof(option_specs) / sizeof(option_specs[0])
+
+    result: OptionSpec* = NULL
+    for s = &option_specs[0]; s < &option_specs[nspecs]; s++:
+        if starts_with(s->name, name):
+            if result == NULL:
+                result = s
+            else:
+                fprintf(
+                    state->err, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
+                    state->program_name, name, result->name, s->name
+                )
+                return NULL
+
+    if result == NULL:
+        fprintf(state->err, "%s: unknown option '%s'\n", state->program_name, name)
+        return NULL
+
+    return result
 
 
 def is_valid_integer(s: byte*, min: int, max: int) -> bool:
+    if *s == '\0':
+        return False
+
     for p = s; *p != '\0'; p++:
         if not is_ascii_digit(*p):
             return False
@@ -62,176 +103,127 @@ def is_valid_integer(s: byte*, min: int, max: int) -> bool:
     return min <= n and n <= max
 
 
+# Check whether a value (or the lack of value) passed to an option is valid.
+#
+# Return values:
+#   True    ok
+#   False   error message printed
+def validate_value(state: ParseState*, spec: OptionSpec*, value: byte*) -> bool:
+    match spec->type:
+        case OptionType.YesNo:
+            if value != NULL:
+                fprintf(
+                    state->err, "%s: use just '%s', not '%s something' or '%s=something'\n",
+                    state->program_name, spec->name, spec->name, spec->name,
+                )
+                return False
+
+            return True
+
+        case OptionType.Int:
+            if value == NULL:
+                with_space = spec->name_with_metavar(' ')
+                with_equal = spec->name_with_metavar('=')
+                fprintf(
+                    state->err, "%s: use '%s' or '%s', not just '%s'\n",
+                    state->program_name, with_space, with_equal, spec->name,
+                )
+                return False
+
+            if not is_valid_integer(value, spec->min, spec->max):
+                fprintf(
+                    state->err, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
+                    state->program_name, spec->name, spec->min, spec->max, value,
+                )
+                return False
+
+            return True
+
+
+# Parse one option and its value, if any.
+# One option can come from 2 argv items (--pick 3) or just one (--pick=3, --no-colors).
+#
+# Return values:
+#   True:   Success
+#   False:  Error message was printed
+def parse_option_and_value(state: ParseState*, value: byte**) -> OptionSpec*:
+    arg = *state->remaining_args++
+    assert arg != NULL
+
+    if strlen(arg) < 3 or not starts_with(arg, "--"):
+        fprintf(state->err, "%s: unexpected argument: '%s'\n", state->program_name, arg)
+        return NULL
+
+    eq = strstr(arg, "=")
+    if eq != NULL:
+        *value = &eq[1]
+    elif *state->remaining_args == NULL or starts_with(*state->remaining_args, "-"):
+        *value = NULL
+    else:
+        *value = *state->remaining_args++
+
+    # Get rid of value if any, e.g. "--pick=1" --> "--pick"
+    name: byte[100]
+    snprintf(name, sizeof(name), "%.*s", strcspn(arg, "=") as int, arg)
+    return find_option_spec(state, name)
+
+
 @public
 const CONTINUE_TO_PROGRAM: int = -1
 
 
-class Parser:
-    out: FILE*  # typically stdout, can also be a temporary file during tests
-    err: FILE*  # typically stderr, can also be a temporary file during tests
-    argv0: byte*  # program name
-    remaining_args: byte**  # never includes program name
-    specs: OptionSpec[4]
+# Return value: CONTINUE_TO_PROGRAM or a number to be passed to exit()
+def option_to_args(state: ParseState*, spec: OptionSpec*, value: byte*, args: Args*) -> int:
+    match spec->name with strcmp:
+        case "--help":
+            print_help(state)
+            return 0
+        case "--no-colors":
+            args->color = False
+        case "--pick":
+            assert value != NULL
+            args->pick = atoi(value)
+        case "--discard-hide":
+            args->discardhide = True
+        case _:
+            assert False  # should never happen
 
-    def print_help(self) -> None:
-        fprintf(self->out, "Usage: %s", self->argv0)
-        for s = &self->specs[0]; s < &self->specs[sizeof(self->specs) / sizeof(self->specs[0])]; s++:
-            name_with_metavar = s->name_with_metavar(' ')
-            fprintf(self->out, " [%s]", name_with_metavar)
+    return CONTINUE_TO_PROGRAM
 
-        fprintf(self->out, "\n\nOptions:\n")
-        for s = &self->specs[0]; s < &self->specs[sizeof(self->specs) / sizeof(self->specs[0])]; s++:
-            name_with_metavar = s->name_with_metavar(' ')
-            fprintf(self->out, "  %-14s  %s\n", name_with_metavar, s->desc)
 
-    # Finds an option by name
-    #
-    # Prints error message and returns NULL if not found.
-    # Supports abbreviations when not ambiguous, e.g. "--discard-h" for "--discard-hide".
-    def find_option_spec(self, name: byte*) -> OptionSpec*:
-        result: OptionSpec* = NULL
+# Return value: CONTINUE_TO_PROGRAM or a number to be passed to exit()
+def parse_arg(state: ParseState*, seen: OptionSpec**, nseen: int*, args: Args*) -> int:
+    value: byte*
+    spec = parse_option_and_value(state, &value)
+    if spec == NULL or not validate_value(state, spec, value):
+        fprintf(state->err, "Run '%s --help' for help.\n", state->program_name)
+        return 2
 
-        for s = &self->specs[0]; s < &self->specs[sizeof(self->specs) / sizeof(self->specs[0])]; s++:
-            if starts_with(s->name, name):
-                if result == NULL:
-                    result = s
-                else:
-                    fprintf(
-                        self->err, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
-                        self->argv0, name, result->name, s->name
-                    )
-                    return NULL
+    for i = 0; i < *nseen; i++:
+        if seen[i] == spec:
+            fprintf(state->err, "%s: repeated option '%s'\n", state->program_name, spec->name)
+            fprintf(state->err, "Run '%s --help' for help.\n", state->program_name)
+            return 2
+    seen[(*nseen)++] = spec
 
-        if result == NULL:
-            fprintf(self->err, "%s: unknown option '%s'\n", self->argv0, name)
-            return NULL
-
-        return result
-
-    # Check whether a value (or the lack of value) passed to an option is valid.
-    #
-    # Return values:
-    #   True    ok
-    #   False   error message printed
-    def validate_value(self, spec: OptionSpec*, value: byte*) -> bool:
-        match spec->type:
-            case OptionType.YesNo:
-                if value != NULL:
-                    fprintf(
-                        self->err, "%s: use just '%s', not '%s something' or '%s=something'\n",
-                        self->argv0, spec->name, spec->name, spec->name,
-                    )
-                    return False
-
-                return True
-
-            case OptionType.Int:
-                if value == NULL:
-                    with_space = spec->name_with_metavar(' ')
-                    with_equal = spec->name_with_metavar('=')
-                    fprintf(
-                        self->err, "%s: use '%s' or '%s', not just '%s'\n",
-                        self->argv0, with_space, with_equal, spec->name,
-                    )
-                    return False
-
-                if not is_valid_integer(value, spec->min, spec->max):
-                    fprintf(
-                        self->err, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
-                        self->argv0, spec->name, spec->min, spec->max, value,
-                    )
-                    return False
-
-                return True
-
-    # Parse one token of arguments. Called repeatedly.
-    #
-    # Return values:
-    #   True:   Got token successfully
-    #   False:  Error message was printed
-    #
-    # argv_ptr should point to remaining args. It will be moved as args are
-    # consumed. There is always a NULL at the end of argv and this relies on it.
-    def get_token(self, result_ptr: Token*) -> bool:
-        arg = *self->remaining_args++
-        assert arg != NULL
-
-        if strlen(arg) < 3 or not starts_with(arg, "--"):
-            fprintf(self->err, "%s: unexpected argument: '%s'\n", self->argv0, arg)
-            return False
-
-        name = strdup(arg)
-        value: byte*
-
-        eq = strstr(name, "=")
-        if eq != NULL:
-            *eq = '\0'  # truncate the name, e.g. "--pick=1" --> "--pick"
-            value = &strstr(arg, "=")[1]
-        elif *self->remaining_args == NULL or starts_with(*self->remaining_args, "-"):
-            value = NULL
-        else:
-            value = *self->remaining_args++
-
-        spec = self->find_option_spec(name)
-        free(name)
-        if spec == NULL or not self->validate_value(spec, value):
-            return False
-
-        *result_ptr = Token{spec=spec, value=value}
-        return True
-
-    # Return value: CONTINUE_TO_PROGRAM or a number to be passed to exit()
-    def tokens_to_args(self, tokens: List[Token], args: Args*) -> int:
-        for t = tokens.ptr; t < tokens.end(); t++:
-            if strcmp(t->spec->name, "--help") == 0:
-                self->print_help()
-                return 0
-            elif strcmp(t->spec->name, "--no-colors") == 0:
-                args->color = False
-            elif strcmp(t->spec->name, "--pick") == 0:
-                args->pick = atoi(t->value)
-            elif strcmp(t->spec->name, "--discard-hide") == 0:
-                args->discardhide = True
-            else:
-                assert False  # should never happen
-
-        return CONTINUE_TO_PROGRAM
-
-    def print_oneline_help_to_stderr(self) -> None:
-        fprintf(self->err, "Run '%s --help' for help.\n", self->argv0)
-
-    # This is the "main method". Parses all arguments into the given `Args` instance.
-    #
-    # Return value: CONTINUE_TO_PROGRAM or a number to be passed to exit()
-    def parse(self, args: Args*) -> int:
-        tokens = List[Token]{}
-
-        while *self->remaining_args != NULL:
-            t: Token
-            if not self->get_token(&t):
-                self->print_oneline_help_to_stderr()
-                free(tokens.ptr)
-                return 2
-
-            for old = tokens.ptr; old < tokens.end(); old++:
-                if old->spec == t.spec:
-                    fprintf(self->err, "%s: repeated option '%s'\n", self->argv0, t.spec->name)
-                    self->print_oneline_help_to_stderr()
-                    free(tokens.ptr)
-                    return 2
-
-            tokens.append(t)
-
-        result = self->tokens_to_args(tokens, args)
-        free(tokens.ptr)
-        return result
+    return option_to_args(state, spec, value, args)
 
 
 # Return value: CONTINUE_TO_PROGRAM or a number to be passed to exit()
 @public
 def parse_args(argv: byte**, args: Args*, out: FILE*, err: FILE*) -> int:
-    # Set defaults
+    init_option_specs()
     *args = Args{color=True, pick=3, discardhide=False}
 
-    parser = Parser{out=out, err=err, argv0=argv[0], remaining_args=&argv[1], specs=get_option_specs()}
-    return parser.parse(args)
+    state = ParseState{out=out, err=err, program_name=argv[0], remaining_args=&argv[1]}
+
+    assert sizeof(option_specs) / sizeof(option_specs[0]) == 4
+    seen: OptionSpec*[5]
+    nseen = 0
+
+    while *state.remaining_args != NULL:
+        ret = parse_arg(&state, seen, &nseen, args)
+        if ret != CONTINUE_TO_PROGRAM:
+            return ret
+
+    return CONTINUE_TO_PROGRAM
