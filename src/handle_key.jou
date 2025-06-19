@@ -9,7 +9,6 @@ import "stdlib/process.jou"
 import "./curses.jou"
 import "./state.jou"
 import "./card.jou"
-import "./klondike.jou"
 import "./selectmove.jou"
 import "./help.jou"
 
@@ -26,15 +25,12 @@ def stock_to_discard(app_state: AppState*) -> None:
         app_state->klon.stock_to_discard(app_state->args)
 
     # Make sure that whatever ends up in discard place is selected
-    app_state->selmv.select_top_card_or_move_to(&app_state->klon, CardPlace{kind = CardPlaceKind.Discard})
+    app_state->selmv.select_top_card_or_move_to(&app_state->klon, &app_state->klon.discard)
 
 
 def select_discard(app_state: AppState*) -> None:
-    if app_state->selmv.is_move:
-        return
-
-    # TODO: this is much harder than it should be
-    app_state->selmv.select_top_card_or_move_to(&app_state->klon, CardPlace{kind = CardPlaceKind.Discard})
+    if not app_state->selmv.is_move:
+        app_state->selmv.select_top_card_or_move_to(&app_state->klon, &app_state->klon.discard)
 
 
 def move_selected_to_foundation(app_state: AppState*) -> None:
@@ -85,7 +81,7 @@ def new_game(app_state: AppState*) -> None:
     app_state->klon.deal_cards()
     app_state->selmv = SelectionOrMove{
         is_move = False,
-        selection = Selection{place = CardPlace{kind = CardPlaceKind.Stock}},
+        selection = Selection{place = &app_state->klon.stock},
     }
 
 
@@ -133,7 +129,7 @@ def handle_key(app_state: AppState*, key: int) -> None:
         case '\n':
             if app_state->selmv.is_move:
                 app_state->selmv.end_move(&app_state->klon)
-            elif app_state->selmv.selection.place.is_stock():
+            elif app_state->selmv.selection.place == &app_state->klon.stock:
                 stock_to_discard(app_state)
             elif app_state->selmv.selection.card != NULL and app_state->selmv.selection.card->visible:
                 app_state->selmv.begin_move()
@@ -156,4 +152,4 @@ def handle_key(app_state: AppState*, key: int) -> None:
             while select_less(app_state):
                 pass
         case '1' | '2' | '3' | '4' | '5' | '6' | '7':
-            app_state->selmv.select_top_card_or_move_to(&app_state->klon, CardPlace{kind = CardPlaceKind.Tableau, number = key - '1'})
+            app_state->selmv.select_top_card_or_move_to(&app_state->klon, &app_state->klon.tableau[key - '1'])

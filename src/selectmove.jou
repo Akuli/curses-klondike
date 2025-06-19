@@ -2,40 +2,34 @@ import "./card.jou"
 import "./klondike.jou"
 
 
-def place_to_card_x(place: CardPlace) -> int:
-    match place.kind:
-        case CardPlaceKind.Tableau:
-            return place.number
-        case CardPlaceKind.Foundation:
-            return 3 + place.number
-        case CardPlaceKind.Stock:
-            return 0
-        case CardPlaceKind.Discard:
-            return 1
+def place_to_card_x(klon: Klondike*, place: Card**) -> int:
+    if place == &klon->stock:
+        return 0
+    if place == &klon->discard:
+        return 1
+    if klon->is_tableau(place):
+        return klon->tableau_number(place)
+    if klon->is_foundation(place):
+        return 3 + klon->foundation_number(place)
+    assert False
 
 
-def card_x_to_top_place(x: int) -> CardPlace:
+def card_x_to_top_place(klon: Klondike*, x: int) -> Card**:
     match x:
         case 0:
-            return CardPlace{kind = CardPlaceKind.Stock}
+            return &klon->stock
         case 1:
-            return CardPlace{kind = CardPlaceKind.Discard}
+            return &klon->discard
         case 3 | 4 | 5 | 6:
-            return CardPlace{kind = CardPlaceKind.Foundation, number = x-3}
+            return &klon->foundations[x-3]
         case _:
             assert False
 
 
-def get_visible_top_card(klon: Klondike, place: CardPlace) -> Card*:
-    match place.kind:
-        case CardPlaceKind.Foundation:
-            return cardlist_top(klon.foundations[place.number])
-        case CardPlaceKind.Tableau:
-            return cardlist_top(klon.tableau[place.number])
-        case CardPlaceKind.Discard:
-            return cardlist_top(klon.discard)
-        case CardPlaceKind.Stock:
-            return NULL
+def get_visible_top_card(klon: Klondike*, place: Card**) -> Card*:
+    if place == &klon->stock:
+        return NULL
+    return cardlist_top(*place)
 
 
 @public
@@ -69,12 +63,12 @@ enum SelDirection:
 @public
 class Selection:
     card: Card*
-    place: CardPlace
+    place: Card**  # &stock, &discard, &foundations[i] or &tableau[i]
 
     # returns true if something was done, false otherwise
     def select_more(self, klon: Klondike*) -> bool:
-        if self->place.kind == CardPlaceKind.Tableau:
-            for card = klon->tableau[self->place.number]; card != NULL and card->next != NULL; card = card->next:
+        if klon->is_tableau(self->place):
+            for card = *self->place; card != NULL and card->next != NULL; card = card->next:
                 if self->card == card->next and card->visible:
                     self->card = card
                     return True
@@ -84,7 +78,7 @@ class Selection:
     # returns true if something was done, false otherwise
     def select_less(self, klon: Klondike*) -> bool:
         if (
-            self->place.kind == CardPlaceKind.Tableau
+            klon->is_tableau(self->place)
             and self->card != NULL
             and self->card->next != NULL
         ):
@@ -96,8 +90,8 @@ class Selection:
 # represents card being moved src --> dest
 class Move:
     card: Card*
-    src: CardPlace
-    dest: CardPlace
+    src: Card**
+    dest: Card**
 
 
 @public
@@ -107,22 +101,22 @@ class SelectionOrMove:
     selection: Selection
     move: Move
 
-    def select_top_card_or_move_to(self, klon: Klondike*, place: CardPlace) -> None:
+    def select_top_card_or_move_to(self, klon: Klondike*, place: Card**) -> None:
         if self->is_move:
             self->move.dest = place
         else:
-            self->selection = Selection{card = get_visible_top_card(*klon, place), place = place}
+            self->selection = Selection{card = get_visible_top_card(klon, place), place = place}
 
     def select_another_card(self, klon: Klondike*, dir: SelDirection) -> None:
         if self->is_move:
             assert self->move.card != NULL
 
         if self->is_move:
-            x = place_to_card_x(self->move.dest)
-            is_bottom_row = self->move.dest.kind == CardPlaceKind.Tableau
+            x = place_to_card_x(klon, self->move.dest)
+            is_bottom_row = klon->is_tableau(self->move.dest)
         else:
-            x = place_to_card_x(self->selection.place)
-            is_bottom_row = self->selection.place.kind == CardPlaceKind.Tableau
+            x = place_to_card_x(klon, self->selection.place)
+            is_bottom_row = klon->is_tableau(self->selection.place)
 
         match dir:
             case SelDirection.Left | SelDirection.Right:
@@ -137,25 +131,25 @@ class SelectionOrMove:
 
                 if 0 <= x and x < 7:
                     if is_bottom_row:
-                        new_place = CardPlace{kind = CardPlaceKind.Tableau, number = x}
+                        new_place = &klon->tableau[x]
                     else:
-                        new_place = card_x_to_top_place(x)
-                    if (not self->is_move) or is_bottom_row or new_place.kind == CardPlaceKind.Foundation:
+                        new_place = card_x_to_top_place(klon, x)
+                    if (not self->is_move) or is_bottom_row or klon->is_foundation(new_place):
                         self->select_top_card_or_move_to(klon, new_place)
 
             case SelDirection.Up:
                 if is_bottom_row and x != 2:
-                    top_place = card_x_to_top_place(x)
+                    top_place = card_x_to_top_place(klon, x)
                     # can only move from table to foundations, but multiple cards not even there
                     if (
                         (not self->is_move)
-                        or (top_place.kind == CardPlaceKind.Foundation and self->move.card->next == NULL)
+                        or (klon->is_foundation(top_place) and self->move.card->next == NULL)
                     ):
                         self->select_top_card_or_move_to(klon, top_place)
 
             case SelDirection.Down:
                 if self->is_move or not is_bottom_row:
-                    self->select_top_card_or_move_to(klon, CardPlace{kind = CardPlaceKind.Tableau, number = x})
+                    self->select_top_card_or_move_to(klon, &klon->tableau[x])
 
     def begin_move(self) -> None:
         card = self->selection.card

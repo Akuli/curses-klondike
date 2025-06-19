@@ -5,44 +5,6 @@ import "./rand.jou"
 import "./state.jou"
 
 
-# A card place cannot be represented as a card, or as a pointer to a card,
-# because there may be no cards in a card place.
-#
-# TODO: would a double pointer work? Card**
-@public
-enum CardPlaceKind:
-    Stock
-    Discard
-    Foundation
-    Tableau
-
-@public
-class CardPlace:
-    kind: CardPlaceKind
-    number: int  # only meaningful for foundation (0 <= number < 4) and tableau (0 <= number < 7)
-
-    def is_stock(self: CardPlace) -> bool:
-        return self.kind == CardPlaceKind.Stock
-
-    def is_discard(self: CardPlace) -> bool:
-        return self.kind == CardPlaceKind.Discard
-
-    # TODO: delete this?
-    def is_foundation(self: CardPlace, n: int) -> bool:
-        return self.kind == CardPlaceKind.Foundation and self.number == n
-
-    # TODO: delete this?
-    def is_tableau(self: CardPlace, n: int) -> bool:
-        return self.kind == CardPlaceKind.Tableau and self.number == n
-
-    def equals(self: CardPlace, other: CardPlace) -> bool:
-        match self.kind:
-            case CardPlaceKind.Stock | CardPlaceKind.Discard:
-                return self.kind == other.kind
-            case CardPlaceKind.Foundation | CardPlaceKind.Tableau:
-                return self.kind == other.kind and self.number == other.number
-
-
 def shuffle(cards: Card*, n: int) -> None:
     while n > 1:
         # Choose a random card to be last
@@ -65,6 +27,28 @@ class Klondike:
     # The cards are actually stored here, but usually referenced by pointers.
     # Rarely accessed directly.
     card_array: Card[52]
+
+    def is_foundation(self, place: Card**) -> bool:
+        return &self->foundations[0] <= place and place < &self->foundations[4]
+
+    def is_tableau(self, place: Card**) -> bool:
+        return &self->tableau[0] <= place and place < &self->tableau[7]
+
+    # Convert &self->foundations[i] to i
+    def foundation_number(self, place: Card**) -> int:
+        assert self->is_foundation(place)
+        i = ((place as int64) - (&self->foundations as int64)) / sizeof(*place)
+        assert 0 <= i and i < 4
+        assert place == &self->foundations[i]
+        return i as int
+
+    # Convert &self->tableau[i] to i. Returns -1 if pointer is not a tableau.
+    def tableau_number(self, place: Card**) -> int:
+        assert self->is_tableau(place)
+        i = ((place as int64) - (&self->tableau as int64)) / sizeof(*place)
+        assert 0 <= i and i < 7
+        assert place == &self->tableau[i]
+        return i as int
 
     def deal_cards(self) -> None:
         memset(self, 0, sizeof(*self))
@@ -97,7 +81,7 @@ class Klondike:
     # Returns whether a card can be moved to on top of dest.
     # Use stock2discard() instead for stock -> discard moves, this returns false for those.
     # card must be a card in klon
-    def can_move(self, card: Card*, dest: CardPlace) -> bool:
+    def can_move(self, card: Card*, dest: Card**) -> bool:
         # invisible cards can never be moved
         if not card->visible:
             return False
@@ -105,33 +89,32 @@ class Klondike:
         # the only way how a stack of multiple cards is allowed to move is tableau -> tableau
         if (
             card->next != NULL
-            and not (dest.kind == CardPlaceKind.Tableau and self->card_in_some_tableau(card))
+            and not (self->is_tableau(dest) and self->card_in_some_tableau(card))
         ):
             return False
 
-        match dest.kind:
-            case CardPlaceKind.Stock | CardPlaceKind.Discard:
-                # taking cards stock to discard is handled by stock2discard() and not allowed here
-                return False
+        if dest == &self->stock or dest == &self->discard:
+            # taking cards stock to discard is handled by stock2discard() and not allowed here
+            return False
 
-            case CardPlaceKind.Foundation:
-                assert 0 <= dest.number and dest.number < 4
-                if self->foundations[dest.number] == NULL:
-                    # Only A can be placed into an empty foundation
-                    return card->number == 1
-                top = cardlist_top(self->foundations[dest.number])
-                return card->suit == top->suit and card->number == top->number + 1
+        if self->is_foundation(dest):
+            if *dest == NULL:
+                # Only A can be placed into an empty foundation
+                return card->number == 1
+            top = cardlist_top(*dest)
+            return card->suit == top->suit and card->number == top->number + 1
 
-            case CardPlaceKind.Tableau:
-                assert 0 <= dest.number and dest.number < 7
-                if self->tableau[dest.number] == NULL:
-                    # Only K can be placed into an empty foundation
-                    return card->number == 13
-                top = cardlist_top(self->tableau[dest.number])
-                return (
-                    suit_to_color(card->suit) != suit_to_color(top->suit)
-                    and card->number == top->number - 1
-                )
+        if self->is_tableau(dest):
+            if *dest == NULL:
+                # Only K can be placed into an empty foundation
+                return card->number == 13
+            top = cardlist_top(*dest)
+            return (
+                suit_to_color(card->suit) != suit_to_color(top->suit)
+                and card->number == top->number - 1
+            )
+
+        assert False
 
     # Temporarily removes a card and anything stacked on top of it from the game.
     #
@@ -179,7 +162,7 @@ class Klondike:
     # If raw, accepts invalid moves (can_move) and never sets ->visible
     #
     # TODO: are raw moves still needed?
-    def move(self, card: Card*, dest: CardPlace, raw: bool) -> None:
+    def move(self, card: Card*, dest: Card**, raw: bool) -> None:
         if not raw:
             assert self->can_move(card, dest)
 
@@ -189,24 +172,14 @@ class Klondike:
             # Expose the card under the card being moved
             prev->visible = True
 
-        match dest.kind:
-            case CardPlaceKind.Stock:
-                dest_pointer = &self->stock
-            case CardPlaceKind.Discard:
-                dest_pointer = &self->discard
-            case CardPlaceKind.Foundation:
-                dest_pointer = &self->foundations[dest.number]
-            case CardPlaceKind.Tableau:
-                dest_pointer = &self->tableau[dest.number]
-
-        cardlist_push_to_top(dest_pointer, card)
+        cardlist_push_to_top(dest, card)
 
     # Move card to any foundation if possible. Does nothing if card is NULL.
     def move2foundation(self, card: Card*) -> bool:
         if card != NULL:
             for i = 0; i < 4; i++:
-                if self->can_move(card, CardPlace{kind = CardPlaceKind.Foundation, number = i}):
-                    self->move(card, CardPlace{kind = CardPlaceKind.Foundation, number = i}, False)
+                if self->can_move(card, &self->foundations[i]):
+                    self->move(card, &self->foundations[i], False)
                     return True
         return False
 
