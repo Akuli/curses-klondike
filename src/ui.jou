@@ -68,29 +68,20 @@ def ui_y(y_count: int) -> int:
     return y_count * CARD_HEIGHT
 
 
-# Determines what card is selected, if any.
-#
-# When moving a pile of cards at once, the first (bottom) card in the pile
-# is returned.
-def get_selected_card(app_state: AppState*) -> Card*:
-    if app_state->selmv.is_move:
-        return app_state->selmv.move.card
-    else:
-        return app_state->selmv.selection.card
-
-
 def get_selected_place(app_state: AppState*) -> Card**:
-    if app_state->selmv.is_move:
-        return app_state->selmv.move.dest
+    if app_state->move_dest == NULL:
+        # Selection mode
+        return app_state->sel_place
     else:
-        return app_state->selmv.selection.place
+        # Moving cards will appear at their destination
+        return app_state->move_dest
 
 
 def draw_card(app_state: AppState*, card: Card*, left: int, top: int) -> None:
     assert card != NULL
 
     selected = False
-    for c = get_selected_card(app_state); c != NULL; c = c->next:
+    for c = app_state->sel_card; c != NULL; c = c->next:
         if c == card:
             selected = True
             break
@@ -123,24 +114,24 @@ def get_cards_after_moves(app_state: AppState*, place: Card**, result: Card*[52]
     i = 0
 
     if (
-        app_state->selmv.is_move
-        and app_state->selmv.move.src != app_state->selmv.move.dest
-        and app_state->selmv.move.src == place
+        app_state->move_dest != NULL
+        and app_state->sel_place == place
+        and app_state->move_dest != place
     ):
         # Cards are being moved away from here. Stop at the moving card.
         for c = *place; c != NULL; c = c->next:
-            if c == app_state->selmv.move.card:
+            if c == app_state->sel_card:
                 break
             (*result)[i++] = c
     elif (
-        app_state->selmv.is_move
-        and app_state->selmv.move.src != app_state->selmv.move.dest
-        and place == app_state->selmv.move.dest
+        app_state->move_dest != NULL
+        and app_state->sel_place != place
+        and app_state->move_dest == place
     ):
         # Cards are being moved here. Add moved cards to end of result.
         for c = *place; c != NULL; c = c->next:
             (*result)[i++] = c
-        for c = app_state->selmv.move.card; c != NULL; c = c->next:
+        for c = app_state->sel_card; c != NULL; c = c->next:
             (*result)[i++] = c
     else:
         # Moves are irrelevant
@@ -194,9 +185,9 @@ def draw_discard(app_state: AppState*) -> None:
 
     num_picked = app_state->klon.num_picked
     if (
-        app_state->selmv.is_move
-        and app_state->selmv.move.src == place
-        and app_state->selmv.move.dest != place
+        app_state->move_dest != NULL
+        and app_state->sel_place == place
+        and app_state->move_dest != place
     ):
         # A card is being moved away from discard.
         num_picked--
@@ -267,7 +258,7 @@ def draw_klondike(app_state: AppState*) -> None:
         draw_tableau(app_state, i)
 
     # If there are no cards wherever the selection is, draw the selection there
-    if get_selected_card(app_state) == NULL:
+    if app_state->sel_card == NULL:
         xy = place_to_xy(&app_state->klon, get_selected_place(app_state))
         draw_card_border(xy[0], xy[1], True, NULL)
 

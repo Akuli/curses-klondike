@@ -1,5 +1,5 @@
+import "./card.jou"
 import "./klondike.jou"
-import "./selectmove.jou"
 
 
 @public
@@ -23,5 +23,12 @@ class AppState:
     # The main game state
     klon: Klondike
 
-    # What user is currently doing
-    selmv: SelectionOrMove
+    # What card does user have selected? NULL if empty place selected.
+    sel_card: Card*
+
+    # Where is the selected card? This is especially important when the user
+    # selects an empty place.
+    sel_place: Card**   # one of: &stock, &discard, &foundations[i], &tableau[i]
+
+    # If user is currently moving cards, this is where they go. NULL means not moving.
+    move_dest: Card**   # one of: NULL, &stock, &discard, &foundations[i], &tableau[i]

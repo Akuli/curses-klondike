@@ -1,4 +1,5 @@
 import "./card.jou"
+import "./state.jou"
 import "./klondike.jou"
 
 
@@ -26,10 +27,44 @@ def card_x_to_top_place(klon: Klondike*, x: int) -> Card**:
             assert False
 
 
-def get_visible_top_card(klon: Klondike*, place: Card**) -> Card*:
-    if place == &klon->stock:
-        return NULL
-    return cardlist_top(*place)
+# returns true if something was done, false otherwise
+@public
+def select_more(app_state: AppState*) -> bool:
+    if app_state->move_dest != NULL:
+        return False
+
+    if app_state->klon.is_tableau(app_state->sel_place):
+        for card = *app_state->sel_place; card != NULL and card->next != NULL; card = card->next:
+            if app_state->sel_card == card->next and card->visible:
+                app_state->sel_card = card
+                return True
+    return False
+
+
+# returns true if something was done, false otherwise
+@public
+def select_less(app_state: AppState*) -> bool:
+    if app_state->move_dest != NULL:
+        return False
+
+    if app_state->sel_card != NULL and app_state->sel_card->next != NULL:
+        app_state->sel_card = app_state->sel_card->next
+        return True
+    return False
+
+
+# TODO: inline this function? it looks stupid
+@public
+def select_top_card_or_move_to(app_state: AppState*, place: Card**) -> None:
+    assert place != NULL
+
+    if app_state->move_dest == NULL:
+        # Select top card
+        app_state->sel_place = place
+        app_state->sel_card = cardlist_top(*place)
+    else:
+        # Set where we move it
+        app_state->move_dest = place
 
 
 @public
@@ -39,117 +74,69 @@ enum SelDirection:
     Up
     Down
 
-# Represents the card pile or location that the user has selected.
-#
-# A pointer to Card is not enough because it's possible to select a place where
-# cards can be put but currently contains no cards.
-@public
-class Selection:
-    card: Card*
-    place: Card**  # must be one of: &stock, &discard, &foundations[i], &tableau[i]
-
-    # returns true if something was done, false otherwise
-    def select_more(self, klon: Klondike*) -> bool:
-        if klon->is_tableau(self->place):
-            for card = *self->place; card != NULL and card->next != NULL; card = card->next:
-                if self->card == card->next and card->visible:
-                    self->card = card
-                    return True
-
-        return False
-
-    # returns true if something was done, false otherwise
-    def select_less(self, klon: Klondike*) -> bool:
-        if (
-            klon->is_tableau(self->place)
-            and self->card != NULL
-            and self->card->next != NULL
-        ):
-            self->card = self->card->next
-            return True
-        return False
-
-
-# Represents card being moved src --> dest.
-# When multiple cards move, that happens through the `->next` pointer.
-class Move:
-    card: Card*
-    src: Card**     # must be one of: &stock, &discard, &foundations[i], &tableau[i]
-    dest: Card**    # must be one of: &stock, &discard, &foundations[i], &tableau[i]
-
 
 @public
-class SelectionOrMove:
-    is_move: bool
-    # Not a union, canceling with Esc key reverts back to what was selected
-    selection: Selection
-    move: Move
+def select_another_card(app_state: AppState*, dir: SelDirection) -> None:
+    if app_state->move_dest != NULL:
+        assert app_state->sel_card != NULL
 
-    def select_top_card_or_move_to(self, klon: Klondike*, place: Card**) -> None:
-        if self->is_move:
-            self->move.dest = place
-        else:
-            self->selection = Selection{card = get_visible_top_card(klon, place), place = place}
+    if app_state->move_dest != NULL:
+        x = place_to_card_x(&app_state->klon, app_state->move_dest)
+        is_bottom_row = app_state->klon.is_tableau(app_state->move_dest)
+    else:
+        x = place_to_card_x(&app_state->klon, app_state->sel_place)
+        is_bottom_row = app_state->klon.is_tableau(app_state->sel_place)
 
-    def select_another_card(self, klon: Klondike*, dir: SelDirection) -> None:
-        if self->is_move:
-            assert self->move.card != NULL
-
-        if self->is_move:
-            x = place_to_card_x(klon, self->move.dest)
-            is_bottom_row = klon->is_tableau(self->move.dest)
-        else:
-            x = place_to_card_x(klon, self->selection.place)
-            is_bottom_row = klon->is_tableau(self->selection.place)
-
-        match dir:
-            case SelDirection.Left | SelDirection.Right:
-                if dir == SelDirection.Left:
-                    dx = -1
-                else:
-                    dx = 1
+    match dir:
+        case SelDirection.Left | SelDirection.Right:
+            if dir == SelDirection.Left:
+                dx = -1
+            else:
+                dx = 1
+            x += dx
+            if x == 2 and not is_bottom_row:
+                # between discard and tableau
                 x += dx
-                if x == 2 and not is_bottom_row:
-                    # between discard and tableau
-                    x += dx
 
-                if 0 <= x and x < 7:
-                    if is_bottom_row:
-                        new_place = &klon->tableau[x]
-                    else:
-                        new_place = card_x_to_top_place(klon, x)
-                    if (not self->is_move) or is_bottom_row or klon->is_foundation(new_place):
-                        self->select_top_card_or_move_to(klon, new_place)
+            if 0 <= x and x < 7:
+                if is_bottom_row:
+                    new_place = &app_state->klon.tableau[x]
+                else:
+                    new_place = card_x_to_top_place(&app_state->klon, x)
+                if app_state->move_dest == NULL or is_bottom_row or app_state->klon.is_foundation(new_place):
+                    select_top_card_or_move_to(app_state, new_place)
 
-            case SelDirection.Up:
-                if is_bottom_row and x != 2:
-                    top_place = card_x_to_top_place(klon, x)
-                    # can only move from table to foundations, but multiple cards not even there
-                    if (
-                        (not self->is_move)
-                        or (klon->is_foundation(top_place) and self->move.card->next == NULL)
-                    ):
-                        self->select_top_card_or_move_to(klon, top_place)
+        case SelDirection.Up:
+            if is_bottom_row and x != 2:
+                top_place = card_x_to_top_place(&app_state->klon, x)
+                # can only move from table to foundations, but multiple cards not even there
+                if (
+                    app_state->move_dest == NULL
+                    or (app_state->klon.is_foundation(top_place) and app_state->sel_card->next == NULL)
+                ):
+                    select_top_card_or_move_to(app_state, top_place)
 
-            case SelDirection.Down:
-                if self->is_move or not is_bottom_row:
-                    self->select_top_card_or_move_to(klon, &klon->tableau[x])
+        case SelDirection.Down:
+            if app_state->move_dest != NULL or not is_bottom_row:
+                select_top_card_or_move_to(app_state, &app_state->klon.tableau[x])
 
-    def begin_move(self) -> None:
-        card = self->selection.card
-        place = self->selection.place
-        self->is_move = True
-        self->move.card = card
-        self->move.src = place
-        self->move.dest = place
 
-    # moves card if possible
-    def end_move(self, klon: Klondike*) -> None:
-        assert self->is_move
-        assert self->move.card != NULL
-        if klon->can_move(self->move.card, self->move.dest):
-            klon->move(self->move.card, self->move.dest, False)
+@public
+def begin_move(app_state: AppState*) -> None:
+    assert app_state->move_dest == NULL
+    assert app_state->sel_card != NULL
+    app_state->move_dest = app_state->sel_place
 
-        place = self->move.dest
-        self->is_move = False
-        self->select_top_card_or_move_to(klon, self->move.dest)
+
+# moves card if possible
+@public
+def end_move(app_state: AppState*) -> None:
+    assert app_state->move_dest != NULL
+    assert app_state->sel_card != NULL
+    place = app_state->move_dest
+    app_state->move_dest = NULL
+
+    if app_state->klon.can_move(app_state->sel_card, place):
+        app_state->klon.move(app_state->sel_card, place, False)
+
+    select_top_card_or_move_to(app_state, place)
