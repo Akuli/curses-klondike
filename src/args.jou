@@ -191,41 +191,38 @@ def option_to_args(state: ParseState*, spec: OptionSpec*, value: byte*, args: Ar
     return CONTINUE_TO_PROGRAM
 
 
-def fail(state: ParseState*) -> int:
-    fprintf(state->err, "Run '%s --help' for help.\n", state->program_name)
-    return 2
+# Return value: CONTINUE_TO_PROGRAM or a number to be passed to exit()
+def parse_arg(state: ParseState*, seen: OptionSpec**, nseen: int*, args: Args*) -> int:
+    value: byte*
+    spec = parse_option_and_value(state, &value)
+    if spec == NULL or not validate_value(state, spec, value):
+        fprintf(state->err, "Run '%s --help' for help.\n", state->program_name)
+        return 2
+
+    for i = 0; i < *nseen; i++:
+        if seen[i] == spec:
+            fprintf(state->err, "%s: repeated option '%s'\n", state->program_name, spec->name)
+            fprintf(state->err, "Run '%s --help' for help.\n", state->program_name)
+            return 2
+    seen[(*nseen)++] = spec
+
+    return option_to_args(state, spec, value, args)
 
 
 # Return value: CONTINUE_TO_PROGRAM or a number to be passed to exit()
 @public
 def parse_args(argv: byte**, args: Args*, out: FILE*, err: FILE*) -> int:
     init_option_specs()
-
-    # Set defaults
     *args = Args{color=True, pick=3, discardhide=False}
 
     state = ParseState{out=out, err=err, program_name=argv[0], remaining_args=&argv[1]}
 
     assert sizeof(option_specs) / sizeof(option_specs[0]) == 4
-    seen: OptionSpec*[4]
+    seen: OptionSpec*[5]
     nseen = 0
 
     while *state.remaining_args != NULL:
-        value: byte*
-        spec = parse_option_and_value(&state, &value)
-        if spec == NULL:
-            return fail(&state)
-
-        if not validate_value(&state, spec, value):
-            return fail(&state)
-
-        for i = 0; i < nseen; i++:
-            if seen[i] == spec:
-                fprintf(err, "%s: repeated option '%s'\n", state.program_name, spec->name)
-                return fail(&state)
-        seen[nseen++] = spec
-
-        ret = option_to_args(&state, spec, value, args)
+        ret = parse_arg(&state, seen, &nseen, args)
         if ret != CONTINUE_TO_PROGRAM:
             return ret
 
