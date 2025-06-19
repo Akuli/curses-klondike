@@ -53,22 +53,18 @@ def select_less(app_state: AppState*) -> bool:
     return False
 
 
-# TODO: inline this function? it looks stupid
 @public
-def select_top_card_or_move_to(app_state: AppState*, place: Card**) -> None:
+def select_top_card(app_state: AppState*, place: Card**) -> None:
     assert place != NULL
 
-    if app_state->move_dest == NULL:
-        # Select top card
-        app_state->sel_place = place
-        if place == &app_state->klon.stock:
-            # Doesn't make sense to select a card in stock, that also messes with UI
-            app_state->sel_card = NULL
-        else:
-            app_state->sel_card = cardlist_top(*place)
+    app_state->sel_place = place
+    app_state->move_dest = NULL
+
+    if place == &app_state->klon.stock:
+        # Doesn't make sense to select a card in stock, that also messes with UI
+        app_state->sel_card = NULL
     else:
-        # Set where we move it
-        app_state->move_dest = place
+        app_state->sel_card = cardlist_top(*place)
 
 
 @public
@@ -108,7 +104,10 @@ def select_another_card(app_state: AppState*, dir: SelDirection) -> None:
                 else:
                     new_place = card_x_to_top_place(&app_state->klon, x)
                 if app_state->move_dest == NULL or is_bottom_row or app_state->klon.is_foundation(new_place):
-                    select_top_card_or_move_to(app_state, new_place)
+                    if app_state->move_dest == NULL:
+                        select_top_card(app_state, new_place)
+                    else:
+                        app_state->move_dest = new_place
 
         case SelDirection.Up:
             if is_bottom_row and x != 2:
@@ -118,11 +117,17 @@ def select_another_card(app_state: AppState*, dir: SelDirection) -> None:
                     app_state->move_dest == NULL
                     or (app_state->klon.is_foundation(top_place) and app_state->sel_card->next == NULL)
                 ):
-                    select_top_card_or_move_to(app_state, top_place)
+                    if app_state->move_dest == NULL:
+                        select_top_card(app_state, top_place)
+                    else:
+                        app_state->move_dest = top_place
 
         case SelDirection.Down:
             if app_state->move_dest != NULL or not is_bottom_row:
-                select_top_card_or_move_to(app_state, &app_state->klon.tableau[x])
+                if app_state->move_dest == NULL:
+                    select_top_card(app_state, &app_state->klon.tableau[x])
+                else:
+                    app_state->move_dest = &app_state->klon.tableau[x]
 
 
 @public
@@ -143,4 +148,4 @@ def end_move(app_state: AppState*) -> None:
     if app_state->klon.can_move(app_state->sel_card, place):
         app_state->klon.move(app_state->sel_card, place, False)
 
-    select_top_card_or_move_to(app_state, place)
+    select_top_card(app_state, place)
