@@ -24,13 +24,12 @@ def stock_to_discard(app_state: AppState*) -> None:
     else:
         app_state->klon.stock_to_discard(app_state->args)
 
-    # Make sure that whatever ends up in discard place is selected
-    select_top_card_or_move_to(app_state, &app_state->klon.discard)
+    select_top_card(app_state, &app_state->klon.discard)
 
 
 def select_discard(app_state: AppState*) -> None:
     if app_state->move_dest == NULL:
-        select_top_card_or_move_to(app_state, &app_state->klon.discard)
+        select_top_card(app_state, &app_state->klon.discard)
 
 
 def move_selected_to_foundation(app_state: AppState*) -> None:
@@ -38,7 +37,7 @@ def move_selected_to_foundation(app_state: AppState*) -> None:
         moved = app_state->klon.move2foundation(app_state->sel_card)
         if moved:
             # Select whatever is just below the card that just moved to a foundation
-            select_top_card_or_move_to(app_state, app_state->sel_place)
+            select_top_card(app_state, app_state->sel_place)
 
 
 def move_anything_to_foundation(app_state: AppState*) -> None:
@@ -56,7 +55,7 @@ def move_anything_to_foundation(app_state: AppState*) -> None:
 
     if moved:
         # Select whatever is just below the card that just moved to a foundation
-        select_top_card_or_move_to(app_state, app_state->sel_place)
+        select_top_card(app_state, app_state->sel_place)
 
 
 @public
@@ -118,15 +117,15 @@ def handle_key(app_state: AppState*, key: int) -> None:
         case 27:  # esc key, didn't find a KEY_foo constant for this in curses headers
             app_state->move_dest = NULL
         case KEY_LEFT:
-            select_another_card(app_state, SelDirection.Left)
+            select_or_move_to_neighbor(app_state, -1, 0)
         case KEY_RIGHT:
-            select_another_card(app_state, SelDirection.Right)
+            select_or_move_to_neighbor(app_state, 1, 0)
         case KEY_UP:
             if not select_more(app_state):
-                select_another_card(app_state, SelDirection.Up)
+                select_or_move_to_neighbor(app_state, 0, -1)
         case KEY_DOWN:
             if not select_less(app_state):
-                select_another_card(app_state, SelDirection.Down)
+                select_or_move_to_neighbor(app_state, 0, 1)
         case KEY_PPAGE:
             while select_more(app_state):
                 pass
@@ -134,4 +133,7 @@ def handle_key(app_state: AppState*, key: int) -> None:
             while select_less(app_state):
                 pass
         case '1' | '2' | '3' | '4' | '5' | '6' | '7':
-            select_top_card_or_move_to(app_state, &app_state->klon.tableau[key - '1'])
+            if app_state->move_dest == NULL:
+                select_top_card(app_state, &app_state->klon.tableau[key - '1'])
+            else:
+                app_state->move_dest = &app_state->klon.tableau[key - '1']

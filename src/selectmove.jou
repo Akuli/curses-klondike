@@ -3,28 +3,35 @@ import "./state.jou"
 import "./klondike.jou"
 
 
-def place_to_card_x(klon: Klondike*, place: Card**) -> int:
+def place_to_card_xy(klon: Klondike*, place: Card**) -> int[2]:
     if place == &klon->stock:
-        return 0
+        return [0, 0]
     if place == &klon->discard:
-        return 1
-    if klon->is_tableau(place):
-        return klon->tableau_number(place)
+        return [1, 0]
     if klon->is_foundation(place):
-        return 3 + klon->foundation_number(place)
+        i = klon->foundation_number(place)
+        return [3 + i, 0]
+    if klon->is_tableau(place):
+        i = klon->tableau_number(place)
+        return [i, 1]
     assert False
 
 
-def card_x_to_top_place(klon: Klondike*, x: int) -> Card**:
-    match x:
+def card_xy_to_place(klon: Klondike*, xy: int[2]) -> Card**:
+    x = xy[0]
+    y = xy[1]
+    match y:
         case 0:
-            return &klon->stock
+            match x:
+                case 0:
+                    return &klon->stock
+                case 1:
+                    return &klon->discard
+                case 3 | 4 | 5 | 6:
+                    return &klon->foundations[x-3]
         case 1:
-            return &klon->discard
-        case 3 | 4 | 5 | 6:
-            return &klon->foundations[x-3]
-        case _:
-            assert False
+            return &klon->tableau[x]
+    return NULL
 
 
 # returns true if something was done, false otherwise
@@ -53,76 +60,56 @@ def select_less(app_state: AppState*) -> bool:
     return False
 
 
-# TODO: inline this function? it looks stupid
 @public
-def select_top_card_or_move_to(app_state: AppState*, place: Card**) -> None:
+def select_top_card(app_state: AppState*, place: Card**) -> None:
     assert place != NULL
 
+    app_state->sel_place = place
+    app_state->move_dest = NULL
+
+    if place == &app_state->klon.stock:
+        # Doesn't make sense to select a card in stock, that also messes with UI
+        app_state->sel_card = NULL
+    else:
+        app_state->sel_card = cardlist_top(*place)
+
+
+def select_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
+    assert app_state->move_dest == NULL  # selecting, not moving
+
+    xy = place_to_card_xy(&app_state->klon, app_state->sel_place)
+    xy[0] += dx
+    xy[1] += dy
+
+    if card_xy_to_place(&app_state->klon, xy) == NULL:
+        # If blank spot between discard and first foundation, move past it
+        xy[0] += dx
+        xy[1] += dy
+
+    new_place = card_xy_to_place(&app_state->klon, xy)
+    if new_place != NULL:
+        select_top_card(app_state, new_place)
+
+
+def move_to_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
+    assert app_state->move_dest != NULL
+    assert app_state->sel_card != NULL
+
+    xy = place_to_card_xy(&app_state->klon, app_state->move_dest)
+    xy[0] += dx
+    xy[1] += dy
+
+    new_place = card_xy_to_place(&app_state->klon, xy)
+    if app_state->klon.is_tableau(new_place) or app_state->klon.is_foundation(new_place):
+        app_state->move_dest = new_place
+
+
+@public
+def select_or_move_to_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
     if app_state->move_dest == NULL:
-        # Select top card
-        app_state->sel_place = place
-        if place == &app_state->klon.stock:
-            # Doesn't make sense to select a card in stock, that also messes with UI
-            app_state->sel_card = NULL
-        else:
-            app_state->sel_card = cardlist_top(*place)
+        select_neighbor(app_state, dx, dy)
     else:
-        # Set where we move it
-        app_state->move_dest = place
-
-
-@public
-enum SelDirection:
-    Left
-    Right
-    Up
-    Down
-
-
-@public
-def select_another_card(app_state: AppState*, dir: SelDirection) -> None:
-    if app_state->move_dest != NULL:
-        assert app_state->sel_card != NULL
-
-    if app_state->move_dest != NULL:
-        x = place_to_card_x(&app_state->klon, app_state->move_dest)
-        is_bottom_row = app_state->klon.is_tableau(app_state->move_dest)
-    else:
-        x = place_to_card_x(&app_state->klon, app_state->sel_place)
-        is_bottom_row = app_state->klon.is_tableau(app_state->sel_place)
-
-    match dir:
-        case SelDirection.Left | SelDirection.Right:
-            if dir == SelDirection.Left:
-                dx = -1
-            else:
-                dx = 1
-            x += dx
-            if x == 2 and not is_bottom_row:
-                # between discard and tableau
-                x += dx
-
-            if 0 <= x and x < 7:
-                if is_bottom_row:
-                    new_place = &app_state->klon.tableau[x]
-                else:
-                    new_place = card_x_to_top_place(&app_state->klon, x)
-                if app_state->move_dest == NULL or is_bottom_row or app_state->klon.is_foundation(new_place):
-                    select_top_card_or_move_to(app_state, new_place)
-
-        case SelDirection.Up:
-            if is_bottom_row and x != 2:
-                top_place = card_x_to_top_place(&app_state->klon, x)
-                # can only move from table to foundations, but multiple cards not even there
-                if (
-                    app_state->move_dest == NULL
-                    or (app_state->klon.is_foundation(top_place) and app_state->sel_card->next == NULL)
-                ):
-                    select_top_card_or_move_to(app_state, top_place)
-
-        case SelDirection.Down:
-            if app_state->move_dest != NULL or not is_bottom_row:
-                select_top_card_or_move_to(app_state, &app_state->klon.tableau[x])
+        move_to_neighbor(app_state, dx, dy)
 
 
 @public
@@ -141,6 +128,6 @@ def end_move(app_state: AppState*) -> None:
     app_state->move_dest = NULL
 
     if app_state->klon.can_move(app_state->sel_card, place):
-        app_state->klon.move(app_state->sel_card, place, False)
+        app_state->klon.move(app_state->sel_card, place)
 
-    select_top_card_or_move_to(app_state, place)
+    select_top_card(app_state, place)

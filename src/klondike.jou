@@ -160,16 +160,11 @@ class Klondike:
         assert False  # card not found
 
     # Moves the source card and ->next cards (if any) to dest.
-    # If raw, accepts invalid moves (can_move) and never sets ->visible
-    #
-    # TODO: are raw moves still needed?
-    def move(self, card: Card*, dest: Card**, raw: bool) -> None:
-        if not raw:
-            assert self->can_move(card, dest)
+    def move(self, card: Card*, dest: Card**) -> None:
+        assert self->can_move(card, dest)
 
         prev = self->detach_card(card)
-
-        if prev != NULL and not raw:
+        if prev != NULL:
             # Expose the card under the card being moved
             prev->visible = True
 
@@ -180,7 +175,7 @@ class Klondike:
         if card != NULL:
             for i = 0; i < 4; i++:
                 if self->can_move(card, &self->foundations[i]):
-                    self->move(card, &self->foundations[i], False)
+                    self->move(card, &self->foundations[i])
                     return True
         return False
 
