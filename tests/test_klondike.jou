@@ -46,13 +46,13 @@ def test_can_move() -> None:
 
     # non-visible cards can never be moved
     assert not klon.tableau[2]->visible
-    assert not klon.can_move(klon.tableau[2], CardPlace{kind = CardPlaceKind.Stock})
-    assert not klon.can_move(klon.tableau[2], CardPlace{kind = CardPlaceKind.Discard})
-    assert not klon.can_move(klon.tableau[2], CardPlace{kind = CardPlaceKind.Foundation, number = 3})
-    assert not klon.can_move(klon.tableau[2], CardPlace{kind = CardPlaceKind.Tableau, number = 3})
+    assert not klon.can_move(klon.tableau[2], &klon.stock)
+    assert not klon.can_move(klon.tableau[2], &klon.discard)
+    assert not klon.can_move(klon.tableau[2], &klon.foundations[3])
+    assert not klon.can_move(klon.tableau[2], &klon.tableau[3])
 
     # discarding is implemented separately
-    assert not klon.can_move(klon.stock, CardPlace{kind = CardPlaceKind.Discard})
+    assert not klon.can_move(klon.stock, &klon.discard)
 
     # TODO: test rest of the code? problem is, how do i find e.g. ♠A or ♥Q
 
@@ -66,7 +66,7 @@ def init_movable_kln(klon: Klondike*, srctab: int*, dsttab: int*) -> None:
             for j = 0; j < 7; j++:
                 if i == j:
                     continue
-                if klon->can_move(cardlist_top(klon->tableau[i]), CardPlace{kind = CardPlaceKind.Tableau, number = j}):
+                if klon->can_move(cardlist_top(klon->tableau[i]), &klon->tableau[j]):
                     *srctab = i
                     *dsttab = j
                     return
@@ -77,7 +77,7 @@ def test_move() -> None:
     srctab, dsttab: int
     init_movable_kln(&klon, &srctab, &dsttab)
 
-    klon.move(cardlist_top(klon.tableau[srctab]), CardPlace{kind = CardPlaceKind.Tableau, number = dsttab}, False)
+    klon.move(cardlist_top(klon.tableau[srctab]), &klon.tableau[dsttab], False)
     for i = 0; i < 7; i++:
         n = i+1
         if i == srctab:
