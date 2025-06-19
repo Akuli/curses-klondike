@@ -74,7 +74,6 @@ def select_top_card(app_state: AppState*, place: Card**) -> None:
         app_state->sel_card = cardlist_top(*place)
 
 
-@public
 def select_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
     assert app_state->move_dest == NULL  # selecting, not moving
 
@@ -92,7 +91,6 @@ def select_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
         select_top_card(app_state, new_place)
 
 
-@public
 def move_to_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
     assert app_state->move_dest != NULL
     assert app_state->sel_card != NULL
