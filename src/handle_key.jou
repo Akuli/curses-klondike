@@ -117,15 +117,27 @@ def handle_key(app_state: AppState*, key: int) -> None:
         case 27:  # esc key, didn't find a KEY_foo constant for this in curses headers
             app_state->move_dest = NULL
         case KEY_LEFT:
-            select_another_card(app_state, SelDirection.Left)
+            if app_state->move_dest == NULL:
+                select_neighbor(app_state, -1, 0)
+            else:
+                move_to_neighbor(app_state, -1, 0)
         case KEY_RIGHT:
-            select_another_card(app_state, SelDirection.Right)
+            if app_state->move_dest == NULL:
+                select_neighbor(app_state, 1, 0)
+            else:
+                move_to_neighbor(app_state, 1, 0)
         case KEY_UP:
-            if not select_more(app_state):
-                select_another_card(app_state, SelDirection.Up)
+            if app_state->move_dest == NULL:
+                if not select_more(app_state):
+                    select_neighbor(app_state, 0, -1)
+            else:
+                move_to_neighbor(app_state, 0, -1)
         case KEY_DOWN:
-            if not select_less(app_state):
-                select_another_card(app_state, SelDirection.Down)
+            if app_state->move_dest == NULL:
+                if not select_less(app_state):
+                    select_neighbor(app_state, 0, 1)
+            else:
+                move_to_neighbor(app_state, 0, 1)
         case KEY_PPAGE:
             while select_more(app_state):
                 pass
