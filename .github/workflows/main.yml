@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies (mostly Jou dependencies)
-      run: sudo apt install -y libncurses5-dev libncursesw5-dev llvm-19-dev clang-19 make valgrind
+      run: sudo apt install -y libncurses-dev llvm-19-dev clang-19 make valgrind
     - name: Cache Jou compiler
       id: cache-jou
       uses: actions/cache@v4
