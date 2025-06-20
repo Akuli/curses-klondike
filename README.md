@@ -16,7 +16,7 @@ If you don't like colors, use the `--no-colors` option:
     Newer versions of Jou may also work.
 2. Install curses:
     ```
-    sudo apt install libncurses5-dev libncursesw5-dev
+    sudo apt install libncurses-dev
     ```
 3. Download the code:
     ```
