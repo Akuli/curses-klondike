@@ -30,7 +30,8 @@ def card_xy_to_place(klon: Klondike*, xy: int[2]) -> Card**:
                 case 3 | 4 | 5 | 6:
                     return &klon->foundations[x-3]
         case 1:
-            return &klon->tableau[x]
+            if 0 <= x and x < 7:
+                return &klon->tableau[x]
     return NULL
 
 
