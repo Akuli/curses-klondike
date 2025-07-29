@@ -13,6 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Check that Jou version is specified consistently
+      run: |
+        n=$(grep -o "$JOU_VERSION" README.md | tee /dev/stderr | wc -l)
+        if [ $n != 2 ]; then
+          echo "Error: README should mention jou version twice"
+          exit 1
+        fi
     - name: Install dependencies (mostly Jou dependencies)
       run: sudo apt install -y libncurses-dev llvm-19-dev clang-19 make valgrind
     - name: Cache Jou compiler
