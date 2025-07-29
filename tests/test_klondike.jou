@@ -8,15 +8,15 @@ import "../src/klondike.jou"
 
 def count_cards(first: Card*) -> int:
     n = 0
-    for card = first; card != NULL; card = card->next:
+    for card = first; card != NULL; card = card.next:
         n++
     return n
 
 
 def count_visible_cards(first: Card*) -> int:
     n = 0
-    for card = first; card != NULL; card = card->next:
-        if card->visible:
+    for card = first; card != NULL; card = card.next:
+        if card.visible:
             n++
     return n
 
@@ -37,7 +37,7 @@ def test_deal_cards() -> None:
     for i = 0; i < 7; i++:
         assert count_cards(klon.tableau[i]) == i+1
         assert count_visible_cards(klon.tableau[i]) == 1
-        assert cardlist_top(klon.tableau[i])->visible
+        assert cardlist_top(klon.tableau[i]).visible
 
 
 def test_can_move() -> None:
@@ -45,7 +45,7 @@ def test_can_move() -> None:
     klon.deal_cards()
 
     # non-visible cards can never be moved
-    assert not klon.tableau[2]->visible
+    assert not klon.tableau[2].visible
     assert not klon.can_move(klon.tableau[2], &klon.stock)
     assert not klon.can_move(klon.tableau[2], &klon.discard)
     assert not klon.can_move(klon.tableau[2], &klon.foundations[3])
@@ -60,13 +60,13 @@ def test_can_move() -> None:
 # Creates a game where some tableau->tableau move is possible
 def init_movable_kln(klon: Klondike*, srctab: int*, dsttab: int*) -> None:
     while True:
-        klon->deal_cards()
+        klon.deal_cards()
 
         for i = 0; i < 7; i++:
             for j = 0; j < 7; j++:
                 if i == j:
                     continue
-                if klon->can_move(cardlist_top(klon->tableau[i]), &klon->tableau[j]):
+                if klon.can_move(cardlist_top(klon.tableau[i]), &klon.tableau[j]):
                     *srctab = i
                     *dsttab = j
                     return
@@ -94,7 +94,7 @@ def test_move() -> None:
             assert count_visible_cards(klon.tableau[i]) == 1
 
         if klon.tableau[i] != NULL:
-            assert cardlist_top(klon.tableau[i])->visible
+            assert cardlist_top(klon.tableau[i]).visible
 
 
 def discard_check(klon: Klondike, ndiscarded: int, ds: int) -> None:
@@ -144,10 +144,10 @@ def test_stock_to_discard_visibility_with_discard_hide() -> None:
     klon.stock_to_discard(Args{pick = 3, discardhide = True})
 
     # Only the topmost card should be visible
-    assert cardlist_top(klon.discard)->visible
+    assert cardlist_top(klon.discard).visible
     n = 0
-    for c = klon.discard; c != NULL; c = c->next:
-        if c->visible:
+    for c = klon.discard; c != NULL; c = c.next:
+        if c.visible:
             n++
     assert n == 1
 
@@ -160,8 +160,8 @@ def test_stock_to_discard_visibility_without_discard_hide() -> None:
     klon.stock_to_discard(Args{pick = 3, discardhide = False})
 
     # All cards should be visible
-    for c = klon.discard; c != NULL; c = c->next:
-        assert c->visible
+    for c = klon.discard; c != NULL; c = c.next:
+        assert c.visible
 
 
 def main() -> int:
