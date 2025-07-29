@@ -12,9 +12,9 @@ import "./ui.jou"
 
 
 def fail(app_state: AppState*, msg: byte*) -> noreturn:
-    if app_state->screen_inited:
+    if app_state.screen_inited:
         endwin()
-    fprintf(stderr, "%s: %s\n", app_state->program_name, msg)
+    fprintf(stderr, "%s: %s\n", app_state.program_name, msg)
     exit(1)
 
 
@@ -38,10 +38,10 @@ def setup_curses(app_state: AppState*) -> None:
 
     if initscr() == NULL:
         fail(app_state, "initscr() failed")
-    app_state->screen_inited = True
+    app_state.screen_inited = True
 
-    app_state->args.color = (app_state->args.color and has_colors() and start_color() != ERR)
-    if app_state->args.color:
+    app_state.args.color = (app_state.args.color and has_colors() and start_color() != ERR)
+    if app_state.args.color:
         if init_pair(color_pair_number(Color.Red), COLOR_RED, COLOR_BLACK) == ERR:
             fail(app_state, "init_pair() failed")
         if init_pair(color_pair_number(Color.Black), COLOR_WHITE, COLOR_BLACK) == ERR:

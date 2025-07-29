@@ -18,30 +18,30 @@ class Scroller:
 
     # Ensure that we don't scroll too far up or down
     def bounds_check(self) -> None:
-        window_height = getmaxy(self->window) - 1  # leave room for bottom bar
-        pad_height = getmaxy(self->pad)
+        window_height = getmaxy(self.window) - 1  # leave room for bottom bar
+        pad_height = getmaxy(self.pad)
 
         # Negativeness must be checked last.
         # This way scroll_pos is set to 0 if the whole pad fits in view at once.
-        self->scroll_pos = min(self->scroll_pos, pad_height - window_height)
-        self->scroll_pos = max(0, self->scroll_pos)
+        self.scroll_pos = min(self.scroll_pos, pad_height - window_height)
+        self.scroll_pos = max(0, self.scroll_pos)
 
     def draw_pad_to_window(self) -> None:
-        self->bounds_check()
+        self.bounds_check()
 
-        window_width = getmaxx(self->window)
-        window_height = getmaxy(self->window) - 1  # leave room for bottom bar
-        pad_width = getmaxx(self->pad)
-        pad_height = getmaxy(self->pad)
+        window_width = getmaxx(self.window)
+        window_height = getmaxy(self.window) - 1  # leave room for bottom bar
+        pad_width = getmaxx(self.pad)
+        pad_height = getmaxy(self.pad)
 
-        wclear(self->window)  # werase() doesn't fill with dark background in color mode
+        wclear(self.window)  # werase() doesn't fill with dark background in color mode
 
         # Min stuff and -1 are needed because curses is awesome. :D
         # If this code is wrong, it either segfaults or does nothing.
         copywin(
-            self->pad,
-            self->window,
-            self->scroll_pos, # source top
+            self.pad,
+            self.window,
+            self.scroll_pos, # source top
             0,  # source left
             0,  # destination top
             0,  # destination left
@@ -55,29 +55,29 @@ class Scroller:
         else:
             msg = "Press q to quit."
 
-        wattron(self->window, A_STANDOUT)
-        mvwaddstr(self->window, window_height, 0, msg)
-        wattroff(self->window, A_STANDOUT)
+        wattron(self.window, A_STANDOUT)
+        mvwaddstr(self.window, window_height, 0, msg)
+        wattroff(self.window, A_STANDOUT)
 
-        wrefresh(self->window)
+        wrefresh(self.window)
 
     def handle_key(self, key: int) -> None:
-        window_width = getmaxx(self->window)
-        window_height = getmaxy(self->window) - 1  # leave room for bottom bar
+        window_width = getmaxx(self.window)
+        window_height = getmaxy(self.window) - 1  # leave room for bottom bar
 
         match key:
             case KEY_UP | 'p':
-                self->scroll_pos--
+                self.scroll_pos--
             case KEY_DOWN | 'n':
-                self->scroll_pos++
+                self.scroll_pos++
             case KEY_PPAGE:
-                self->scroll_pos -= window_height
+                self.scroll_pos -= window_height
             case KEY_NPAGE | ' ':
-                self->scroll_pos += window_height
+                self.scroll_pos += window_height
             case KEY_HOME:
-                self->scroll_pos = 0
+                self.scroll_pos = 0
             case KEY_END:
-                self->scroll_pos = INT_MAX  # will be clamped
+                self.scroll_pos = INT_MAX  # will be clamped
 
 
 @public

@@ -15,55 +15,55 @@ import "./help.jou"
 
 # Takes cards stock --> discard, or if stock is empty, puts all discardeds to stock.
 def stock_to_discard(app_state: AppState*) -> None:
-    if app_state->move_dest != NULL:
+    if app_state.move_dest != NULL:
         return
 
-    if app_state->klon.stock == NULL:
+    if app_state.klon.stock == NULL:
         # No cards in stock
-        app_state->klon.discard_to_stock()
+        app_state.klon.discard_to_stock()
     else:
-        app_state->klon.stock_to_discard(app_state->args)
+        app_state.klon.stock_to_discard(app_state.args)
 
-    select_top_card(app_state, &app_state->klon.discard)
+    select_top_card(app_state, &app_state.klon.discard)
 
 
 def select_discard(app_state: AppState*) -> None:
-    if app_state->move_dest == NULL:
-        select_top_card(app_state, &app_state->klon.discard)
+    if app_state.move_dest == NULL:
+        select_top_card(app_state, &app_state.klon.discard)
 
 
 def move_selected_to_foundation(app_state: AppState*) -> None:
-    if app_state->move_dest == NULL and app_state->sel_card != NULL:
-        moved = app_state->klon.move2foundation(app_state->sel_card)
+    if app_state.move_dest == NULL and app_state.sel_card != NULL:
+        moved = app_state.klon.move2foundation(app_state.sel_card)
         if moved:
             # Select whatever is just below the card that just moved to a foundation
-            select_top_card(app_state, app_state->sel_place)
+            select_top_card(app_state, app_state.sel_place)
 
 
 def move_anything_to_foundation(app_state: AppState*) -> None:
-    if app_state->move_dest != NULL:
+    if app_state.move_dest != NULL:
         return
 
     # Try discard -> foundation
-    moved = app_state->klon.move2foundation(cardlist_top(app_state->klon.discard))
+    moved = app_state.klon.move2foundation(cardlist_top(app_state.klon.discard))
     if not moved:
         # Try tableau -> foundation
         for i = 0; i < 7; i++:
-            if app_state->klon.move2foundation(cardlist_top(app_state->klon.tableau[i])):
+            if app_state.klon.move2foundation(cardlist_top(app_state.klon.tableau[i])):
                 moved = True
                 break
 
     if moved:
         # Select whatever is just below the card that just moved to a foundation
-        select_top_card(app_state, app_state->sel_place)
+        select_top_card(app_state, app_state.sel_place)
 
 
 @public
 def new_game(app_state: AppState*) -> None:
-    app_state->klon.deal_cards()
-    app_state->sel_card = NULL
-    app_state->sel_place = &app_state->klon.stock
-    app_state->move_dest = NULL
+    app_state.klon.deal_cards()
+    app_state.sel_card = NULL
+    app_state.sel_place = &app_state.klon.stock
+    app_state.move_dest = NULL
 
 
 def confirm_yes_no(prompt: byte*) -> bool:
@@ -91,13 +91,13 @@ def handle_key(app_state: AppState*, key: int) -> None:
         ### If you change these, please update the key bindings shown in help! ###
         ##########################################################################
         case 'h':
-            show_help(stdscr, app_state->program_name, app_state->args.color)
+            show_help(stdscr, app_state.program_name, app_state.args.color)
         case 'q':
             if confirm_yes_no("Do you really want to quit?"):
                 endwin()
                 exit(0)
         case 'n':
-            if app_state->klon.win() or confirm_yes_no("Do you really want to start a new game?"):
+            if app_state.klon.win() or confirm_yes_no("Do you really want to start a new game?"):
                 new_game(app_state)
         case 's':
             stock_to_discard(app_state)
@@ -108,14 +108,14 @@ def handle_key(app_state: AppState*, key: int) -> None:
         case 'g':
             move_anything_to_foundation(app_state)
         case '\n':
-            if app_state->move_dest != NULL:
+            if app_state.move_dest != NULL:
                 end_move(app_state)
-            elif app_state->sel_place == &app_state->klon.stock:
+            elif app_state.sel_place == &app_state.klon.stock:
                 stock_to_discard(app_state)
-            elif app_state->sel_card != NULL and app_state->sel_card->visible:
+            elif app_state.sel_card != NULL and app_state.sel_card.visible:
                 begin_move(app_state)
         case 27:  # esc key, didn't find a KEY_foo constant for this in curses headers
-            app_state->move_dest = NULL
+            app_state.move_dest = NULL
         case KEY_LEFT:
             select_or_move_to_neighbor(app_state, -1, 0)
         case KEY_RIGHT:
@@ -133,7 +133,7 @@ def handle_key(app_state: AppState*, key: int) -> None:
             while select_less(app_state):
                 pass
         case '1' | '2' | '3' | '4' | '5' | '6' | '7':
-            if app_state->move_dest == NULL:
-                select_top_card(app_state, &app_state->klon.tableau[key - '1'])
+            if app_state.move_dest == NULL:
+                select_top_card(app_state, &app_state.klon.tableau[key - '1'])
             else:
-                app_state->move_dest = &app_state->klon.tableau[key - '1']
+                app_state.move_dest = &app_state.klon.tableau[key - '1']
