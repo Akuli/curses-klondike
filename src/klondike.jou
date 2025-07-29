@@ -17,7 +17,7 @@ def shuffle(cards: Card*, n: int) -> None:
 @public
 class Klondike:
     # https://www.denexa.com/wp-content/uploads/2015/11/klondike.png
-    # These point to just one card. Use ->next to access others.
+    # These point to just one card. Use .next to access others.
     stock: Card*           # TOPMOST card or NULL
     discard: Card*         # bottommost card or NULL
     num_picked: int        # number of cards in discard not fully covered by other cards
@@ -29,25 +29,25 @@ class Klondike:
     card_array: Card[52]
 
     def is_foundation(self, place: Card**) -> bool:
-        return &self->foundations[0] <= place and place < &self->foundations[4]
+        return &self.foundations[0] <= place and place < &self.foundations[4]
 
     def is_tableau(self, place: Card**) -> bool:
-        return &self->tableau[0] <= place and place < &self->tableau[7]
+        return &self.tableau[0] <= place and place < &self.tableau[7]
 
-    # Convert &self->foundations[i] to i
+    # Convert &self.foundations[i] to i
     def foundation_number(self, place: Card**) -> int:
-        assert self->is_foundation(place)
-        i = ((place as int64) - (&self->foundations as int64)) / sizeof(*place)
+        assert self.is_foundation(place)
+        i = ((place as int64) - (&self.foundations as int64)) / sizeof(*place)
         assert 0 <= i and i < 4
-        assert place == &self->foundations[i]
+        assert place == &self.foundations[i]
         return i as int
 
-    # Convert &self->tableau[i] to i. Returns -1 if pointer is not a tableau.
+    # Convert &self.tableau[i] to i. Returns -1 if pointer is not a tableau.
     def tableau_number(self, place: Card**) -> int:
-        assert self->is_tableau(place)
-        i = ((place as int64) - (&self->tableau as int64)) / sizeof(*place)
+        assert self.is_tableau(place)
+        i = ((place as int64) - (&self.tableau as int64)) / sizeof(*place)
         assert 0 <= i and i < 7
-        assert place == &self->tableau[i]
+        assert place == &self.tableau[i]
         return i as int
 
     def deal_cards(self) -> None:
@@ -56,24 +56,24 @@ class Klondike:
         num_cards = 0
         for s = 0; s < 4; s++:
             for n = 1; n <= 13; n++:
-                self->card_array[num_cards++] = Card{number = n, suit = (s as Suit)}
-        assert num_cards == sizeof(self->card_array) / sizeof(self->card_array[0])
+                self.card_array[num_cards++] = Card{number = n, suit = (s as Suit)}
+        assert num_cards == sizeof(self.card_array) / sizeof(self.card_array[0])
 
-        shuffle(self->card_array, num_cards)
+        shuffle(self.card_array, num_cards)
 
         card_index = 0
         for i = 0; i < 7; i++:
-            self->tableau[i] = NULL
+            self.tableau[i] = NULL
             for j = 0; j < i+1; j++:
-                cardlist_push_to_top(&self->tableau[i], &self->card_array[--num_cards])
-            cardlist_top(self->tableau[i])->visible = True
+                cardlist_push_to_top(&self.tableau[i], &self.card_array[--num_cards])
+            cardlist_top(self.tableau[i]).visible = True
 
         while num_cards > 0:
-            cardlist_push_to_top(&self->stock, &self->card_array[--num_cards])
+            cardlist_push_to_top(&self.stock, &self.card_array[--num_cards])
 
     def card_in_some_tableau(self, card: Card*) -> bool:
         for i = 0; i < 7; i++:
-            for c = self->tableau[i]; c != NULL; c = c->next:
+            for c = self.tableau[i]; c != NULL; c = c.next:
                 if c == card:
                     return True
         return False
@@ -84,89 +84,89 @@ class Klondike:
     # card must be a card in klon
     def can_move(self, card: Card*, dest: Card**) -> bool:
         # invisible cards can never be moved
-        if not card->visible:
+        if not card.visible:
             return False
 
         # the only way how a stack of multiple cards is allowed to move is tableau -> tableau
         if (
-            card->next != NULL
-            and not (self->is_tableau(dest) and self->card_in_some_tableau(card))
+            card.next != NULL
+            and not (self.is_tableau(dest) and self.card_in_some_tableau(card))
         ):
             return False
 
-        if dest == &self->stock or dest == &self->discard:
+        if dest == &self.stock or dest == &self.discard:
             # taking cards stock to discard is handled by stock2discard() and not allowed here
             return False
 
-        if self->is_foundation(dest):
+        if self.is_foundation(dest):
             if *dest == NULL:
                 # Only A can be placed into an empty foundation
-                return card->number == 1
+                return card.number == 1
             top = cardlist_top(*dest)
-            return card->suit == top->suit and card->number == top->number + 1
+            return card.suit == top.suit and card.number == top.number + 1
 
-        if self->is_tableau(dest):
+        if self.is_tableau(dest):
             if *dest == NULL:
                 # Only K can be placed into an empty foundation
-                return card->number == 13
+                return card.number == 13
             top = cardlist_top(*dest)
             return (
-                suit_to_color(card->suit) != suit_to_color(top->suit)
-                and card->number == top->number - 1
+                suit_to_color(card.suit) != suit_to_color(top.suit)
+                and card.number == top.number - 1
             )
 
         assert False
 
     # Temporarily removes a card and anything stacked on top of it from the game.
     #
-    # Returns the card whose `->next` the given card was, if any.
+    # Returns the card whose `.next` the given card was, if any.
     def detach_card(self, card: Card*) -> Card*:
         assert card != NULL
 
         # a doubly linked list would make this easier and many other things harder :)
         card_lists = [
-            &self->stock,
-            &self->discard,
-            &self->foundations[0],
-            &self->foundations[1],
-            &self->foundations[2],
-            &self->foundations[3],
-            &self->tableau[0],
-            &self->tableau[1],
-            &self->tableau[2],
-            &self->tableau[3],
-            &self->tableau[4],
-            &self->tableau[5],
-            &self->tableau[6],
+            &self.stock,
+            &self.discard,
+            &self.foundations[0],
+            &self.foundations[1],
+            &self.foundations[2],
+            &self.foundations[3],
+            &self.tableau[0],
+            &self.tableau[1],
+            &self.tableau[2],
+            &self.tableau[3],
+            &self.tableau[4],
+            &self.tableau[5],
+            &self.tableau[6],
         ]
 
         for i = 0; i < sizeof(card_lists)/sizeof(card_lists[0]); i++:
             list = card_lists[i]
 
-            # special case: no card has card as ->next
+            # special case: no card has card as .next
             if *list == card:
-                if list == &self->discard:
-                    self->num_picked = 0
+                if list == &self.discard:
+                    self.num_picked = 0
                 *list = NULL
                 return NULL
 
-            for prev = *list; prev != NULL and prev->next != NULL; prev = prev->next:
-                if prev->next == card:
-                    if list == &self->discard and self->num_picked > 1:
-                        self->num_picked--
-                    prev->next = NULL
+            for prev = *list; prev != NULL and prev.next != NULL; prev = prev.next:
+                if prev.next == card:
+                    if list == &self.discard and self.num_picked > 1:
+                        self.num_picked--
+                    prev.next = NULL
                     return prev
 
         assert False  # card not found
 
-    # Moves the source card and ->next cards (if any) to dest.
+    # Moves the source card and .next cards (if any) to dest.
     def move(self, card: Card*, dest: Card**) -> None:
-        assert self->can_move(card, dest)
+        assert self.can_move(card, dest)
 
-        prev = self->detach_card(card)
+        prev = self.detach_card(card)
         if prev != NULL:
             # Expose the card under the card being moved
-            prev->visible = True
+            prev.visible = True
 
         cardlist_push_to_top(dest, card)
 
@@ -174,45 +174,45 @@ class Klondike:
     def move2foundation(self, card: Card*) -> bool:
         if card != NULL:
             for i = 0; i < 4; i++:
-                if self->can_move(card, &self->foundations[i]):
-                    self->move(card, &self->foundations[i])
+                if self.can_move(card, &self.foundations[i]):
+                    self.move(card, &self.foundations[i])
                     return True
         return False
 
     # Takes cards stock --> discard
     def stock_to_discard(self, args: Args) -> None:
-        for i = 0; i < args.pick and self->stock != NULL; i++:
-            c = cardlist_pop_from_bottom(&self->stock)
-            assert not c->visible
-            cardlist_push_to_top(&self->discard, c)
+        for i = 0; i < args.pick and self.stock != NULL; i++:
+            c = cardlist_pop_from_bottom(&self.stock)
+            assert not c.visible
+            cardlist_push_to_top(&self.discard, c)
 
         # We moved i cards, show all of them
-        self->num_picked = i
+        self.num_picked = i
 
         if args.discardhide:
             # Only the last card in discard is visible
-            for c = self->discard; c != NULL; c = c->next:
-                c->visible = (c->next == NULL)
+            for c = self.discard; c != NULL; c = c.next:
+                c.visible = (c.next == NULL)
         else:
             # Everything in discard is visible
-            for c = self->discard; c != NULL; c = c->next:
-                c->visible = True
+            for c = self.discard; c != NULL; c = c.next:
+                c.visible = True
 
     def discard_to_stock(self) -> None:
-        assert self->stock == NULL  # no more cards in stock
-        self->stock = self->discard
-        self->discard = NULL
-        self->num_picked = 0
+        assert self.stock == NULL  # no more cards in stock
+        self.stock = self.discard
+        self.discard = NULL
+        self.num_picked = 0
 
         # Stock cards are not visible
-        for c = self->stock; c != NULL; c = c->next:
-            c->visible = False
+        for c = self.stock; c != NULL; c = c.next:
+            c.visible = False
 
     # Check if player won
     def win(self) -> bool:
         for i = 0; i < 4; i++:
             n = 0
-            for card = self->foundations[i]; card != NULL; card = card->next:
+            for card = self.foundations[i]; card != NULL; card = card.next:
                 n++
             # n can be >13 when cards are being moved, cannot "assert n <= 13" here
             if n < 13:

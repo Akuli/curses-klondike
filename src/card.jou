@@ -56,11 +56,11 @@ class Card:
 
 # Return topmost card in a linked list of cards.
 # Special case to make some things easier: cardlist_top(NULL) == NULL
-# top(not null)->next is always NULL
+# top(not null).next is always NULL
 @public
 def cardlist_top(list: Card*) -> Card*:
-    while list != NULL and list->next != NULL:
-        list = list->next
+    while list != NULL and list.next != NULL:
+        list = list.next
     return list
 
 
@@ -72,8 +72,8 @@ def cardlist_pop_from_bottom(list: Card**) -> Card*:
     assert *list != NULL
 
     result = *list
-    *list = (*list)->next
-    result->next = NULL
+    *list = (*list).next
+    result.next = NULL
     return result
 
 
@@ -82,6 +82,6 @@ def cardlist_pop_from_bottom(list: Card**) -> Card*:
 def cardlist_push_to_top(list: Card**, new_top: Card*) -> None:
     assert list != NULL
     if *list != NULL:
-        cardlist_top(*list)->next = new_top
+        cardlist_top(*list).next = new_top
     else:
         *list = new_top

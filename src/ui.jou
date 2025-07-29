@@ -69,41 +69,41 @@ def ui_y(y_count: int) -> int:
 
 
 def get_selected_place(app_state: AppState*) -> Card**:
-    if app_state->move_dest == NULL:
+    if app_state.move_dest == NULL:
         # Selection mode
-        return app_state->sel_place
+        return app_state.sel_place
     else:
         # Moving cards will appear at their destination
-        return app_state->move_dest
+        return app_state.move_dest
 
 
 def draw_card(app_state: AppState*, card: Card*, left: int, top: int) -> None:
     assert card != NULL
 
     selected = False
-    for c = app_state->sel_card; c != NULL; c = c->next:
+    for c = app_state.sel_card; c != NULL; c = c.next:
         if c == card:
             selected = True
             break
 
-    if card->visible:
+    if card.visible:
         draw_card_border(left, top, selected, " ")
     else:
         draw_card_border(left, top, selected, "?")
 
-    if card->visible:
-        attributes = COLOR_PAIR(color_pair_number(suit_to_color(card->suit)))
-        if app_state->args.color:
+    if card.visible:
+        attributes = COLOR_PAIR(color_pair_number(suit_to_color(card.suit)))
+        if app_state.args.color:
             attron(attributes)
 
-        number_string = card_number_to_string(card->number)
-        suit_string = suit_to_string(card->suit)
+        number_string = card_number_to_string(card.number)
+        suit_string = suit_to_string(card.suit)
         mvaddstr(top + 1, left + 1, number_string)
         mvaddstr(top + CARD_HEIGHT - 2, left + CARD_WIDTH - 1 - (strlen(number_string) as int), number_string)
         mvaddstr(top + 1, left + CARD_WIDTH - 2, suit_string)
         mvaddstr(top + CARD_HEIGHT - 2, left + 1, suit_string)
 
-        if app_state->args.color:
+        if app_state.args.color:
             attroff(attributes)
 
 
@@ -114,28 +114,28 @@ def get_cards_after_moves(app_state: AppState*, place: Card**, result: Card*[52]
     i = 0
 
     if (
-        app_state->move_dest != NULL
-        and app_state->sel_place == place
-        and app_state->move_dest != place
+        app_state.move_dest != NULL
+        and app_state.sel_place == place
+        and app_state.move_dest != place
     ):
         # Cards are being moved away from here. Stop at the moving card.
-        for c = *place; c != NULL; c = c->next:
-            if c == app_state->sel_card:
+        for c = *place; c != NULL; c = c.next:
+            if c == app_state.sel_card:
                 break
             (*result)[i++] = c
     elif (
-        app_state->move_dest != NULL
-        and app_state->sel_place != place
-        and app_state->move_dest == place
+        app_state.move_dest != NULL
+        and app_state.sel_place != place
+        and app_state.move_dest == place
     ):
         # Cards are being moved here. Add moved cards to end of result.
-        for c = *place; c != NULL; c = c->next:
+        for c = *place; c != NULL; c = c.next:
             (*result)[i++] = c
-        for c = app_state->sel_card; c != NULL; c = c->next:
+        for c = app_state.sel_card; c != NULL; c = c.next:
             (*result)[i++] = c
     else:
         # Moves are irrelevant
-        for c = *place; c != NULL; c = c->next:
+        for c = *place; c != NULL; c = c.next:
             (*result)[i++] = c
 
     assert i < sizeof(*result) / sizeof((*result)[0])
@@ -174,20 +174,20 @@ def draw_cards_with_compression(app_state: AppState*, cards: Card**, ncards: int
 
 
 def draw_stock(app_state: AppState*) -> None:
-    if app_state->klon.stock != NULL:
-        draw_card(app_state, app_state->klon.stock, ui_x(0), ui_y(0))
+    if app_state.klon.stock != NULL:
+        draw_card(app_state, app_state.klon.stock, ui_x(0), ui_y(0))
 
 
 def draw_discard(app_state: AppState*) -> None:
-    place = &app_state->klon.discard
+    place = &app_state.klon.discard
     cards: Card*[52]
     ncards = get_cards_after_moves(app_state, place, &cards)
 
-    num_picked = app_state->klon.num_picked
+    num_picked = app_state.klon.num_picked
     if (
-        app_state->move_dest != NULL
-        and app_state->sel_place == place
-        and app_state->move_dest != place
+        app_state.move_dest != NULL
+        and app_state.sel_place == place
+        and app_state.move_dest != place
     ):
         # A card is being moved away from discard.
         num_picked--
@@ -198,7 +198,7 @@ def draw_discard(app_state: AppState*) -> None:
         draw_card(app_state, cards[i], x, ui_y(0))
         if i >= ncards - num_picked:
             # Do not cover this with other cards
-            if app_state->args.discardhide:
+            if app_state.args.discardhide:
                 x++
             else:
                 x += X_OFFSET
@@ -207,7 +207,7 @@ def draw_discard(app_state: AppState*) -> None:
 def draw_foundation(app_state: AppState*, number: int) -> None:
     assert 0 <= number and number < 4
 
-    place = &app_state->klon.foundations[number]
+    place = &app_state.klon.foundations[number]
     cards: Card*[52]
     ncards = get_cards_after_moves(app_state, place, &cards)
 
@@ -217,14 +217,14 @@ def draw_foundation(app_state: AppState*, number: int) -> None:
 
 
 def draw_tableau(app_state: AppState*, number: int) -> None:
-    place = &app_state->klon.tableau[number]
+    place = &app_state.klon.tableau[number]
     cards: Card*[52]
     ncards = get_cards_after_moves(app_state, place, &cards)
 
     y = ui_y(1)
 
     for i = 0; i < ncards; i++:
-        if cards[i]->visible:
+        if cards[i].visible:
             draw_cards_with_compression(app_state, &cards[i], ncards - i, ui_x(number), y)
             break
 
@@ -233,15 +233,15 @@ def draw_tableau(app_state: AppState*, number: int) -> None:
 
 
 def place_to_xy(klon: Klondike*, place: Card**) -> int[2]:
-    if place == &klon->stock:
+    if place == &klon.stock:
         return [ui_x(0), ui_y(0)]
-    if place == &klon->discard:
+    if place == &klon.discard:
         return [ui_x(1), ui_y(0)]
-    if klon->is_foundation(place):
-        i = klon->foundation_number(place)
+    if klon.is_foundation(place):
+        i = klon.foundation_number(place)
         return [ui_x(3 + i), ui_y(0)]
-    if klon->is_tableau(place):
-        i = klon->tableau_number(place)
+    if klon.is_tableau(place):
+        i = klon.tableau_number(place)
         return [ui_x(i), ui_y(1)]
     assert False
 
@@ -258,11 +258,11 @@ def draw_klondike(app_state: AppState*) -> None:
         draw_tableau(app_state, i)
 
     # If there are no cards wherever the selection is, draw the selection there
-    if app_state->sel_card == NULL:
-        xy = place_to_xy(&app_state->klon, get_selected_place(app_state))
+    if app_state.sel_card == NULL:
+        xy = place_to_xy(&app_state.klon, get_selected_place(app_state))
         draw_card_border(xy[0], xy[1], True, NULL)
 
-    if app_state->klon.win():
+    if app_state.klon.win():
         msg = "you win :)"
         msg_width = strlen(msg) as int
         mvaddstr(getmaxy(stdscr)/2, (getmaxx(stdscr) - msg_width)/2, msg)

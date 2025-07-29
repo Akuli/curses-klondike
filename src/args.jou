@@ -23,11 +23,11 @@ class OptionSpec:
     def name_with_metavar(self, sep: byte) -> byte[100]:
         assert sep == ' ' or sep == '='
 
-        if self->metavar == NULL:
-            return self->name
+        if self.metavar == NULL:
+            return self.name
 
         result: byte[100]
-        snprintf(result, sizeof(result), "%s%c%s", self->name, sep, self->metavar)
+        snprintf(result, sizeof(result), "%s%c%s", self.name, sep, self.metavar)
         return result
 
 
@@ -53,15 +53,15 @@ class ParseState:
 def print_help(state: ParseState*) -> None:
     nspecs = sizeof(option_specs) / sizeof(option_specs[0])
 
-    fprintf(state->out, "Usage: %s", state->program_name)
+    fprintf(state.out, "Usage: %s", state.program_name)
     for s = &option_specs[0]; s < &option_specs[nspecs]; s++:
-        name_with_metavar = s->name_with_metavar(' ')
-        fprintf(state->out, " [%s]", name_with_metavar)
+        name_with_metavar = s.name_with_metavar(' ')
+        fprintf(state.out, " [%s]", name_with_metavar)
 
-    fprintf(state->out, "\n\nOptions:\n")
+    fprintf(state.out, "\n\nOptions:\n")
     for s = &option_specs[0]; s < &option_specs[nspecs]; s++:
-        name_with_metavar = s->name_with_metavar(' ')
-        fprintf(state->out, "  %-14s  %s\n", name_with_metavar, s->desc)
+        name_with_metavar = s.name_with_metavar(' ')
+        fprintf(state.out, "  %-14s  %s\n", name_with_metavar, s.desc)
 
 
 # Finds an option by name
@@ -73,18 +73,18 @@ def find_option_spec(state: ParseState*, name: byte*) -> OptionSpec*:
 
     result: OptionSpec* = NULL
     for s = &option_specs[0]; s < &option_specs[nspecs]; s++:
-        if starts_with(s->name, name):
+        if starts_with(s.name, name):
             if result == NULL:
                 result = s
             else:
                 fprintf(
-                    state->err, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
-                    state->program_name, name, result->name, s->name
+                    state.err, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
+                    state.program_name, name, result.name, s.name
                 )
                 return NULL
 
     if result == NULL:
-        fprintf(state->err, "%s: unknown option '%s'\n", state->program_name, name)
+        fprintf(state.err, "%s: unknown option '%s'\n", state.program_name, name)
         return NULL
 
     return result
@@ -109,12 +109,12 @@ def is_valid_integer(s: byte*, min: int, max: int) -> bool:
 #   True    ok
 #   False   error message printed
 def validate_value(state: ParseState*, spec: OptionSpec*, value: byte*) -> bool:
-    match spec->type:
+    match spec.type:
         case OptionType.YesNo:
             if value != NULL:
                 fprintf(
-                    state->err, "%s: use just '%s', not '%s something' or '%s=something'\n",
-                    state->program_name, spec->name, spec->name, spec->name,
+                    state.err, "%s: use just '%s', not '%s something' or '%s=something'\n",
+                    state.program_name, spec.name, spec.name, spec.name,
                 )
                 return False
 
@@ -122,18 +122,18 @@ def validate_value(state: ParseState*, spec: OptionSpec*, value: byte*) -> bool:
 
         case OptionType.Int:
             if value == NULL:
-                with_space = spec->name_with_metavar(' ')
-                with_equal = spec->name_with_metavar('=')
+                with_space = spec.name_with_metavar(' ')
+                with_equal = spec.name_with_metavar('=')
                 fprintf(
-                    state->err, "%s: use '%s' or '%s', not just '%s'\n",
-                    state->program_name, with_space, with_equal, spec->name,
+                    state.err, "%s: use '%s' or '%s', not just '%s'\n",
+                    state.program_name, with_space, with_equal, spec.name,
                 )
                 return False
 
-            if not is_valid_integer(value, spec->min, spec->max):
+            if not is_valid_integer(value, spec.min, spec.max):
                 fprintf(
-                    state->err, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
-                    state->program_name, spec->name, spec->min, spec->max, value,
+                    state.err, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
+                    state.program_name, spec.name, spec.min, spec.max, value,
                 )
                 return False
 
@@ -147,20 +147,20 @@ def validate_value(state: ParseState*, spec: OptionSpec*, value: byte*) -> bool:
 #   True:   Success
 #   False:  Error message was printed
 def parse_option_and_value(state: ParseState*, value: byte**) -> OptionSpec*:
-    arg = *state->remaining_args++
+    arg = *state.remaining_args++
     assert arg != NULL
 
     if strlen(arg) < 3 or not starts_with(arg, "--"):
-        fprintf(state->err, "%s: unexpected argument: '%s'\n", state->program_name, arg)
+        fprintf(state.err, "%s: unexpected argument: '%s'\n", state.program_name, arg)
         return NULL
 
     eq = strstr(arg, "=")
     if eq != NULL:
         *value = &eq[1]
-    elif *state->remaining_args == NULL or starts_with(*state->remaining_args, "-"):
+    elif *state.remaining_args == NULL or starts_with(*state.remaining_args, "-"):
         *value = NULL
     else:
-        *value = *state->remaining_args++
+        *value = *state.remaining_args++
 
     # Get rid of value if any, e.g. "--pick=1" --> "--pick"
     name: byte[100]
@@ -174,17 +174,17 @@ const CONTINUE_TO_PROGRAM: int = -1
 
 # Return value: CONTINUE_TO_PROGRAM or a number to be passed to exit()
 def option_to_args(state: ParseState*, spec: OptionSpec*, value: byte*, args: Args*) -> int:
-    match spec->name with strcmp:
+    match spec.name with strcmp:
         case "--help":
             print_help(state)
             return 0
         case "--no-colors":
-            args->color = False
+            args.color = False
         case "--pick":
             assert value != NULL
-            args->pick = atoi(value)
+            args.pick = atoi(value)
         case "--discard-hide":
-            args->discardhide = True
+            args.discardhide = True
         case _:
             assert False  # should never happen
 
@@ -196,13 +196,13 @@ def parse_arg(state: ParseState*, seen: OptionSpec**, nseen: int*, args: Args*) 
     value: byte*
     spec = parse_option_and_value(state, &value)
     if spec == NULL or not validate_value(state, spec, value):
-        fprintf(state->err, "Run '%s --help' for help.\n", state->program_name)
+        fprintf(state.err, "Run '%s --help' for help.\n", state.program_name)
         return 2
 
     for i = 0; i < *nseen; i++:
         if seen[i] == spec:
-            fprintf(state->err, "%s: repeated option '%s'\n", state->program_name, spec->name)
-            fprintf(state->err, "Run '%s --help' for help.\n", state->program_name)
+            fprintf(state.err, "%s: repeated option '%s'\n", state.program_name, spec.name)
+            fprintf(state.err, "Run '%s --help' for help.\n", state.program_name)
             return 2
     seen[(*nseen)++] = spec
 

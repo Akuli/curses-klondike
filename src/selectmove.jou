@@ -4,15 +4,15 @@ import "./klondike.jou"
 
 
 def place_to_card_xy(klon: Klondike*, place: Card**) -> int[2]:
-    if place == &klon->stock:
+    if place == &klon.stock:
         return [0, 0]
-    if place == &klon->discard:
+    if place == &klon.discard:
         return [1, 0]
-    if klon->is_foundation(place):
-        i = klon->foundation_number(place)
+    if klon.is_foundation(place):
+        i = klon.foundation_number(place)
         return [3 + i, 0]
-    if klon->is_tableau(place):
-        i = klon->tableau_number(place)
+    if klon.is_tableau(place):
+        i = klon.tableau_number(place)
         return [i, 1]
     assert False
 
@@ -24,27 +24,27 @@ def card_xy_to_place(klon: Klondike*, xy: int[2]) -> Card**:
         case 0:
             match x:
                 case 0:
-                    return &klon->stock
+                    return &klon.stock
                 case 1:
-                    return &klon->discard
+                    return &klon.discard
                 case 3 | 4 | 5 | 6:
-                    return &klon->foundations[x-3]
+                    return &klon.foundations[x-3]
         case 1:
             if 0 <= x and x < 7:
-                return &klon->tableau[x]
+                return &klon.tableau[x]
     return NULL
 
 
 # returns true if something was done, false otherwise
 @public
 def select_more(app_state: AppState*) -> bool:
-    if app_state->move_dest != NULL:
+    if app_state.move_dest != NULL:
         return False
 
-    if app_state->klon.is_tableau(app_state->sel_place):
-        for card = *app_state->sel_place; card != NULL and card->next != NULL; card = card->next:
-            if app_state->sel_card == card->next and card->visible:
-                app_state->sel_card = card
+    if app_state.klon.is_tableau(app_state.sel_place):
+        for card = *app_state.sel_place; card != NULL and card.next != NULL; card = card.next:
+            if app_state.sel_card == card.next and card.visible:
+                app_state.sel_card = card
                 return True
     return False
 
@@ -52,11 +52,11 @@ def select_more(app_state: AppState*) -> bool:
 # returns true if something was done, false otherwise
 @public
 def select_less(app_state: AppState*) -> bool:
-    if app_state->move_dest != NULL:
+    if app_state.move_dest != NULL:
         return False
 
-    if app_state->sel_card != NULL and app_state->sel_card->next != NULL:
-        app_state->sel_card = app_state->sel_card->next
+    if app_state.sel_card != NULL and app_state.sel_card.next != NULL:
+        app_state.sel_card = app_state.sel_card.next
         return True
     return False
 
@@ -65,49 +65,49 @@ def select_less(app_state: AppState*) -> bool:
 def select_top_card(app_state: AppState*, place: Card**) -> None:
     assert place != NULL
 
-    app_state->sel_place = place
-    app_state->move_dest = NULL
+    app_state.sel_place = place
+    app_state.move_dest = NULL
 
-    if place == &app_state->klon.stock:
+    if place == &app_state.klon.stock:
         # Doesn't make sense to select a card in stock, that also messes with UI
-        app_state->sel_card = NULL
+        app_state.sel_card = NULL
     else:
-        app_state->sel_card = cardlist_top(*place)
+        app_state.sel_card = cardlist_top(*place)
 
 
 def select_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
-    assert app_state->move_dest == NULL  # selecting, not moving
+    assert app_state.move_dest == NULL  # selecting, not moving
 
-    xy = place_to_card_xy(&app_state->klon, app_state->sel_place)
+    xy = place_to_card_xy(&app_state.klon, app_state.sel_place)
     xy[0] += dx
     xy[1] += dy
 
-    if card_xy_to_place(&app_state->klon, xy) == NULL:
+    if card_xy_to_place(&app_state.klon, xy) == NULL:
         # If blank spot between discard and first foundation, move past it
         xy[0] += dx
         xy[1] += dy
 
-    new_place = card_xy_to_place(&app_state->klon, xy)
+    new_place = card_xy_to_place(&app_state.klon, xy)
     if new_place != NULL:
         select_top_card(app_state, new_place)
 
 
 def move_to_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
-    assert app_state->move_dest != NULL
-    assert app_state->sel_card != NULL
+    assert app_state.move_dest != NULL
+    assert app_state.sel_card != NULL
 
-    xy = place_to_card_xy(&app_state->klon, app_state->move_dest)
+    xy = place_to_card_xy(&app_state.klon, app_state.move_dest)
     xy[0] += dx
     xy[1] += dy
 
-    new_place = card_xy_to_place(&app_state->klon, xy)
-    if app_state->klon.is_tableau(new_place) or app_state->klon.is_foundation(new_place):
-        app_state->move_dest = new_place
+    new_place = card_xy_to_place(&app_state.klon, xy)
+    if app_state.klon.is_tableau(new_place) or app_state.klon.is_foundation(new_place):
+        app_state.move_dest = new_place
 
 
 @public
 def select_or_move_to_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
-    if app_state->move_dest == NULL:
+    if app_state.move_dest == NULL:
         select_neighbor(app_state, dx, dy)
     else:
         move_to_neighbor(app_state, dx, dy)
@@ -115,20 +115,20 @@ def select_or_move_to_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
 
 @public
 def begin_move(app_state: AppState*) -> None:
-    assert app_state->move_dest == NULL
-    assert app_state->sel_card != NULL
-    app_state->move_dest = app_state->sel_place
+    assert app_state.move_dest == NULL
+    assert app_state.sel_card != NULL
+    app_state.move_dest = app_state.sel_place
 
 
 # moves card if possible
 @public
 def end_move(app_state: AppState*) -> None:
-    assert app_state->move_dest != NULL
-    assert app_state->sel_card != NULL
-    place = app_state->move_dest
-    app_state->move_dest = NULL
+    assert app_state.move_dest != NULL
+    assert app_state.sel_card != NULL
+    place = app_state.move_dest
+    app_state.move_dest = NULL
 
-    if app_state->klon.can_move(app_state->sel_card, place):
-        app_state->klon.move(app_state->sel_card, place)
+    if app_state.klon.can_move(app_state.sel_card, place):
+        app_state.klon.move(app_state.sel_card, place)
 
     select_top_card(app_state, place)

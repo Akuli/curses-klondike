@@ -105,16 +105,16 @@ class Printer:
     # Display a colored suit, e.g. red ♥
     def print_suit_string(self, x: int, suit: Suit) -> None:
         attr = COLOR_PAIR(color_pair_number(suit_to_color(suit)))
-        wattron(self->window, attr)
-        mvwaddstr(self->window, self->y, x, suit_to_string(suit))
-        wattroff(self->window, attr)
+        wattron(self.window, attr)
+        mvwaddstr(self.window, self.y, x, suit_to_string(suit))
+        wattroff(self.window, attr)
 
     def print_colored(self, x: int, string: byte*, string_len: int) -> None:
-        if self->window == NULL:
+        if self.window == NULL:
             return
 
-        if not self->color:
-            mvwaddnstr(self->window, self->y, x, string, string_len)
+        if not self.color:
+            mvwaddnstr(self.window, self.y, x, string, string_len)
             return
 
         while string_len > 0:
@@ -123,7 +123,7 @@ class Printer:
             for s = 0; s < 4; s++:
                 suit_str = suit_to_string(s as Suit)
                 if string_len >= strlen(suit_str) and starts_with(string, suit_str):
-                    self->print_suit_string(x, s as Suit)
+                    self.print_suit_string(x, s as Suit)
                     bytes_printed = strlen(suit_str) as int
                     break
 
@@ -136,7 +136,7 @@ class Printer:
                     or starts_with(&string[bytes_printed], suit_to_string(Suit.Club))
                 ):
                     bytes_printed++
-                mvwaddnstr(self->window, self->y, x, string, bytes_printed)
+                mvwaddnstr(self.window, self.y, x, string, bytes_printed)
 
             for i = 0; i < bytes_printed; i++:
                 if not utf8_continuation(string[i]):
@@ -149,8 +149,8 @@ class Printer:
         picture_lines = get_picture_lines()
 
         while *string != '\0':
-            remaining_width = self->terminal_width - x_offset
-            if self->y <= PICTURE_HEIGHT:
+            remaining_width = self.terminal_width - x_offset
+            if self.y <= PICTURE_HEIGHT:
                 remaining_width -= PICTURE_WIDTH
                 remaining_width -= 3  # more space between picture_lines and helps
 
@@ -180,55 +180,55 @@ class Printer:
 
             assert end > string
 
-            self->print_colored(x_offset, string, ((end as int64) - (string as int64)) as int)
-            self->y++
+            self.print_colored(x_offset, string, ((end as int64) - (string as int64)) as int)
+            self.y++
             string = end
 
     def print_help_item(self, key_column_width: int, item: HelpItem) -> None:
-        if self->window != NULL:
+        if self.window != NULL:
             x = key_column_width - utf8_char_count(item.key)
-            mvwprintw(self->window, self->y, x, "%s:", item.key)
-        self->print_wrapped_colored(item.desc, key_column_width + 2)
+            mvwprintw(self.window, self.y, x, "%s:", item.key)
+        self.print_wrapped_colored(item.desc, key_column_width + 2)
 
     # Returns number of lines printed
     def print_all_help(self, argv0: byte*) -> int:
         help_items = get_help_items()
         picture_lines = get_picture_lines()
 
-        if self->window != NULL:
+        if self.window != NULL:
             for y = 0; y < sizeof(picture_lines) / sizeof(picture_lines[0]); y++:
                 line = picture_lines[y]
-                mvwaddstr(self->window, y, self->terminal_width - PICTURE_WIDTH, line)
+                mvwaddstr(self.window, y, self.terminal_width - PICTURE_WIDTH, line)
 
         max_key_width = 0
         for i = 0; i < sizeof(help_items)/sizeof(help_items[0]); i++:
             max_key_width = max(max_key_width, utf8_char_count(help_items[i].key))
 
         for i = 0; i < sizeof(help_items)/sizeof(help_items[0]); i++:
-            self->print_help_item(max_key_width, help_items[i])
+            self.print_help_item(max_key_width, help_items[i])
 
-        self->print_title("Rules")
-        self->print_wrapped_colored(get_rules(argv0), 0)
+        self.print_title("Rules")
+        self.print_wrapped_colored(get_rules(argv0), 0)
 
-        return max(self->y, (sizeof(picture_lines) / sizeof(picture_lines[0])) as int)
+        return max(self.y, (sizeof(picture_lines) / sizeof(picture_lines[0])) as int)
 
     def print_title(self, title: byte*) -> None:
-        self->y += 2
+        self.y += 2
 
         text_width = 0
         for i = 0; title[i] != '\0'; i++:
             if not utf8_continuation(title[i]):
                 text_width++
 
-        x = (self->terminal_width - text_width)/2
+        x = (self.terminal_width - text_width)/2
         left = x - 1
         right = x + text_width + 1
 
-        if self->window != NULL:
-            mvwhline(self->window, self->y, 0, 0, self->terminal_width)
-            mvwprintw(self->window, self->y, x-1, " %s ", title)
+        if self.window != NULL:
+            mvwhline(self.window, self.y, 0, 0, self.terminal_width)
+            mvwprintw(self.window, self.y, x-1, " %s ", title)
 
-        self->y += 2
+        self.y += 2
 
 
 @public

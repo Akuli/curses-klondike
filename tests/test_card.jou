@@ -20,8 +20,8 @@ def abc_cards(a: Card*, b: Card*, c: Card*, linked: bool) -> None:
     *c = Card{number = 3, suit = Suit.Heart, visible = True}
 
     if linked:
-        a->next = b
-        b->next = c
+        a.next = b
+        b.next = c
 
 
 def test_cardlist_top() -> None:
@@ -55,18 +55,18 @@ def test_cardlist_push() -> None:
 
     cardlist_push_to_top(&p, &a)
     assert p == &a
-    assert p->next == NULL
+    assert p.next == NULL
 
     cardlist_push_to_top(&p, &b)
     assert p == &a
-    assert p->next == &b
-    assert p->next->next == NULL
+    assert p.next == &b
+    assert p.next.next == NULL
 
     cardlist_push_to_top(&p, &c)
     assert p == &a
-    assert p->next == &b
-    assert p->next->next == &c
-    assert p->next->next->next == NULL
+    assert p.next == &b
+    assert p.next.next == &c
+    assert p.next.next.next == NULL
 
 
 def main() -> int:
