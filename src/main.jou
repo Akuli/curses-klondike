@@ -62,10 +62,7 @@ def main(argc: int, argv: byte**) -> int:
 
     app_state = AppState{program_name = argv[0]}
 
-    status = parse_args(argv, &app_state.args, stdout, stderr)
-    if status != CONTINUE_TO_PROGRAM:
-        return status
-
+    parse_args(argv, &app_state.args)
     setup_curses(&app_state)
     new_game(&app_state)
 
