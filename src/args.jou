@@ -1,11 +1,9 @@
 # This file parses command-line arguments.
 
 import "stdlib/ascii.jou"
-import "stdlib/mem.jou"
 import "stdlib/io.jou"
 import "stdlib/str.jou"
 import "stdlib/process.jou"
-
 import "./state.jou"
 
 
@@ -48,6 +46,11 @@ Options:\n\
 "
 
 
+def fail(state: ParseState*) -> noreturn:
+    fprintf(stderr, "Run '%s --help' for help.\n", state.program_name)
+    exit(2)
+
+
 def get_option_from_name(state: ParseState*, arg: byte*) -> Option:
     if strlen(arg) < 3 or not starts_with(arg, "--"):
         fprintf(stderr, "%s: unexpected argument: '%s'\n", state.program_name, arg)
@@ -60,49 +63,6 @@ def get_option_from_name(state: ParseState*, arg: byte*) -> Option:
 
     fprintf(stderr, "%s: unknown option '%s'\n", state.program_name, arg)
     fail(state)
-
-
-def fail(state: ParseState*) -> noreturn:
-    fprintf(stderr, "Run '%s --help' for help.\n", state.program_name)
-    exit(2)
-
-
-def is_valid_integer(s: byte*, min: int, max: int) -> bool:
-    if *s == '\0':
-        return False
-
-    for p = s; *p != '\0'; p++:
-        if not is_ascii_digit(*p):
-            return False
-
-    # This won't work for very large values, but it doesn't really matter :)
-    n = atoi(s)
-    return min <= n and n <= max
-
-
-def check_no_value(state: ParseState*, opt: Option, value: byte*) -> None:
-    if value != NULL:
-        fprintf(
-            stderr, "%s: use just '%s', not '%s something' or '%s=something'\n",
-            state.program_name, option_name(opt), option_name(opt), option_name(opt)
-        )
-        fail(state)
-
-
-def check_int_value(state: ParseState*, opt: Option, value: byte*, min: int, max: int) -> None:
-    if value == NULL:
-        fprintf(
-            stderr, "%s: use '%s something' or '%s=something', not just '%s'\n",
-            state.program_name, option_name(opt), option_name(opt), option_name(opt)
-        )
-        fail(state)
-
-    if not is_valid_integer(value, min, max):
-        fprintf(
-            stderr, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
-            state.program_name, option_name(opt), min, max, value,
-        )
-        fail(state)
 
 
 # Grab one option from args. If the option has an associated value (--pick 3), take that too.
@@ -127,6 +87,44 @@ def get_option_and_value(state: ParseState*, opt: Option*, value: byte**) -> Non
     name: byte[100]
     snprintf(name, sizeof(name), "%.*s", strcspn(arg, "=") as int, arg)
     *opt = get_option_from_name(state, name)
+
+
+def check_no_value(state: ParseState*, opt: Option, value: byte*) -> None:
+    if value != NULL:
+        fprintf(
+            stderr, "%s: use just '%s', not '%s something' or '%s=something'\n",
+            state.program_name, option_name(opt), option_name(opt), option_name(opt)
+        )
+        fail(state)
+
+
+def is_valid_integer(s: byte*, min: int, max: int) -> bool:
+    if *s == '\0':
+        return False
+
+    for p = s; *p != '\0'; p++:
+        if not is_ascii_digit(*p):
+            return False
+
+    # This won't work for very large values, but it doesn't really matter :)
+    n = atoi(s)
+    return min <= n and n <= max
+
+
+def check_int_value(state: ParseState*, opt: Option, value: byte*, min: int, max: int) -> None:
+    if value == NULL:
+        fprintf(
+            stderr, "%s: use '%s something' or '%s=something', not just '%s'\n",
+            state.program_name, option_name(opt), option_name(opt), option_name(opt)
+        )
+        fail(state)
+
+    if not is_valid_integer(value, min, max):
+        fprintf(
+            stderr, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
+            state.program_name, option_name(opt), min, max, value,
+        )
+        fail(state)
 
 
 def parse_arg(state: ParseState*, seen: bool*, args: Args*) -> None:
@@ -160,12 +158,8 @@ def parse_args(argv: byte**, args: Args*) -> None:
 
     state = ParseState{program_name=argv[0], remaining_args=&argv[1]}
 
-    # TODO: this doesn't yet work in Jou
-    #seen: Option*[NUM_OPTIONS]
-
-    assert NUM_OPTIONS == 4
-    seen: bool[4]
-    memset(seen, 0, sizeof(seen))
+    seen = [False, False, False, False]
+    assert sizeof(seen)/sizeof(seen[0]) == NUM_OPTIONS
 
     while *state.remaining_args != NULL:
         parse_arg(&state, seen, args)
