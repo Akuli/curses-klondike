@@ -85,11 +85,11 @@ def find_option_spec(state: ParseState*, name: byte*) -> OptionSpec*:
                     stderr, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
                     state.program_name, name, result.name, s.name
                 )
-                return NULL
+                fail(state)
 
     if result == NULL:
         fprintf(stderr, "%s: unknown option '%s'\n", state.program_name, name)
-        return NULL
+        fail(state)
 
     return result
 
@@ -146,17 +146,13 @@ def validate_value(state: ParseState*, spec: OptionSpec*, value: byte*) -> bool:
 
 # Parse one option and its value, if any.
 # One option can come from 2 argv items (--pick 3) or just one (--pick=3, --no-colors).
-#
-# Return values:
-#   True:   Success
-#   False:  Error message was printed
 def parse_option_and_value(state: ParseState*, value: byte**) -> OptionSpec*:
     arg = *state.remaining_args++
     assert arg != NULL
 
     if strlen(arg) < 3 or not starts_with(arg, "--"):
         fprintf(stderr, "%s: unexpected argument: '%s'\n", state.program_name, arg)
-        return NULL
+        fail(state)
 
     eq = strstr(arg, "=")
     if eq != NULL:
@@ -191,7 +187,7 @@ def option_to_args(state: ParseState*, spec: OptionSpec*, value: byte*, args: Ar
 def parse_arg(state: ParseState*, seen: OptionSpec**, nseen: int*, args: Args*) -> None:
     value: byte*
     spec = parse_option_and_value(state, &value)
-    if spec == NULL or not validate_value(state, spec, value):
+    if not validate_value(state, spec, value):
         fail(state)
 
     for i = 0; i < *nseen; i++:
