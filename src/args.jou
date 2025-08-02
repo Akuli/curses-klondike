@@ -1,58 +1,12 @@
 # This file parses command-line arguments.
 
 import "stdlib/ascii.jou"
+import "stdlib/mem.jou"
 import "stdlib/io.jou"
 import "stdlib/str.jou"
 import "stdlib/process.jou"
 
 import "./state.jou"
-
-
-const HELP_TEXT: byte* = "\
-Usage: %s [--help] [--no-colors] [--pick n] [--discard-hide]\n\
-\n\
-Options:\n\
-  --help          show this help message and exit\n\
-  --no-colors     don't use colors, even if the terminal supports colors\n\
-  --pick n        pick n cards from stock at a time, default is 3\n\
-  --discard-hide  only show topmost discarded card (not useful with --pick=1)\n\
-"
-
-
-enum OptionType:
-    YesNo
-    Int
-
-class OptionSpec:
-    name: byte[100]
-    metavar: byte*  # For example the "n" of "--pick n". Only for help messages. May be NULL.
-    type: OptionType
-    min: int
-    max: int
-    desc: byte*
-
-    # Returns e.g. "--pick 1" or "--pick=1"
-    def name_with_metavar(self, sep: byte) -> byte[100]:
-        assert sep == ' ' or sep == '='
-
-        if self.metavar == NULL:
-            return self.name
-
-        result: byte[100]
-        snprintf(result, sizeof(result), "%s%c%s", self.name, sep, self.metavar)
-        return result
-
-
-# TODO: use a compile-time constant when that is supported
-global option_specs: OptionSpec[4]
-
-def init_option_specs() -> None:
-    option_specs = [
-        OptionSpec{name="--help", type=OptionType.YesNo, desc="show this help message and exit"},
-        OptionSpec{name="--no-colors", type=OptionType.YesNo, desc="don't use colors, even if the terminal supports colors"},
-        OptionSpec{name="--pick", metavar="n", type=OptionType.Int, min=1, max=(13*4 - (1+2+3+4+5+6+7)), desc="pick n cards from stock at a time, default is 3"},
-        OptionSpec{name="--discard-hide", type=OptionType.YesNo, desc="only show topmost discarded card (not useful with --pick=1)"},
-    ]
 
 
 class ParseState:
@@ -67,17 +21,41 @@ enum Option:
     DiscardHide
 
 
-def get_option_from_name(state: ParseState*, arg: byte*) -> Option:
-    # must match enum Option
-    names: byte*[4] = ["--help", "--no-colors", "--pick", "--discard-hide"]
+# TODO: NUM_OPTIONS and option_name() should be replaced by a `const` array of strings.
+# That is not supported in Jou yet.
+const NUM_OPTIONS: int = 4
 
+def option_name(opt: Option) -> byte*:
+    match opt:
+        case Option.Help:
+            return "--help"
+        case Option.NoColors:
+            return "--no-colors"
+        case Option.Pick:
+            return "--pick"
+        case Option.DiscardHide:
+            return "--discard-hide"
+
+
+const HELP_TEXT: byte* = "\
+Usage: %s [--help] [--no-colors] [--pick n] [--discard-hide]\n\
+\n\
+Options:\n\
+  --help          show this help message and exit\n\
+  --no-colors     don't use colors, even if the terminal supports colors\n\
+  --pick n        pick n cards from stock at a time, default is 3\n\
+  --discard-hide  only show topmost discarded card (not useful with --pick=1)\n\
+"
+
+
+def get_option_from_name(state: ParseState*, arg: byte*) -> Option:
     if strlen(arg) < 3 or not starts_with(arg, "--"):
         fprintf(stderr, "%s: unexpected argument: '%s'\n", state.program_name, arg)
         fail(state)
 
     # Allow abbreviations, e.g. "--no-col" for --no-colors
-    for i = 0; i < sizeof(names)/sizeof(names[0]); i++:
-        if starts_with(names[i], arg):
+    for i = 0; i < NUM_OPTIONS; i++:
+        if starts_with(option_name(i as Option), arg):
             return i as Option
 
     fprintf(stderr, "%s: unknown option '%s'\n", state.program_name, arg)
@@ -87,11 +65,6 @@ def get_option_from_name(state: ParseState*, arg: byte*) -> Option:
 def fail(state: ParseState*) -> noreturn:
     fprintf(stderr, "Run '%s --help' for help.\n", state.program_name)
     exit(2)
-
-
-# TODO: legacy function, delete
-def find_option_spec(state: ParseState*, name: byte*) -> OptionSpec*:
-    return &option_specs[get_option_from_name(state, name) as int]
 
 
 def is_valid_integer(s: byte*, min: int, max: int) -> bool:
@@ -107,46 +80,34 @@ def is_valid_integer(s: byte*, min: int, max: int) -> bool:
     return min <= n and n <= max
 
 
-# Check whether a value (or the lack of value) passed to an option is valid.
-#
-# Return values:
-#   True    ok
-#   False   error message printed
-def validate_value(state: ParseState*, spec: OptionSpec*, value: byte*) -> bool:
-    match spec.type:
-        case OptionType.YesNo:
-            if value != NULL:
-                fprintf(
-                    stderr, "%s: use just '%s', not '%s something' or '%s=something'\n",
-                    state.program_name, spec.name, spec.name, spec.name,
-                )
-                return False
-
-            return True
-
-        case OptionType.Int:
-            if value == NULL:
-                with_space = spec.name_with_metavar(' ')
-                with_equal = spec.name_with_metavar('=')
-                fprintf(
-                    stderr, "%s: use '%s' or '%s', not just '%s'\n",
-                    state.program_name, with_space, with_equal, spec.name,
-                )
-                return False
-
-            if not is_valid_integer(value, spec.min, spec.max):
-                fprintf(
-                    stderr, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
-                    state.program_name, spec.name, spec.min, spec.max, value,
-                )
-                return False
-
-            return True
+def check_no_value(state: ParseState*, opt: Option, value: byte*) -> None:
+    if value != NULL:
+        fprintf(
+            stderr, "%s: use just '%s', not '%s something' or '%s=something'\n",
+            state.program_name, option_name(opt), option_name(opt), option_name(opt)
+        )
+        fail(state)
 
 
-# Parse one option and its value, if any.
+def check_int_value(state: ParseState*, opt: Option, value: byte*, min: int, max: int) -> None:
+    if value == NULL:
+        fprintf(
+            stderr, "%s: use '%s something' or '%s=something', not just '%s'\n",
+            state.program_name, option_name(opt), option_name(opt), option_name(opt)
+        )
+        fail(state)
+
+    if not is_valid_integer(value, min, max):
+        fprintf(
+            stderr, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
+            state.program_name, option_name(opt), min, max, value,
+        )
+        fail(state)
+
+
+# Grab one option from args. If the option has an associated value (--pick 3), take that too.
 # One option can come from 2 argv items (--pick 3) or just one (--pick=3, --no-colors).
-def parse_option_and_value(state: ParseState*, value: byte**) -> OptionSpec*:
+def get_option_and_value(state: ParseState*, opt: Option*, value: byte**) -> None:
     arg = *state.remaining_args++
     assert arg != NULL
 
@@ -165,53 +126,49 @@ def parse_option_and_value(state: ParseState*, value: byte**) -> OptionSpec*:
     # Get rid of value if any, e.g. "--pick=1" --> "--pick"
     name: byte[100]
     snprintf(name, sizeof(name), "%.*s", strcspn(arg, "=") as int, arg)
-    return find_option_spec(state, name)
+    *opt = get_option_from_name(state, name)
 
 
-def option_to_args(state: ParseState*, spec: OptionSpec*, value: byte*, args: Args*) -> None:
-    match spec.name with strcmp:
-        case "--help":
+def parse_arg(state: ParseState*, seen: bool*, args: Args*) -> None:
+    opt: Option
+    value: byte*
+    get_option_and_value(state, &opt, &value)
+
+    if seen[opt as int]:
+        fprintf(stderr, "%s: repeated option '%s'\n", state.program_name, option_name(opt))
+        fail(state)
+    seen[opt as int] = True
+
+    match opt:
+        case Option.Help:
             printf(HELP_TEXT, state.program_name)
             exit(0)
-        case "--no-colors":
+        case Option.NoColors:
+            check_no_value(state, opt, value)
             args.color = False
-        case "--pick":
-            assert value != NULL
+        case Option.Pick:
+            check_int_value(state, opt, value, 1, 13*4 - (1+2+3+4+5+6+7))
             args.pick = atoi(value)
-        case "--discard-hide":
+        case Option.DiscardHide:
+            check_no_value(state, opt, value)
             args.discardhide = True
-        case _:
-            assert False  # should never happen
-
-
-def parse_arg(state: ParseState*, seen: OptionSpec**, nseen: int*, args: Args*) -> None:
-    value: byte*
-    spec = parse_option_and_value(state, &value)
-    if not validate_value(state, spec, value):
-        fail(state)
-
-    for i = 0; i < *nseen; i++:
-        if seen[i] == spec:
-            fprintf(stderr, "%s: repeated option '%s'\n", state.program_name, spec.name)
-            fail(state)
-    seen[(*nseen)++] = spec
-
-    option_to_args(state, spec, value, args)
 
 
 @public
 def parse_args(argv: byte**, args: Args*) -> None:
-    init_option_specs()
     *args = Args{color=True, pick=3, discardhide=False}
 
     state = ParseState{program_name=argv[0], remaining_args=&argv[1]}
 
-    assert sizeof(option_specs) / sizeof(option_specs[0]) == 4
-    seen: OptionSpec*[5]
-    nseen = 0
+    # TODO: this doesn't yet work in Jou
+    #seen: Option*[NUM_OPTIONS]
+
+    assert NUM_OPTIONS == 4
+    seen: bool[4]
+    memset(seen, 0, sizeof(seen))
 
     while *state.remaining_args != NULL:
-        parse_arg(&state, seen, &nseen, args)
+        parse_arg(&state, seen, args)
 
 
 # Main function for tests: `jou -o foo src/args.jou` compiles an executable that runs this.

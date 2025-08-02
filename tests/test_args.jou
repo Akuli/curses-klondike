@@ -123,7 +123,7 @@ def test_errors() -> None:
 
     ret = run_command("tmp/args --no-colors --pick")
     read_file("tmp/out.txt", "")
-    read_file("tmp/err.txt", "tmp/args: use '--pick n' or '--pick=n', not just '--pick'\nRun 'tmp/args --help' for help.\n")
+    read_file("tmp/err.txt", "tmp/args: use '--pick something' or '--pick=something', not just '--pick'\nRun 'tmp/args --help' for help.\n")
     assert ret == 2
 
     ret = run_command("tmp/args --pick a")
