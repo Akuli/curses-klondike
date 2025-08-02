@@ -7,11 +7,6 @@ import "stdlib/process.jou"
 import "./state.jou"
 
 
-class ParseState:
-    program_name: byte*
-    remaining_args: byte**  # never includes program name
-
-
 enum Option:
     Help
     NoColors
@@ -44,6 +39,15 @@ Options:\n\
   --pick n        pick n cards from stock at a time, default is 3\n\
   --discard-hide  only show topmost discarded card (not useful with --pick=1)\n\
 "
+
+
+class ParseState:
+    program_name: byte*
+    remaining_args: byte**  # never includes program name
+    # TODO: This doesn't work yet in Jou. For now let's add much more than enough...
+    #seen: bool[NUM_OPTIONS]
+    seen: bool[10]
+    result: Args
 
 
 def fail(state: ParseState*) -> noreturn:
@@ -127,15 +131,15 @@ def check_int_value(state: ParseState*, opt: Option, value: byte*, min: int, max
         fail(state)
 
 
-def parse_arg(state: ParseState*, seen: bool*, args: Args*) -> None:
+def parse_arg(state: ParseState*) -> None:
     opt: Option
     value: byte*
     get_option_and_value(state, &opt, &value)
 
-    if seen[opt as int]:
+    if state.seen[opt as int]:
         fprintf(stderr, "%s: repeated option '%s'\n", state.program_name, option_name(opt))
         fail(state)
-    seen[opt as int] = True
+    state.seen[opt as int] = True
 
     match opt:
         case Option.Help:
@@ -143,31 +147,29 @@ def parse_arg(state: ParseState*, seen: bool*, args: Args*) -> None:
             exit(0)
         case Option.NoColors:
             check_no_value(state, opt, value)
-            args.color = False
+            state.result.color = False
         case Option.Pick:
             check_int_value(state, opt, value, 1, 13*4 - (1+2+3+4+5+6+7))
-            args.pick = atoi(value)
+            state.result.pick = atoi(value)
         case Option.DiscardHide:
             check_no_value(state, opt, value)
-            args.discardhide = True
+            state.result.discardhide = True
 
 
 @public
-def parse_args(argv: byte**, args: Args*) -> None:
-    *args = Args{color=True, pick=3, discardhide=False}
-
-    state = ParseState{program_name=argv[0], remaining_args=&argv[1]}
-
-    seen = [False, False, False, False]
-    assert sizeof(seen)/sizeof(seen[0]) == NUM_OPTIONS
-
+def parse_args(argv: byte**) -> Args:
+    state = ParseState{
+        program_name = argv[0],
+        remaining_args = &argv[1],
+        result = Args{color=True, pick=3, discardhide=False},
+    }
     while *state.remaining_args != NULL:
-        parse_arg(&state, seen, args)
+        parse_arg(&state)
+    return state.result
 
 
 # Main function for tests: `jou -o foo src/args.jou` compiles an executable that runs this.
 def main(argc: int, argv: byte**) -> int:
-    args: Args
-    parse_args(argv, &args)
+    args = parse_args(argv)
     args.print()
     return 0
