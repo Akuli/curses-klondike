@@ -1,3 +1,4 @@
+import "stdlib/io.jou"
 import "./card.jou"
 import "./klondike.jou"
 
@@ -7,6 +8,11 @@ class Args:
     color: bool
     pick: int
     discardhide: bool
+
+    def print(self) -> None:
+        printf("Color: %s\n", "yes" if self.color else "no")
+        printf("Pick: %d\n", self.pick)
+        printf("Discard hide: %s\n", "yes" if self.discardhide else "no")
 
 
 @public

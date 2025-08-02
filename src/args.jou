@@ -227,3 +227,14 @@ def parse_args(argv: byte**, args: Args*, out: FILE*, err: FILE*) -> int:
             return ret
 
     return CONTINUE_TO_PROGRAM
+
+
+# Main functio for testing this. Run `jou src/args.jou` to experiment with it.
+def main(argc: int, argv: byte**) -> int:
+    args: Args
+    ret = parse_args(argv, &args, stdout, stderr)
+    if ret != CONTINUE_TO_PROGRAM:
+        return ret
+
+    args.print()
+    return 0
