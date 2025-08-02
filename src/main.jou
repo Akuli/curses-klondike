@@ -60,9 +60,8 @@ def setup_curses(app_state: AppState*) -> None:
 def main(argc: int, argv: byte**) -> int:
     srand(time(NULL) as uint32)
 
-    app_state = AppState{program_name = argv[0]}
+    app_state = AppState{program_name = argv[0], args = parse_args(argv)}
 
-    parse_args(argv, &app_state.args)
     setup_curses(&app_state)
     new_game(&app_state)
 
