@@ -76,15 +76,12 @@ def read_file_object(f: FILE*, expected: byte*) -> None:
     fclose(f)
 
 
-def run_command(command: byte*, out: byte*, err: byte*) -> int:
+def run_command(command: byte*) -> int:
     actual_command: byte[500]
     snprintf(actual_command, sizeof(actual_command), "%s > tmp/out.txt 2>tmp/err.txt", command)
+
     ret = system(actual_command)
     assert WIFEXITED(ret)  # exited normally, no crash or similar
-
-    read_file("tmp/out.txt", out)
-    read_file("tmp/err.txt", err)
-
     return WEXITSTATUS(ret)
 
 
@@ -117,33 +114,32 @@ Options:\n\
   --pick n        pick n cards from stock at a time, default is 3\n\
   --discard-hide  only show topmost discarded card (not useful with --pick=1)\n\
 "
-    ret = run_command("tmp/args --help", output, "")
+    ret = run_command("tmp/args --help")
+    read_file("tmp/out.txt", output)
+    read_file("tmp/err.txt", "")
     assert ret == 0
 
 
 def test_defaults() -> None:
-    r = parse_and_capture("asdasd")
-    read_file_object(r.out, "")
-    read_file_object(r.err, "")
-    assert r.exit_code == CONTINUE_TO_PROGRAM
-
-    assert r.args.color
-    assert r.args.pick == 3
-    assert not r.args.discardhide
+    ret = run_command("tmp/args")
+    assert ret == 0
+    read_file("tmp/out.txt", "Color: yes\nPick: 3\nDiscard hide: no\n")
+    read_file("tmp/err.txt", "")
 
 
 def test_no_defaults() -> None:
-    r = parse_and_capture("asdasd --no-color --pick=2 --discard-hide")
-    read_file_object(r.out, "")
-    read_file_object(r.err, "")
-    assert r.exit_code == CONTINUE_TO_PROGRAM
-
-    assert not r.args.color
-    assert r.args.pick == 2
-    assert r.args.discardhide
+    ret = run_command("tmp/args --no-color --pick=2 --discard-hide")
+    assert ret == 0
+    read_file("tmp/out.txt", "Color: no\nPick: 2\nDiscard hide: yes\n")
+    read_file("tmp/err.txt", "")
 
 
 def test_errors() -> None:
+    ret = run_command("tmp/args --wut")
+    assert ret == 2
+    read_file("tmp/out.txt", "")
+    read_file("tmp/err.txt", "tmp/args: unknown option '--wut'\nRun 'tmp/args --help' for help.\n")
+
     r = parse_and_capture("asdasd --wut")
     read_file_object(r.out, "")
     read_file_object(r.err, "asdasd: unknown option '--wut'\nRun 'asdasd --help' for help.\n")

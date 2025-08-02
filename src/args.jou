@@ -229,7 +229,7 @@ def parse_args(argv: byte**, args: Args*, out: FILE*, err: FILE*) -> int:
     return CONTINUE_TO_PROGRAM
 
 
-# Main functio for testing this. Run `jou src/args.jou` to experiment with it.
+# Main function for tests: `jou -o foo src/args.jou` compiles an executable that runs this.
 def main(argc: int, argv: byte**) -> int:
     args: Args
     ret = parse_args(argv, &args, stdout, stderr)
