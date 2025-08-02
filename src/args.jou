@@ -60,35 +60,38 @@ class ParseState:
     remaining_args: byte**  # never includes program name
 
 
+enum Option:
+    Help
+    NoColors
+    Pick
+    DiscardHide
+
+
+def get_option_from_name(state: ParseState*, arg: byte*) -> Option:
+    # must match enum Option
+    names: byte*[4] = ["--help", "--no-colors", "--pick", "--discard-hide"]
+
+    if strlen(arg) < 3 or not starts_with(arg, "--"):
+        fprintf(stderr, "%s: unexpected argument: '%s'\n", state.program_name, arg)
+        fail(state)
+
+    # Allow abbreviations, e.g. "--no-col" for --no-colors
+    for i = 0; i < sizeof(names)/sizeof(names[0]); i++:
+        if starts_with(names[i], arg):
+            return i as Option
+
+    fprintf(stderr, "%s: unknown option '%s'\n", state.program_name, arg)
+    fail(state)
+
+
 def fail(state: ParseState*) -> noreturn:
     fprintf(stderr, "Run '%s --help' for help.\n", state.program_name)
     exit(2)
 
 
-# Finds an option by name
-#
-# Prints error message and returns NULL if not found.
-# Supports abbreviations when not ambiguous, e.g. "--discard-h" for "--discard-hide".
+# TODO: legacy function, delete
 def find_option_spec(state: ParseState*, name: byte*) -> OptionSpec*:
-    nspecs = sizeof(option_specs) / sizeof(option_specs[0])
-
-    result: OptionSpec* = NULL
-    for s = &option_specs[0]; s < &option_specs[nspecs]; s++:
-        if starts_with(s.name, name):
-            if result == NULL:
-                result = s
-            else:
-                fprintf(
-                    stderr, "%s: ambiguous option '%s': could be '%s' or '%s'\n",
-                    state.program_name, name, result.name, s.name
-                )
-                fail(state)
-
-    if result == NULL:
-        fprintf(stderr, "%s: unknown option '%s'\n", state.program_name, name)
-        fail(state)
-
-    return result
+    return &option_specs[get_option_from_name(state, name) as int]
 
 
 def is_valid_integer(s: byte*, min: int, max: int) -> bool:
