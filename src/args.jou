@@ -8,6 +8,17 @@ import "stdlib/process.jou"
 import "./state.jou"
 
 
+const HELP_TEXT: byte* = "\
+Usage: %s [--help] [--no-colors] [--pick n] [--discard-hide]\n\
+\n\
+Options:\n\
+  --help          show this help message and exit\n\
+  --no-colors     don't use colors, even if the terminal supports colors\n\
+  --pick n        pick n cards from stock at a time, default is 3\n\
+  --discard-hide  only show topmost discarded card (not useful with --pick=1)\n\
+"
+
+
 enum OptionType:
     YesNo
     Int
@@ -52,20 +63,6 @@ class ParseState:
 def fail(state: ParseState*) -> noreturn:
     fprintf(stderr, "Run '%s --help' for help.\n", state.program_name)
     exit(2)
-
-
-def print_help(state: ParseState*) -> None:
-    nspecs = sizeof(option_specs) / sizeof(option_specs[0])
-
-    printf("Usage: %s", state.program_name)
-    for s = &option_specs[0]; s < &option_specs[nspecs]; s++:
-        name_with_metavar = s.name_with_metavar(' ')
-        printf(" [%s]", name_with_metavar)
-
-    printf("\n\nOptions:\n")
-    for s = &option_specs[0]; s < &option_specs[nspecs]; s++:
-        name_with_metavar = s.name_with_metavar(' ')
-        printf("  %-14s  %s\n", name_with_metavar, s.desc)
 
 
 # Finds an option by name
@@ -171,7 +168,7 @@ def parse_option_and_value(state: ParseState*, value: byte**) -> OptionSpec*:
 def option_to_args(state: ParseState*, spec: OptionSpec*, value: byte*, args: Args*) -> None:
     match spec.name with strcmp:
         case "--help":
-            print_help(state)
+            printf(HELP_TEXT, state.program_name)
             exit(0)
         case "--no-colors":
             args.color = False
