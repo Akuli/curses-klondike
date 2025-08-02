@@ -1,22 +1,40 @@
 import "stdlib/io.jou"
-import "stdlib/ascii.jou"
 import "stdlib/mem.jou"
 import "stdlib/str.jou"
 import "stdlib/process.jou"
-import "../src/args.jou"
-import "../src/state.jou"
 import "./util.jou"
 
-declare tmpfile() -> FILE*
+
+# TODO: add these to Jou standard library?
+declare chdir(path: byte*) -> int
+def WIFEXITED(status: int) -> bool:
+    return (status & 0x7F) == 0
+def WEXITSTATUS(status: int) -> int:
+    # TODO: add bitshift operators to Jou. This should be >> 8
+    return (status & 0xFF00) / 256
 
 
-def read_file(f: FILE*, expected: byte*) -> None:
+def compile_parser_to_tests_temp_folder() -> None:
+    chdir("tests")
+
+    # Sanity check, we should now be in tests folder
+    f = fopen("test_args.jou", "r")
+    assert f != NULL
+    fclose(f)
+
+    # The main function of args.jou prints the parsed arguments. Let's compile that.
+    ret = system("mkdir -p tmp && jou ../src/args.jou -o tmp/args")
+    assert ret == 0
+
+
+def read_file(path: byte*, expected: byte*) -> None:
     maxlen = 10000
     file_content = malloc(maxlen + 1)
     assert file_content != NULL
     memset(file_content, 0, maxlen + 1)
 
-    rewind(f)
+    f = fopen(path, "r")
+    assert f != NULL
     fread(file_content, 1, maxlen, f)
 
     if strcmp(file_content, expected) != 0:
@@ -32,131 +50,119 @@ def read_file(f: FILE*, expected: byte*) -> None:
     fclose(f)
 
 
-class Results:
-    out: FILE*
-    err: FILE*
-    args: Args
-    exit_code: int
+def run_command(command: byte*) -> int:
+    actual_command: byte[500]
+    snprintf(actual_command, sizeof(actual_command), "%s > tmp/out.txt 2>tmp/err.txt", command)
 
-
-def parse_and_capture(argv: byte*) -> Results:
-    argv_dup = strdup(argv)
-    argv_list = split_by_ascii_whitespace(argv_dup)
-    argv_list.append(NULL)
-
-    r = Results{out=tmpfile(), err=tmpfile()}
-    r.exit_code = parse_args(argv_list.ptr, &r.args, r.out, r.err)
-
-    free(argv_dup)
-    free(argv_list.ptr)
-    return r
+    ret = system(actual_command)
+    assert WIFEXITED(ret)  # exited normally, no crash or similar
+    return WEXITSTATUS(ret)
 
 
 def test_help() -> None:
-    r = parse_and_capture("asdasd --help")
-    read_file(r.out, "\
-Usage: asdasd [--help] [--no-colors] [--pick n] [--discard-hide]\n\n\
+    output = "\
+Usage: tmp/args [--help] [--no-colors] [--pick n] [--discard-hide]\n\n\
 Options:\n\
   --help          show this help message and exit\n\
   --no-colors     don't use colors, even if the terminal supports colors\n\
   --pick n        pick n cards from stock at a time, default is 3\n\
   --discard-hide  only show topmost discarded card (not useful with --pick=1)\n\
-")
-    read_file(r.err, "")
-    assert r.exit_code == 0
+"
+    ret = run_command("tmp/args --help")
+    read_file("tmp/out.txt", output)
+    read_file("tmp/err.txt", "")
+    assert ret == 0
 
 
 def test_defaults() -> None:
-    r = parse_and_capture("asdasd")
-    read_file(r.out, "")
-    read_file(r.err, "")
-    assert r.exit_code == CONTINUE_TO_PROGRAM
-
-    assert r.args.color
-    assert r.args.pick == 3
-    assert not r.args.discardhide
+    ret = run_command("tmp/args")
+    read_file("tmp/out.txt", "Color: yes\nPick: 3\nDiscard hide: no\n")
+    read_file("tmp/err.txt", "")
+    assert ret == 0
 
 
 def test_no_defaults() -> None:
-    r = parse_and_capture("asdasd --no-color --pick=2 --discard-hide")
-    read_file(r.out, "")
-    read_file(r.err, "")
-    assert r.exit_code == CONTINUE_TO_PROGRAM
-
-    assert not r.args.color
-    assert r.args.pick == 2
-    assert r.args.discardhide
+    ret = run_command("tmp/args --no-color --pick=2 --discard-hide")
+    read_file("tmp/out.txt", "Color: no\nPick: 2\nDiscard hide: yes\n")
+    read_file("tmp/err.txt", "")
+    assert ret == 0
 
 
 def test_errors() -> None:
-    r = parse_and_capture("asdasd --wut")
-    read_file(r.out, "")
-    read_file(r.err, "asdasd: unknown option '--wut'\nRun 'asdasd --help' for help.\n")
-    assert r.exit_code == 2
+    ret = run_command("tmp/args --wut")
+    read_file("tmp/out.txt", "")
+    read_file("tmp/err.txt", "tmp/args: unknown option '--wut'\nRun 'tmp/args --help' for help.\n")
+    assert ret == 2
+
+    ret = run_command("tmp/args --wut")
+    read_file("tmp/out.txt", "")
+    read_file("tmp/err.txt", "tmp/args: unknown option '--wut'\nRun 'tmp/args --help' for help.\n")
+    assert ret == 2
 
     # TODO: test ambiguous option if there will ever be an ambiguous option
 
-    r = parse_and_capture("asdasd wut")
-    read_file(r.out, "")
-    read_file(r.err, "asdasd: unexpected argument: 'wut'\nRun 'asdasd --help' for help.\n")
-    assert r.exit_code == 2
+    ret = run_command("tmp/args wut")
+    read_file("tmp/out.txt", "")
+    read_file("tmp/err.txt", "tmp/args: unexpected argument: 'wut'\nRun 'tmp/args --help' for help.\n")
+    assert ret == 2
 
-    r = parse_and_capture("asdasd --no-colors lel")
-    read_file(r.out, "")
-    read_file(r.err, "asdasd: use just '--no-colors', not '--no-colors something' or '--no-colors=something'\nRun 'asdasd --help' for help.\n")
-    assert r.exit_code == 2
+    ret = run_command("tmp/args --no-colors lel")
+    read_file("tmp/out.txt", "")
+    read_file("tmp/err.txt", "tmp/args: use just '--no-colors', not '--no-colors something' or '--no-colors=something'\nRun 'tmp/args --help' for help.\n")
+    assert ret == 2
 
-    r = parse_and_capture("asdasd --no-colors --no-colors")
-    read_file(r.out, "")
-    read_file(r.err, "asdasd: repeated option '--no-colors'\nRun 'asdasd --help' for help.\n")
-    assert r.exit_code == 2
+    ret = run_command("tmp/args --no-colors --no-colors")
+    read_file("tmp/out.txt", "")
+    read_file("tmp/err.txt", "tmp/args: repeated option '--no-colors'\nRun 'tmp/args --help' for help.\n")
+    assert ret == 2
 
-    r = parse_and_capture("asdasd --no-colors --no-colors --no-colors --no-colors")
-    read_file(r.out, "")
-    read_file(r.err, "asdasd: repeated option '--no-colors'\nRun 'asdasd --help' for help.\n")
-    assert r.exit_code == 2
+    ret = run_command("tmp/args --no-colors --no-colors --no-colors --no-colors")
+    read_file("tmp/out.txt", "")
+    read_file("tmp/err.txt", "tmp/args: repeated option '--no-colors'\nRun 'tmp/args --help' for help.\n")
+    assert ret == 2
 
-    r = parse_and_capture("asdasd --no-colors --pick")
-    read_file(r.out, "")
-    read_file(r.err, "asdasd: use '--pick n' or '--pick=n', not just '--pick'\nRun 'asdasd --help' for help.\n")
-    assert r.exit_code == 2
+    ret = run_command("tmp/args --no-colors --pick")
+    read_file("tmp/out.txt", "")
+    read_file("tmp/err.txt", "tmp/args: use '--pick something' or '--pick=something', not just '--pick'\nRun 'tmp/args --help' for help.\n")
+    assert ret == 2
 
-    r = parse_and_capture("asdasd --pick a")
-    read_file(r.out, "")
-    read_file(r.err, "asdasd: '--pick' wants an integer between 1 and 24, not 'a'\nRun 'asdasd --help' for help.\n")
-    assert r.exit_code == 2
+    ret = run_command("tmp/args --pick a")
+    read_file("tmp/out.txt", "")
+    read_file("tmp/err.txt", "tmp/args: '--pick' wants an integer between 1 and 24, not 'a'\nRun 'tmp/args --help' for help.\n")
+    assert ret == 2
 
-    r = parse_and_capture("asdasd --pick 1 2")
-    read_file(r.out, "")
-    read_file(r.err, "asdasd: unexpected argument: '2'\nRun 'asdasd --help' for help.\n")
-    assert r.exit_code == 2
+    ret = run_command("tmp/args --pick 1 2")
+    read_file("tmp/out.txt", "")
+    read_file("tmp/err.txt", "tmp/args: unexpected argument: '2'\nRun 'tmp/args --help' for help.\n")
+    assert ret == 2
 
-    r = parse_and_capture("asdasd --pick 0")
-    read_file(r.out, "")
-    read_file(r.err, "asdasd: '--pick' wants an integer between 1 and 24, not '0'\nRun 'asdasd --help' for help.\n")
-    assert r.exit_code == 2
+    ret = run_command("tmp/args --pick 0")
+    read_file("tmp/out.txt", "")
+    read_file("tmp/err.txt", "tmp/args: '--pick' wants an integer between 1 and 24, not '0'\nRun 'tmp/args --help' for help.\n")
+    assert ret == 2
 
-    r = parse_and_capture("asdasd --pick=0")
-    read_file(r.out, "")
-    read_file(r.err, "asdasd: '--pick' wants an integer between 1 and 24, not '0'\nRun 'asdasd --help' for help.\n")
-    assert r.exit_code == 2
+    ret = run_command("tmp/args --pick=0")
+    read_file("tmp/out.txt", "")
+    read_file("tmp/err.txt", "tmp/args: '--pick' wants an integer between 1 and 24, not '0'\nRun 'tmp/args --help' for help.\n")
+    assert ret == 2
 
-    r = parse_and_capture("asdasd --pick=1")
-    read_file(r.out, "")
-    read_file(r.err, "")
-    assert r.exit_code == CONTINUE_TO_PROGRAM
-    assert r.args.pick == 1
+    ret = run_command("tmp/args --pick=1")
+    read_file("tmp/out.txt", "Color: yes\nPick: 1\nDiscard hide: no\n")
+    read_file("tmp/err.txt", "")
+    assert ret == 0
 
 
 def test_nused_bug() -> None:
-    r = parse_and_capture("asdasd --pick=1 --no-color")
-    read_file(r.out, "")
-    read_file(r.err, "")
-    assert r.exit_code == CONTINUE_TO_PROGRAM
-    assert not r.args.color  # the bug was that --no-color got ignored
+    # The bug was that --no-color got ignored
+    ret = run_command("tmp/args --pick=1 --no-color")
+    read_file("tmp/out.txt", "Color: no\nPick: 1\nDiscard hide: no\n")
+    read_file("tmp/err.txt", "")
+    assert ret == 0
 
 
 def main() -> int:
+    compile_parser_to_tests_temp_folder()
+    dot()
     test_help()
     dot()
     test_defaults()
