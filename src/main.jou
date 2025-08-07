@@ -14,7 +14,7 @@ import "./ui.jou"
 def fail(app_state: AppState*, msg: byte*) -> noreturn:
     if app_state.screen_inited:
         endwin()
-    fprintf(stderr, "%s: %s\n", app_state.program_name, msg)
+    fprintf(get_stderr(), "%s: %s\n", app_state.program_name, msg)
     exit(1)
 
 
