@@ -43,8 +43,7 @@ def read_file(path: byte*, expected: byte*) -> None:
             strlen(expected), expected,
             strlen(file_content), file_content,
         )
-        fflush(stdout)
-        abort()
+        exit(1)
 
     free(file_content)
     fclose(f)

@@ -3,4 +3,4 @@ import "stdlib/io.jou"
 @public
 def dot() -> None:
     putchar('.')
-    fflush(stdout)
+    fflush(get_stdout())

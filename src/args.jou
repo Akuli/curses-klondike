@@ -51,13 +51,13 @@ class ParseState:
 
 
 def fail(state: ParseState*) -> noreturn:
-    fprintf(stderr, "Run '%s --help' for help.\n", state.program_name)
+    fprintf(get_stderr(), "Run '%s --help' for help.\n", state.program_name)
     exit(2)
 
 
 def get_option_from_name(state: ParseState*, arg: byte*) -> Option:
     if strlen(arg) < 3 or not starts_with(arg, "--"):
-        fprintf(stderr, "%s: unexpected argument: '%s'\n", state.program_name, arg)
+        fprintf(get_stderr(), "%s: unexpected argument: '%s'\n", state.program_name, arg)
         fail(state)
 
     # Allow abbreviations, e.g. "--no-col" for --no-colors
@@ -65,7 +65,7 @@ def get_option_from_name(state: ParseState*, arg: byte*) -> Option:
         if starts_with(option_name(i as Option), arg):
             return i as Option
 
-    fprintf(stderr, "%s: unknown option '%s'\n", state.program_name, arg)
+    fprintf(get_stderr(), "%s: unknown option '%s'\n", state.program_name, arg)
     fail(state)
 
 
@@ -76,7 +76,7 @@ def get_option_and_value(state: ParseState*, opt: Option*, value: byte**) -> Non
     assert arg != NULL
 
     if strlen(arg) < 3 or not starts_with(arg, "--"):
-        fprintf(stderr, "%s: unexpected argument: '%s'\n", state.program_name, arg)
+        fprintf(get_stderr(), "%s: unexpected argument: '%s'\n", state.program_name, arg)
         fail(state)
 
     eq = strstr(arg, "=")
@@ -96,7 +96,7 @@ def get_option_and_value(state: ParseState*, opt: Option*, value: byte**) -> Non
 def check_no_value(state: ParseState*, opt: Option, value: byte*) -> None:
     if value != NULL:
         fprintf(
-            stderr, "%s: use just '%s', not '%s something' or '%s=something'\n",
+            get_stderr(), "%s: use just '%s', not '%s something' or '%s=something'\n",
             state.program_name, option_name(opt), option_name(opt), option_name(opt)
         )
         fail(state)
@@ -118,14 +118,14 @@ def is_valid_integer(s: byte*, min: int, max: int) -> bool:
 def check_int_value(state: ParseState*, opt: Option, value: byte*, min: int, max: int) -> None:
     if value == NULL:
         fprintf(
-            stderr, "%s: use '%s something' or '%s=something', not just '%s'\n",
+            get_stderr(), "%s: use '%s something' or '%s=something', not just '%s'\n",
             state.program_name, option_name(opt), option_name(opt), option_name(opt)
         )
         fail(state)
 
     if not is_valid_integer(value, min, max):
         fprintf(
-            stderr, "%s: '%s' wants an integer between %d and %d, not '%s'\n",
+            get_stderr(), "%s: '%s' wants an integer between %d and %d, not '%s'\n",
             state.program_name, option_name(opt), min, max, value,
         )
         fail(state)
@@ -137,7 +137,7 @@ def parse_arg(state: ParseState*) -> None:
     get_option_and_value(state, &opt, &value)
 
     if state.seen[opt as int]:
-        fprintf(stderr, "%s: repeated option '%s'\n", state.program_name, option_name(opt))
+        fprintf(get_stderr(), "%s: repeated option '%s'\n", state.program_name, option_name(opt))
         fail(state)
     state.seen[opt as int] = True
 
