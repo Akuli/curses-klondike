@@ -1,5 +1,0 @@
-# TODO: move this to jou stdlib?
-@public
-declare srand(seed: uint32) -> None
-@public
-declare rand() -> int

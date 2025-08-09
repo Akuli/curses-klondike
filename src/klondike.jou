@@ -1,7 +1,7 @@
 import "stdlib/mem.jou"
+import "stdlib/rand.jou"
 
 import "./card.jou"
-import "./rand.jou"
 import "./state.jou"
 
 
