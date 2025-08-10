@@ -6,7 +6,7 @@ on:
 
 env:
   # Please keep this in sync with README
-  JOU_VERSION: "2025-07-29-1100"
+  JOU_VERSION: "2025-08-09-2100"
 
 jobs:
   compile_and_test:

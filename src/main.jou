@@ -1,9 +1,9 @@
 import "stdlib/io.jou"
 import "stdlib/process.jou"
+import "stdlib/rand.jou"
+import "stdlib/time.jou"
 
 import "./curses.jou"
-import "./rand.jou"
-
 import "./state.jou"
 import "./handle_key.jou"
 import "./card.jou"
@@ -14,12 +14,11 @@ import "./ui.jou"
 def fail(app_state: AppState*, msg: byte*) -> noreturn:
     if app_state.screen_inited:
         endwin()
-    fprintf(stderr, "%s: %s\n", app_state.program_name, msg)
+    fprintf(get_stderr(), "%s: %s\n", app_state.program_name, msg)
     exit(1)
 
 
 # TODO: move to Jou stdlib?
-declare time(ptr: int64*) -> int64
 declare setenv(name: byte*, value: byte*, overwrite: int) -> int
 declare setlocale(category: int, locale: byte*) -> byte*
 const LC_ALL: int = 6  # TODO: probably something else on macos
