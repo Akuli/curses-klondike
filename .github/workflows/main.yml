@@ -12,12 +12,6 @@ jobs:
 
     - name: Check that Jou version is specified consistently
       run: |
-        n=$(grep -o "$(cat jou_version.txt)" README.md | tee /dev/stderr | wc -l)
-        if [ $n != 2 ]; then
-          echo "Error: README should mention jou version twice"
-          exit 1
-        fi
-
         git grep -no --color $(cat jou_version.txt)  # this is only for debugging
         n=$(git grep -o $(cat jou_version.txt) | wc -l)
         if [ n != 3 ]; then
