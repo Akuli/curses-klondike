@@ -10,22 +10,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Extract Jou version from README
-      id: extract-version
-      # Please keep the below grep up to date with other workflow files.
-      run: |
-        v=$(grep -o 'Jou version [^ ]*' README.md | cut -d' ' -f3)
-        if [ -z "$v" ]; then
-          echo "Error: Could not find Jou version in README.md"
-          exit 1
-        fi
-        echo "JOU_VERSION=$v" >> $GITHUB_OUTPUT
-
     - name: Check that Jou version is specified consistently
       run: |
-        n=$(grep -o "${{ steps.extract-version.outputs.JOU_VERSION }}" README.md | tee /dev/stderr | wc -l)
-        if [ $n != 2 ]; then
-          echo "Error: README should mention jou version twice"
+        git grep -no --color $(cat jou_version.txt)  # this is only for debugging
+        n=$(git grep -o $(cat jou_version.txt) | wc -l)
+        if [ $n != 3 ]; then
+          echo "Error: Jou version should be mentioned only in README (twice) and jou_version.txt (once)"
           exit 1
         fi
 
@@ -37,11 +27,11 @@ jobs:
       uses: actions/cache@v4
       with:
         path: jou
-        key: jou-${{ runner.os }}-${{ steps.extract-version.outputs.JOU_VERSION }}-${{ hashFiles('.github/workflows/main.yml') }}
+        key: jou-${{ runner.os }}-${{ hashFiles('jou_version.txt', '.github/workflows/main.yml') }}
 
     - name: Download and compile Jou
       if: steps.cache-jou.outputs.cache-hit != 'true'
-      run: git clone --branch ${{ steps.extract-version.outputs.JOU_VERSION }} https://github.com/Akuli/jou && cd jou && make -j2
+      run: git clone --branch $(cat jou_version.txt) https://github.com/Akuli/jou && cd jou && make -j2
 
     - name: Add Jou to PATH
       run: echo "$(pwd)/jou" >> $GITHUB_PATH
