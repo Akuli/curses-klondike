@@ -1,0 +1,55 @@
+# This workflow automatically creates a pull request that updates Jou to the
+# latest version. It runs once per week.
+
+on:
+  schedule:
+    - cron: '0 5 * * *'  # About an hour after typical Jou release time
+  workflow_dispatch:
+
+jobs:
+  update-jou:
+    if: github.repository == 'Akuli/curses-klondike'  # Do not run on forks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Check for Jou update and create PR if needed
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          old_version=$(grep -oE 'Jou version [^ ]*' README.md | awk '{print $3}')
+          new_version=$(curl -s https://api.github.com/repos/Akuli/jou/releases/latest | jq -r .tag_name)
+
+          echo "Current Jou version: $old_version"
+          echo "Latest Jou version: $new_version"
+
+          if [ "$old_version" == "$new_version" ]; then
+            echo "Versions match. No need to update."
+            exit 0
+          fi
+
+          branch="update-jou-version"
+          if git ls-remote --exit-code --heads origin "$branch"; then
+            echo "Branch '$branch' already exists. Not touching it."
+            exit 0
+          fi
+          git checkout -b "$branch"
+
+          sed -i "s/$old_version/$new_version/g" $(git ls-files)
+          git add .
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update Jou version"
+          git push origin "$branch"
+
+          # Create PR via REST API
+          curl -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/$GITHUB_REPOSITORY/pulls -d @- <<EOF
+          {
+            "title": "Update Jou: $old_version → $new_version",
+            "head": "$branch",
+            "base": "main",
+            "body": "This automatically generated pull request updates Jou from version $old_version to version $new_version.\n\nTo run the CI checks, please close and reopen this pull request. (This is needed because a GitHub Actions run cannot trigger more GitHub Actions runs.)"
+          }
+          EOF
