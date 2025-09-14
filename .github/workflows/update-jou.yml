@@ -17,8 +17,9 @@ jobs:
       - name: Check for Jou update and create PR if needed
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Please keep the below grep up to date with other workflow files.
         run: |
-          old_version=$(grep -oE 'Jou version [^ ]*' README.md | awk '{print $3}')
+          old_version=$(grep -o 'Jou version [^ ]*' README.md | cut -d' ' -f3)
           new_version=$(curl -s https://api.github.com/repos/Akuli/jou/releases/latest | jq -r .tag_name)
 
           echo "Current Jou version: $old_version"

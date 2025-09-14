@@ -4,40 +4,56 @@ on:
       - main
   pull_request:
 
-env:
-  # Please keep this in sync with README
-  JOU_VERSION: "2025-08-09-2100"
-
 jobs:
   compile_and_test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+
+    - name: Extract Jou version from README
+      id: extract-version
+      # Please keep the below grep up to date with other workflow files.
+      run: |
+        v=$(grep -o 'Jou version [^ ]*' README.md | cut -d' ' -f3)
+        if [ -z "$v" ]; then
+          echo "Error: Could not find Jou version in README.md"
+          exit 1
+        fi
+        echo "JOU_VERSION=$v" >> $GITHUB_OUTPUT
+
     - name: Check that Jou version is specified consistently
       run: |
-        n=$(grep -o "$JOU_VERSION" README.md | tee /dev/stderr | wc -l)
+        n=$(grep -o "$${{ steps.extract-version.outputs.JOU_VERSION }}" README.md | tee /dev/stderr | wc -l)
         if [ $n != 2 ]; then
           echo "Error: README should mention jou version twice"
           exit 1
         fi
+
     - name: Install dependencies (mostly Jou dependencies)
       run: sudo apt install -y libncurses-dev llvm-19-dev clang-19 make valgrind
+
     - name: Cache Jou compiler
       id: cache-jou
       uses: actions/cache@v4
       with:
         path: jou
-        key: jou-${{ runner.os }}-${{ env.JOU_VERSION }}-${{ hashFiles('.github/workflows/main.yml') }}
+        key: jou-${{ runner.os }}-${{ steps.extract-version.outputs.JOU_VERSION }}-${{ hashFiles('.github/workflows/main.yml') }}
+
     - name: Download and compile Jou
       if: steps.cache-jou.outputs.cache-hit != 'true'
-      run: git clone --branch $JOU_VERSION https://github.com/Akuli/jou && cd jou && make -j2
+      run: git clone --branch ${{ steps.extract-version.outputs.JOU_VERSION }} https://github.com/Akuli/jou && cd jou && make -j2
+
     - name: Add Jou to PATH
       run: echo "$(pwd)/jou" >> $GITHUB_PATH
+
     - name: Run tests
       run: ./run_tests.sh
+
     - name: Run tests with valgrind
       run: ./run_tests.sh --valgrind
+
     - name: Compile main executable
       run: jou -o cursesklon src/main.jou
+
     - name: Run with --help option
       run: ./cursesklon --help
