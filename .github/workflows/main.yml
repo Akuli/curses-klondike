@@ -31,7 +31,7 @@ jobs:
 
     - name: Download and compile Jou
       if: steps.cache-jou.outputs.cache-hit != 'true'
-      run: git clone --branch ${{ steps.extract-version.outputs.JOU_VERSION }} https://github.com/Akuli/jou && cd jou && make -j2
+      run: git clone --branch $(cat jou_version.txt) https://github.com/Akuli/jou && cd jou && make -j2
 
     - name: Add Jou to PATH
       run: echo "$(pwd)/jou" >> $GITHUB_PATH
