@@ -27,7 +27,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: jou
-        key: jou-${{ runner.os }}-${{ hashFiles('jou_version.txt') }}-${{ hashFiles('.github/workflows/main.yml') }}
+        key: jou-${{ runner.os }}-${{ hashFiles('jou_version.txt', '.github/workflows/main.yml') }}
 
     - name: Download and compile Jou
       if: steps.cache-jou.outputs.cache-hit != 'true'
