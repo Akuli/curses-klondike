@@ -87,8 +87,7 @@ This can be customized with the --pick option; for example, --pick=1 moves 3 car
 Moving the topmost card of a foundation to tableau is also allowed. \
 This can be useful in some cases.\n\n\
 If the game is too hard or too easy, you can customize it with command-line options. \
-Quit this help and then the game by pressing q twice, and run “%s\xC2\xA0--help” to get a list of all supported options."
-    #                           this is a non-breaking space ----^^^^^^^^
+Quit this help and then the game by pressing q twice, and run “%s --help” to get a list of all supported options."
 
     result: byte* = NULL
     asprintf(&result, format, argv0)
