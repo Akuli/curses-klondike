@@ -64,7 +64,8 @@ const PICTURE_WIDTH: int = 28
 const PICTURE_HEIGHT: int = 8
 
 
-# Return value must be free()d.
+global rules_buf: byte[10000]
+
 def get_rules(argv0: byte*) -> byte*:
     format = "\
 Here the “suit” of a card means ♥, ♦, ♠ or ♣. \
@@ -87,13 +88,10 @@ This can be customized with the --pick option; for example, --pick=1 moves 3 car
 Moving the topmost card of a foundation to tableau is also allowed. \
 This can be useful in some cases.\n\n\
 If the game is too hard or too easy, you can customize it with command-line options. \
-Quit this help and then the game by pressing q twice, and run “%s\xC2\xA0--help” to get a list of all supported options."
-    #                           this is a non-breaking space ----^^^^^^^^
+Quit this help and then the game by pressing q twice, and run “%s --help” to get a list of all supported options."
 
-    result: byte* = NULL
-    asprintf(&result, format, argv0)
-    assert result != NULL
-    return result
+    snprintf(rules_buf, sizeof(rules_buf), format, argv0)
+    return rules_buf
 
 
 class Printer:
@@ -196,7 +194,7 @@ class Printer:
         picture_lines = get_picture_lines()
 
         if self.window != NULL:
-            for y = 0; y < sizeof(picture_lines) / sizeof(picture_lines[0]); y++:
+            for y = 0; y < PICTURE_HEIGHT; y++:
                 line = picture_lines[y]
                 mvwaddstr(self.window, y, self.terminal_width - PICTURE_WIDTH, line)
 
@@ -210,7 +208,7 @@ class Printer:
         self.print_title("Rules")
         self.print_wrapped_colored(get_rules(argv0), 0)
 
-        return max(self.y, (sizeof(picture_lines) / sizeof(picture_lines[0])) as int)
+        return max(self.y, PICTURE_HEIGHT)
 
     def print_title(self, title: byte*) -> None:
         self.y += 2
