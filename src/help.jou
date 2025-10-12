@@ -194,7 +194,7 @@ class Printer:
         picture_lines = get_picture_lines()
 
         if self.window != NULL:
-            for y = 0; y < sizeof(picture_lines) / sizeof(picture_lines[0]); y++:
+            for y = 0; y < PICTURE_HEIGHT; y++:
                 line = picture_lines[y]
                 mvwaddstr(self.window, y, self.terminal_width - PICTURE_WIDTH, line)
 
@@ -208,7 +208,7 @@ class Printer:
         self.print_title("Rules")
         self.print_wrapped_colored(get_rules(argv0), 0)
 
-        return max(self.y, (sizeof(picture_lines) / sizeof(picture_lines[0])) as int)
+        return max(self.y, PICTURE_HEIGHT)
 
     def print_title(self, title: byte*) -> None:
         self.y += 2
