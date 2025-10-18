@@ -18,7 +18,7 @@ def fail(app_state: AppState*, msg: byte*) -> noreturn:
     exit(1)
 
 
-# TODO: move to Jou stdlib?
+# TODO(Jou): move to Jou stdlib?
 declare setenv(name: byte*, value: byte*, overwrite: int) -> int
 declare setlocale(category: int, locale: byte*) -> byte*
 const LC_ALL: int = 6  # TODO: probably something else on macos

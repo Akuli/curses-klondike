@@ -7,7 +7,7 @@ import "stdlib/math.jou"
 import "./curses.jou"
 
 
-# TODO: move to stdlib
+# TODO(Jou): move to stdlib
 const INT_MAX: int = 0x7fff_ffff
 
 
