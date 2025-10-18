@@ -62,3 +62,29 @@ Because it's fun.
 No, but Windows comes with a klondike. Windows command prompt and powershell
 are kind of awful anyway, and you probably want to use GUI applications instead
 of them whenever possible.
+
+
+## Developing
+
+Look at [src/state.jou](src/state.jou)
+and the `main()` function in [src/main.jou](src/main.jou)
+to get started with reading the code.
+
+I look at curses manual pages. For example, here's how I might figure out what `initscr` is/does:
+
+```
+$ sudo apt install ncurses-doc
+$ man initscr
+```
+
+The manual page says `WINDOW *initscr(void)`.
+This C syntax means that `initscr()` is a function that takes no parameters and returns a `Window*` pointer.
+Here's what that looks like in Jou, specifically `src/curses.jou`:
+
+```python
+@public
+declare initscr() -> WINDOW*
+```
+
+For details not mentioned in manual pages, such as values of constants,
+you can look at `/usr/include/ncurses.h` directly.
