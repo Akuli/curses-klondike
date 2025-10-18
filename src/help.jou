@@ -13,7 +13,7 @@ class HelpItem:
     desc: byte*
 
 
-# TODO: use a `const` when that becomes possible
+# TODO(Jou): use a `const` when that becomes possible
 def get_help_items() -> HelpItem[14]:
     return [
         HelpItem{key="h", desc="show this help"},
@@ -33,12 +33,12 @@ def get_help_items() -> HelpItem[14]:
     ]
 
 
-# TODO: move to stdlib?
+# TODO(Jou): move to stdlib?
 def utf8_continuation(b: byte) -> bool:
     return b & 0b1100_0000 == 0b1000_0000
 
 
-# TODO: move to stdlib?
+# TODO(Jou): move to stdlib?
 def utf8_char_count(s: byte*) -> int:
     n = 0
     for p = s; *p != '\0'; p++:
@@ -47,7 +47,7 @@ def utf8_char_count(s: byte*) -> int:
     return n
 
 
-# TODO: use a `const` when that becomes possible
+# TODO(Jou): use a `const` when that becomes possible
 def get_picture_lines() -> byte*[8]:
     return [
         "╭──╮╭──╮    ╭──╮╭──╮╭──╮╭──╮",

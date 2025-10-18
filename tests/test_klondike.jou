@@ -54,8 +54,6 @@ def test_can_move() -> None:
     # discarding is implemented separately
     assert not klon.can_move(klon.stock, &klon.discard)
 
-    # TODO: test rest of the code? problem is, how do i find e.g. ♠A or ♥Q
-
 
 # Creates a game where some tableau->tableau move is possible
 def init_movable_kln(klon: Klondike*, srctab: int*, dsttab: int*) -> None:
@@ -132,8 +130,6 @@ def test_stock_to_discard() -> None:
 
     # make sure that the order of the cards doesn't reverse
     assert klon.stock == savestock
-
-    # TODO: test with less than 13*4 - (1+2+3+4+5+6+7) stock cards? e.g. 0 stock cards
 
 
 def test_stock_to_discard_visibility_with_discard_hide() -> None:

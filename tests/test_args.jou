@@ -5,12 +5,12 @@ import "stdlib/process.jou"
 import "./util.jou"
 
 
-# TODO: add these to Jou standard library?
+# TODO(Jou): add these to Jou standard library?
 declare chdir(path: byte*) -> int
 def WIFEXITED(status: int) -> bool:
     return (status & 0x7F) == 0
 def WEXITSTATUS(status: int) -> int:
-    # TODO: add bitshift operators to Jou. This should be >> 8
+    # TODO(Jou): add bitshift operators. This should be >> 8
     return (status & 0xFF00) / 256
 
 
