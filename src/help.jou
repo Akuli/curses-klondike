@@ -1,6 +1,7 @@
 import "stdlib/ascii.jou"
 import "stdlib/math.jou"
 import "stdlib/str.jou"
+import "stdlib/utf8.jou"
 
 import "./card.jou"
 import "./curses.jou"
@@ -31,20 +32,6 @@ def get_help_items() -> HelpItem[14]:
         HelpItem{key="PageDown", desc="select only 1 tableau card"},
         HelpItem{key="1,2,…,7", desc="select tableau by number"},
     ]
-
-
-# TODO(Jou): move to stdlib?
-def utf8_continuation(b: byte) -> bool:
-    return b & 0b1100_0000 == 0b1000_0000
-
-
-# TODO(Jou): move to stdlib?
-def utf8_char_count(s: byte*) -> int:
-    n = 0
-    for p = s; *p != '\0'; p++:
-        if not utf8_continuation(*p):
-            n++
-    return n
 
 
 # TODO(Jou): use a `const` when that becomes possible
@@ -137,7 +124,7 @@ class Printer:
                 mvwaddnstr(self.window, self.y, x, string, bytes_printed)
 
             for i = 0; i < bytes_printed; i++:
-                if not utf8_continuation(string[i]):
+                if not is_utf8_continuation(string[i]):
                     x++
 
             string = &string[bytes_printed]
@@ -160,7 +147,7 @@ class Printer:
             end = string
             while remaining_width > 0 and *end != '\0' and (end == string or end[-1] != '\n'):
                 end++
-                while utf8_continuation(*end):
+                while is_utf8_continuation(*end):
                     end++
                 remaining_width--
 
@@ -184,7 +171,7 @@ class Printer:
 
     def print_help_item(self, key_column_width: int, item: HelpItem) -> None:
         if self.window != NULL:
-            x = key_column_width - utf8_char_count(item.key)
+            x = key_column_width - (utf8_char_count(item.key) as int)
             mvwprintw(self.window, self.y, x, "%s:", item.key)
         self.print_wrapped_colored(item.desc, key_column_width + 2)
 
@@ -200,7 +187,7 @@ class Printer:
 
         max_key_width = 0
         for i = 0; i < sizeof(help_items)/sizeof(help_items[0]); i++:
-            max_key_width = max(max_key_width, utf8_char_count(help_items[i].key))
+            max_key_width = max(max_key_width, utf8_char_count(help_items[i].key) as int)
 
         for i = 0; i < sizeof(help_items)/sizeof(help_items[0]); i++:
             self.print_help_item(max_key_width, help_items[i])
@@ -213,11 +200,7 @@ class Printer:
     def print_title(self, title: byte*) -> None:
         self.y += 2
 
-        text_width = 0
-        for i = 0; title[i] != '\0'; i++:
-            if not utf8_continuation(title[i]):
-                text_width++
-
+        text_width = utf8_char_count(title) as int
         x = (self.terminal_width - text_width)/2
         left = x - 1
         right = x + text_width + 1
