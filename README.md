@@ -12,7 +12,7 @@ If you don't like colors, use the `--no-colors` option:
 
 ## Setup
 
-1. Install Jou version 2025-10-21-0000 using [Jou's instructions](https://github.com/Akuli/jou/blob/2025-10-21-0000/README.md#setup).
+1. Install Jou version 2025-10-23-0400 using [Jou's instructions](https://github.com/Akuli/jou/blob/2025-10-23-0400/README.md#setup).
     Newer versions of Jou may also work.
 2. Install curses:
     ```
