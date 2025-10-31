@@ -10,8 +10,7 @@ declare chdir(path: byte*) -> int
 def WIFEXITED(status: int) -> bool:
     return (status & 0x7F) == 0
 def WEXITSTATUS(status: int) -> int:
-    # TODO(Jou): add bitshift operators. This should be >> 8
-    return (status & 0xFF00) / 256
+    return (status & 0xFF00) >> 8
 
 
 def compile_parser_to_tests_temp_folder() -> None:
