@@ -21,7 +21,7 @@ class Scroller:
         # Negativeness must be checked last.
         # This way scroll_pos is set to 0 if the whole pad fits in view at once.
         self.scroll_pos = min(self.scroll_pos, pad_height - window_height)
-        self.scroll_pos = max(0, self.scroll_pos)
+        self.scroll_pos = max(self.scroll_pos, 0)
 
     def draw_pad_to_window(self) -> None:
         self.bounds_check()
@@ -74,7 +74,7 @@ class Scroller:
             case KEY_HOME:
                 self.scroll_pos = 0
             case KEY_END:
-                self.scroll_pos = INT_MAX  # will be clamped
+                self.scroll_pos = INT32_MAX  # will be clamped
 
 
 @public
