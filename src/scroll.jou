@@ -2,13 +2,10 @@
 #
 # See newpad() man page for more info about pads vs "normal" windows.
 
+import "stdlib/limits.jou"
 import "stdlib/math.jou"
 
 import "./curses.jou"
-
-
-# TODO(Jou): move to stdlib
-const INT_MAX: int = 0x7fff_ffff
 
 
 class Scroller:
