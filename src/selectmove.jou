@@ -1,3 +1,5 @@
+import "stdlib/assert.jou"
+
 import "./card.jou"
 import "./state.jou"
 import "./klondike.jou"
