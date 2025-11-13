@@ -1,3 +1,6 @@
+import "stdlib/assert.jou"
+
+
 @public
 enum Suit:
     Spade
