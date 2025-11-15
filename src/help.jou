@@ -1,4 +1,5 @@
 import "stdlib/ascii.jou"
+import "stdlib/assert.jou"
 import "stdlib/math.jou"
 import "stdlib/str.jou"
 import "stdlib/utf8.jou"
