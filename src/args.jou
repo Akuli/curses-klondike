@@ -15,10 +15,6 @@ enum Option:
     DiscardHide
 
 
-# TODO(Jou): NUM_OPTIONS and option_name() should be replaced by a `const` array of strings.
-# That is not supported in Jou yet.
-const NUM_OPTIONS: int = 4
-
 def option_name(opt: Option) -> byte*:
     match opt:
         case Option.Help:
@@ -46,7 +42,7 @@ class ParseState:
     program_name: byte*
     remaining_args: byte**  # never includes program name
     # TODO(Jou): This doesn't work yet. For now let's add much more than enough...
-    #seen: bool[NUM_OPTIONS]
+    #seen: bool[enum_count(Option)]
     seen: bool[10]
     result: Args
 
@@ -62,7 +58,7 @@ def get_option_from_name(state: ParseState*, arg: byte*) -> Option:
         fail(state)
 
     # Allow abbreviations, e.g. "--no-col" for --no-colors
-    for i = 0; i < NUM_OPTIONS; i++:
+    for i = 0; i < enum_count(Option); i++:
         if starts_with(option_name(i as Option), arg):
             return i as Option
 
