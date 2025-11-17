@@ -187,10 +187,10 @@ class Printer:
                 mvwaddstr(self.window, y, self.terminal_width - PICTURE_WIDTH, line)
 
         max_key_width = 0
-        for i = 0; i < sizeof(help_items)/sizeof(help_items[0]); i++:
+        for i = 0; i < array_count(help_items); i++:
             max_key_width = max(max_key_width, utf8_char_count(help_items[i].key) as int)
 
-        for i = 0; i < sizeof(help_items)/sizeof(help_items[0]); i++:
+        for i = 0; i < array_count(help_items); i++:
             self.print_help_item(max_key_width, help_items[i])
 
         self.print_title("Rules")

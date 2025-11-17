@@ -58,7 +58,7 @@ class Klondike:
         for s = 0; s < 4; s++:
             for n = 1; n <= 13; n++:
                 self.card_array[num_cards++] = Card{number = n, suit = (s as Suit)}
-        assert num_cards == sizeof(self.card_array) / sizeof(self.card_array[0])
+        assert num_cards == array_count(self.card_array)
 
         shuffle(self.card_array, num_cards)
 
@@ -141,7 +141,7 @@ class Klondike:
             &self.tableau[6],
         ]
 
-        for i = 0; i < sizeof(card_lists)/sizeof(card_lists[0]); i++:
+        for i = 0; i < array_count(card_lists); i++:
             list = card_lists[i]
 
             # special case: no card has card as .next

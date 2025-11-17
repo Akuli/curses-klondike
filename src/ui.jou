@@ -139,7 +139,7 @@ def get_cards_after_moves(app_state: AppState*, place: Card**, result: Card*[52]
         for c = *place; c != NULL; c = c.next:
             (*result)[i++] = c
 
-    assert i < sizeof(*result) / sizeof((*result)[0])
+    assert i < array_count(*result)
     return i
 
 
