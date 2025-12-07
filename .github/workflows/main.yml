@@ -22,13 +22,6 @@ jobs:
     - name: Install dependencies (mostly Jou dependencies)
       run: sudo apt install -y libncurses-dev llvm-19-dev clang-19 make valgrind
 
-    - name: Cache Jou compiler
-      id: cache-jou
-      uses: actions/cache@v4
-      with:
-        path: jou
-        key: jou-${{ runner.os }}-${{ hashFiles('jou_version.txt', '.github/workflows/main.yml') }}
-
     - name: Download and compile Jou
       if: steps.cache-jou.outputs.cache-hit != 'true'
       run: git clone --branch $(cat jou_version.txt) https://github.com/Akuli/jou && cd jou && make -j2
