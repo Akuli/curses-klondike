@@ -1,6 +1,6 @@
 import "stdlib/io.jou"
 import "stdlib/process.jou"
-import "stdlib/rand.jou"
+import "stdlib/random.jou"
 import "stdlib/time.jou"
 
 import "./curses.jou"
