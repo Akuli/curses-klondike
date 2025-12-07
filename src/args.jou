@@ -41,9 +41,7 @@ Options:\n\
 class ParseState:
     program_name: byte*
     remaining_args: byte**  # never includes program name
-    # TODO(Jou): This doesn't work yet. For now let's add much more than enough...
-    #seen: bool[enum_count(Option)]
-    seen: bool[10]
+    seen: bool[enum_count(Option)]
     result: Args
 
 

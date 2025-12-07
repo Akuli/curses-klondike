@@ -1,6 +1,6 @@
 import "stdlib/assert.jou"
 import "stdlib/mem.jou"
-import "stdlib/rand.jou"
+import "stdlib/random.jou"
 
 import "./card.jou"
 import "./state.jou"
