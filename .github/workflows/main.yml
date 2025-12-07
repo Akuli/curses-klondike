@@ -23,7 +23,6 @@ jobs:
       run: sudo apt install -y libncurses-dev llvm-19-dev clang-19 make valgrind
 
     - name: Download and compile Jou
-      if: steps.cache-jou.outputs.cache-hit != 'true'
       run: git clone --branch $(cat jou_version.txt) https://github.com/Akuli/jou && cd jou && make -j2
 
     - name: Add Jou to PATH
