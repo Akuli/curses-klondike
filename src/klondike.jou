@@ -1,4 +1,5 @@
 import "stdlib/assert.jou"
+import "stdlib/intnative.jou"
 import "stdlib/mem.jou"
 import "stdlib/random.jou"
 
@@ -38,7 +39,7 @@ class Klondike:
     # Convert &self.foundations[i] to i
     def foundation_number(self, place: Card**) -> int:
         assert self.is_foundation(place)
-        i = ((place as int64) - (&self.foundations as int64)) / sizeof(*place)
+        i = ((place as intnative) - (&self.foundations as intnative)) / sizeof(*place)
         assert 0 <= i and i < 4
         assert place == &self.foundations[i]
         return i as int
@@ -46,7 +47,7 @@ class Klondike:
     # Convert &self.tableau[i] to i. Returns -1 if pointer is not a tableau.
     def tableau_number(self, place: Card**) -> int:
         assert self.is_tableau(place)
-        i = ((place as int64) - (&self.tableau as int64)) / sizeof(*place)
+        i = ((place as intnative) - (&self.tableau as intnative)) / sizeof(*place)
         assert 0 <= i and i < 7
         assert place == &self.tableau[i]
         return i as int

@@ -1,5 +1,6 @@
 import "stdlib/ascii.jou"
 import "stdlib/assert.jou"
+import "stdlib/intnative.jou"
 import "stdlib/math.jou"
 import "stdlib/str.jou"
 import "stdlib/utf8.jou"
@@ -166,7 +167,7 @@ class Printer:
 
             assert end > string
 
-            self.print_colored(x_offset, string, ((end as int64) - (string as int64)) as int)
+            self.print_colored(x_offset, string, ((end as intnative) - (string as intnative)) as int)
             self.y++
             string = end
 

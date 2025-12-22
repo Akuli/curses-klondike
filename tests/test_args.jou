@@ -39,7 +39,7 @@ def read_file(path: byte*, expected: byte*) -> None:
 
     if strcmp(file_content, expected) != 0:
         printf(
-            "\n\noutputs differ\n=== expected (%lld bytes) ===\n%s\n=== actual (%lld bytes) ===\n%s\n",
+            "\n\noutputs differ\n=== expected (%zd bytes) ===\n%s\n=== actual (%zd bytes) ===\n%s\n",
             strlen(expected), expected,
             strlen(file_content), file_content,
         )
