@@ -3,7 +3,7 @@
 
 on:
   schedule:
-    - cron: '0 5 * * *'  # About an hour after typical Jou release time
+    - cron: '0 5 * * 5'  # About an hour after typical Jou release time
   workflow_dispatch:
 
 jobs:
