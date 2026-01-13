@@ -30,13 +30,16 @@ class Klondike:
     # Rarely accessed directly.
     card_array: Card[52]
 
+    @public
     def is_foundation(self, place: Card**) -> bool:
         return &self.foundations[0] <= place and place < &self.foundations[4]
 
+    @public
     def is_tableau(self, place: Card**) -> bool:
         return &self.tableau[0] <= place and place < &self.tableau[7]
 
     # Convert &self.foundations[i] to i
+    @public
     def foundation_number(self, place: Card**) -> int:
         assert self.is_foundation(place)
         i = ((place as intnative) - (&self.foundations as intnative)) / sizeof(*place)
@@ -45,6 +48,7 @@ class Klondike:
         return i as int
 
     # Convert &self.tableau[i] to i. Returns -1 if pointer is not a tableau.
+    @public
     def tableau_number(self, place: Card**) -> int:
         assert self.is_tableau(place)
         i = ((place as intnative) - (&self.tableau as intnative)) / sizeof(*place)
@@ -52,6 +56,7 @@ class Klondike:
         assert place == &self.tableau[i]
         return i as int
 
+    @public
     def deal_cards(self) -> None:
         memset(self, 0, sizeof(*self))
 
@@ -84,6 +89,7 @@ class Klondike:
     # Dest must be one of: &stock, &discard, &foundations[i], &tableau[i]
     # Use stock2discard() instead for stock -> discard moves, this returns false for those.
     # card must be a card in klon
+    @public
     def can_move(self, card: Card*, dest: Card**) -> bool:
         # invisible cards can never be moved
         if not card.visible:
@@ -162,6 +168,7 @@ class Klondike:
         assert False  # card not found
 
     # Moves the source card and .next cards (if any) to dest.
+    @public
     def move(self, card: Card*, dest: Card**) -> None:
         assert self.can_move(card, dest)
 
@@ -173,6 +180,7 @@ class Klondike:
         cardlist_push_to_top(dest, card)
 
     # Move card to any foundation if possible. Does nothing if card is NULL.
+    @public
     def move2foundation(self, card: Card*) -> bool:
         if card != NULL:
             for i = 0; i < 4; i++:
@@ -182,6 +190,7 @@ class Klondike:
         return False
 
     # Takes cards stock --> discard
+    @public
     def stock_to_discard(self, args: Args) -> None:
         for i = 0; i < args.pick and self.stock != NULL; i++:
             c = cardlist_pop_from_bottom(&self.stock)
@@ -200,6 +209,7 @@ class Klondike:
             for c = self.discard; c != NULL; c = c.next:
                 c.visible = True
 
+    @public
     def discard_to_stock(self) -> None:
         assert self.stock == NULL  # no more cards in stock
         self.stock = self.discard
@@ -211,6 +221,7 @@ class Klondike:
             c.visible = False
 
     # Check if player won
+    @public
     def win(self) -> bool:
         for i = 0; i < 4; i++:
             n = 0

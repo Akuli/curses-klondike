@@ -9,6 +9,7 @@ class Args:
     pick: int
     discardhide: bool
 
+    @public
     def print(self) -> None:
         printf("Color: %s\n", "yes" if self.color else "no")
         printf("Pick: %d\n", self.pick)
