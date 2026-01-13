@@ -11,6 +11,7 @@ import "./state.jou"
 import "./card.jou"
 import "./selectmove.jou"
 import "./help.jou"
+import "./klondike.jou"
 
 
 # Takes cards stock --> discard, or if stock is empty, puts all discardeds to stock.
