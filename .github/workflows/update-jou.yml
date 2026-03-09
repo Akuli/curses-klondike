@@ -29,9 +29,10 @@ jobs:
             exit 0
           fi
 
-          branch="update-jou-version"
-          if git ls-remote --exit-code --heads origin "$branch"; then
-            echo "Branch '$branch' already exists. Not touching it."
+          # Choose a branch name that is not currently being used
+          branch="$(printf '%s\n' update-jou-version{,-2,-3,-4,-5} | grep -Fxv -m1 -f <(git ls-remote --heads origin | cut -d/ -f3-))"
+          if [ -z "$branch" ]; then
+            echo "Many updating branches already exist, not creating more."
             exit 0
           fi
           git checkout -b "$branch"
