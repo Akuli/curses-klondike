@@ -37,7 +37,7 @@ jobs:
           fi
           git checkout -b "$branch"
 
-          sed -i "s/$old_version/$new_version/g" $(git ls-files)
+          sed -i "s/$old_version/$new_version/g" $(git grep -I -l '')
           git add .
 
           git config user.name "github-actions[bot]"
