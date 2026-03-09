@@ -17,10 +17,9 @@ jobs:
       - name: Check for Jou update and create PR if needed
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # Please keep the below grep up to date with other workflow files.
         run: |
           old_version=$(cat jou_version.txt)
-          new_version=$(curl -s https://api.github.com/repos/Akuli/jou/releases/latest | jq -r .tag_name)
+          new_version=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/Akuli/jou/releases/latest | jq -r .tag_name)
 
           echo "Current Jou version: $old_version"
           echo "Latest Jou version: $new_version"
@@ -30,14 +29,15 @@ jobs:
             exit 0
           fi
 
-          branch="update-jou-version"
-          if git ls-remote --exit-code --heads origin "$branch"; then
-            echo "Branch '$branch' already exists. Not touching it."
+          # Choose a branch name that is not currently being used
+          branch="$(printf '%s\n' update-jou-version{,-2,-3,-4,-5} | grep -Fxv -m1 -f <(git ls-remote --heads origin | cut -d/ -f3-))"
+          if [ -z "$branch" ]; then
+            echo "Many updating branches already exist, not creating more."
             exit 0
           fi
           git checkout -b "$branch"
 
-          sed -i "s/$old_version/$new_version/g" $(git ls-files)
+          sed -i "s/$old_version/$new_version/g" $(git grep -I -l '')
           git add .
 
           git config user.name "github-actions[bot]"
