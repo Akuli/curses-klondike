@@ -36,21 +36,18 @@ def get_help_items() -> HelpItem[14]:
     ]
 
 
-# TODO(Jou): use a `const` when that becomes possible
-def get_picture_lines() -> byte*[8]:
-    return [
-        "╭──╮╭──╮    ╭──╮╭──╮╭──╮╭──╮",
-        "│  ││  │    │ foundations  │",
-        "╰──╯╰──╯    ╰──╯╰──╯╰──╯╰──╯",
-        "  │   ╰─── discard          ",
-        "  ╰─── stock                ",
-        "╭──╮╭──╮╭──╮╭──╮╭──╮╭──╮╭──╮",
-        "│         tableau          │",
-        "╰──╯╰──╯╰──╯╰──╯╰──╯╰──╯╰──╯",
-    ]
-
 const PICTURE_WIDTH: int = 28
 const PICTURE_HEIGHT: int = 8
+global PICTURE_LINES: byte*[PICTURE_HEIGHT] = [
+    "╭──╮╭──╮    ╭──╮╭──╮╭──╮╭──╮",
+    "│  ││  │    │ foundations  │",
+    "╰──╯╰──╯    ╰──╯╰──╯╰──╯╰──╯",
+    "  │   ╰─── discard          ",
+    "  ╰─── stock                ",
+    "╭──╮╭──╮╭──╮╭──╮╭──╮╭──╮╭──╮",
+    "│         tableau          │",
+    "╰──╯╰──╯╰──╯╰──╯╰──╯╰──╯╰──╯",
+]
 
 
 global rules_buf: byte[10000]
@@ -133,13 +130,11 @@ class Printer:
             string_len -= bytes_printed
 
     def print_wrapped_colored(self, string: byte*, x_offset: int) -> None:
-        picture_lines = get_picture_lines()
-
         while *string != '\0':
             remaining_width = self.terminal_width - x_offset
             if self.y <= PICTURE_HEIGHT:
                 remaining_width -= PICTURE_WIDTH
-                remaining_width -= 3  # more space between picture_lines and helps
+                remaining_width -= 3  # more space between text and picture
 
             # Don't get stuck if terminal is very narrow. Won't look good anyway.
             remaining_width = max(5, remaining_width)
@@ -180,12 +175,9 @@ class Printer:
     # Returns number of lines printed
     def print_all_help(self, argv0: byte*) -> int:
         help_items = get_help_items()
-        picture_lines = get_picture_lines()
-
         if self.window != NULL:
             for y = 0; y < PICTURE_HEIGHT; y++:
-                line = picture_lines[y]
-                mvwaddstr(self.window, y, self.terminal_width - PICTURE_WIDTH, line)
+                mvwaddstr(self.window, y, self.terminal_width - PICTURE_WIDTH, PICTURE_LINES[y])
 
         max_key_width = 0
         for i = 0; i < array_count(help_items); i++:
