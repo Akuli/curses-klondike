@@ -6,6 +6,10 @@ on:
     - cron: '0 5 * * 5'  # About an hour after typical Jou release time
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   update-jou:
     if: github.repository == 'Akuli/curses-klondike'  # Do not run on forks
@@ -15,11 +19,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check for Jou update and create PR if needed
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           old_version=$(cat jou_version.txt)
-          new_version=$(curl -s -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/Akuli/jou/releases/latest | jq -r .tag_name)
+          new_version=$(curl -f -H "Authorization: token ${{ github.token }}" https://api.github.com/repos/Akuli/jou/releases/latest | jq -r .tag_name)
 
           echo "Current Jou version: $old_version"
           echo "Latest Jou version: $new_version"
@@ -46,7 +48,7 @@ jobs:
           git push origin "$branch"
 
           # Create PR via REST API
-          curl -X POST -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/$GITHUB_REPOSITORY/pulls -d @- <<EOF
+          curl -f -X POST -H "Authorization: token ${{ github.token }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/$GITHUB_REPOSITORY/pulls -d @- <<EOF
           {
             "title": "Update Jou: $old_version → $new_version",
             "head": "$branch",
