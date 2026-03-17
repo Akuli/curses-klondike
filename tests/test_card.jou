@@ -1,5 +1,4 @@
 import "stdlib/assert.jou"
-import "stdlib/io.jou"
 import "stdlib/str.jou"
 
 import "../src/card.jou"
@@ -75,6 +74,4 @@ def main() -> int:
     test_cardlist_top()
     test_cardlist_pop()
     test_cardlist_push()
-
-    printf(" ok\n")
     return 0
