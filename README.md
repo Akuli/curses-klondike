@@ -89,6 +89,12 @@ declare initscr() -> WINDOW*
 For details not mentioned in manual pages, such as values of constants,
 you can look at `/usr/include/ncurses.h` directly.
 
+Use `joutest` to run the tests in the `tests` folder (see `joutest.toml`):
+
+```
+$ joutest
+```
+
 Use `# TODO(Jou):` when you work around limitations of the Jou compiler or programming language,
 and plain `# TODO:` comments for everything else.
 This way I can search for `TODO(Jou)` when upgrading the Jou version
