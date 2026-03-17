@@ -1,7 +1,5 @@
 import "stdlib/assert.jou"
-import "stdlib/io.jou"
 
-import "./util.jou"
 import "../src/card.jou"
 import "../src/state.jou"
 import "../src/klondike.jou"
@@ -163,17 +161,9 @@ def test_stock_to_discard_visibility_without_discard_hide() -> None:
 
 def main() -> int:
     test_deal_cards()
-    dot()
     test_can_move()
-    dot()
     test_move()
-    dot()
     test_stock_to_discard()
-    dot()
     test_stock_to_discard_visibility_with_discard_hide()
-    dot()
     test_stock_to_discard_visibility_without_discard_hide()
-    dot()
-
-    printf(" ok\n")
     return 0

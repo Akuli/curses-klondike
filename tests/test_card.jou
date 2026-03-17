@@ -3,7 +3,6 @@ import "stdlib/io.jou"
 import "stdlib/str.jou"
 
 import "../src/card.jou"
-import "./util.jou"
 
 
 def test_number_to_string() -> None:
@@ -73,13 +72,9 @@ def test_cardlist_push() -> None:
 
 def main() -> int:
     test_number_to_string()
-    dot()
     test_cardlist_top()
-    dot()
     test_cardlist_pop()
-    dot()
     test_cardlist_push()
-    dot()
 
     printf(" ok\n")
     return 0
