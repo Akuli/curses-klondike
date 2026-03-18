@@ -89,7 +89,8 @@ declare initscr() -> WINDOW*
 For details not mentioned in manual pages, such as values of constants,
 you can look at `/usr/include/ncurses.h` directly.
 
-Use `joutest` to run the tests in the `tests` folder (see `joutest.toml`):
+Use [joutest](https://github.com/Akuli/jou/blob/2026-03-18-0500/doc/joutest.md)
+to run the tests in the `tests` directory:
 
 ```
 $ joutest

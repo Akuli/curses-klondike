@@ -14,8 +14,8 @@ jobs:
       run: |
         git grep -no --color $(cat jou_version.txt)  # this is only for debugging
         n=$(git grep -o $(cat jou_version.txt) | wc -l)
-        if [ $n != 3 ]; then
-          echo "Error: Jou version should be mentioned only in README (twice) and jou_version.txt (once)"
+        if [ $n != 4 ]; then
+          echo "Error: Jou version should be mentioned only in README (3 times) and jou_version.txt (once)"
           exit 1
         fi
 
@@ -29,11 +29,11 @@ jobs:
       run: echo "$(pwd)/jou" >> $GITHUB_PATH
 
     - name: Run tests
-      run: joutest
+      run: joutest --verbose
 
     # TODO: enable this when implemented in joutest
     #- name: Run tests with valgrind
-    #  run: joutest --valgrind
+    #  run: joutest --verbose --valgrind
 
     - name: Compile main executable
       run: jou -o cursesklon src/main.jou
