@@ -29,10 +29,11 @@ jobs:
       run: echo "$(pwd)/jou" >> $GITHUB_PATH
 
     - name: Run tests
-      run: ./run_tests.sh
+      run: joutest
 
-    - name: Run tests with valgrind
-      run: ./run_tests.sh --valgrind
+    # TODO: enable this when implemented in joutest
+    #- name: Run tests with valgrind
+    #  run: joutest --valgrind
 
     - name: Compile main executable
       run: jou -o cursesklon src/main.jou
