@@ -3,7 +3,6 @@ import "stdlib/io.jou"
 import "stdlib/mem.jou"
 import "stdlib/str.jou"
 import "stdlib/process.jou"
-import "./util.jou"
 
 
 # TODO(Jou): add these to Jou standard library?
@@ -161,17 +160,9 @@ def test_nused_bug() -> None:
 
 def main() -> int:
     compile_parser_to_tests_temp_folder()
-    dot()
     test_help()
-    dot()
     test_defaults()
-    dot()
     test_no_defaults()
-    dot()
     test_errors()
-    dot()
     test_nused_bug()
-    dot()
-
-    printf(" ok\n")
     return 0

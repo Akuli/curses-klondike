@@ -1,0 +1,2 @@
+[[tests]]
+files = "tests/test_*.jou"
