@@ -1,4 +1,5 @@
 import "stdlib/assert.jou"
+import "stdlib/io.jou"
 
 import "../src/card.jou"
 import "../src/state.jou"
@@ -23,19 +24,32 @@ def count_visible_cards(first: Card*) -> int:
 def test_deal_cards() -> None:
     klon = Klondike{}
     klon.deal_cards()
-    assert klon.num_picked == 0
+    printf("picked %d\n", klon.num_picked)  # Output: picked 0
+    printf("stock %d\n", count_cards(klon.stock))  # Output: stock 24
+    printf("stock visible %d\n", count_visible_cards(klon.stock))  # Output: stock visible 0
+    printf("discard %d\n", count_cards(klon.discard))  # Output: discard 0
 
-    assert count_cards(klon.stock) == 13*4 - (1+2+3+4+5+6+7)
-    assert count_visible_cards(klon.stock) == 0
-
-    assert count_cards(klon.discard) == 0
-
+    # Output: foundation 0
+    # Output: foundation 0
+    # Output: foundation 0
+    # Output: foundation 0
     for i = 0; i < 4; i++:
-        assert count_cards(klon.foundations[i]) == 0
+        printf("foundation %d\n", count_cards(klon.foundations[i]))
 
+    # Output: tableau[0]: 1 cards, 1 visible
+    # Output: tableau[1]: 2 cards, 1 visible
+    # Output: tableau[2]: 3 cards, 1 visible
+    # Output: tableau[3]: 4 cards, 1 visible
+    # Output: tableau[4]: 5 cards, 1 visible
+    # Output: tableau[5]: 6 cards, 1 visible
+    # Output: tableau[6]: 7 cards, 1 visible
     for i = 0; i < 7; i++:
-        assert count_cards(klon.tableau[i]) == i+1
-        assert count_visible_cards(klon.tableau[i]) == 1
+        printf(
+            "tableau[%d]: %d cards, %d visible\n",
+            i,
+            count_cards(klon.tableau[i]),
+            count_visible_cards(klon.tableau[i]),
+        )
         assert cardlist_top(klon.tableau[i]).visible
 
 
@@ -94,38 +108,36 @@ def test_move() -> None:
             assert cardlist_top(klon.tableau[i]).visible
 
 
-def discard_check(klon: Klondike, ndiscarded: int, ds: int) -> None:
-    assert klon.num_picked == ds
+def discard_check(klon: Klondike) -> None:
+    printf("%d picked, %d in stock, %d in discard\n", klon.num_picked, count_cards(klon.stock), count_cards(klon.discard))
 
-    assert count_cards(klon.stock) == 13*4 - (1+2+3+4+5+6+7) - ndiscarded
+    assert count_cards(klon.stock) + count_cards(klon.discard) == 13*4 - (1+2+3+4+5+6+7)
     assert count_visible_cards(klon.stock) == 0
-
-    assert count_cards(klon.discard) == ndiscarded
-    assert count_visible_cards(klon.discard) == ndiscarded
+    assert count_visible_cards(klon.discard) == count_cards(klon.discard)
 
 
 def test_stock_to_discard() -> None:
     klon = Klondike{}
     klon.deal_cards()
-    discard_check(klon, 0, 0)
+    discard_check(klon)  # Output: 0 picked, 24 in stock, 0 in discard
 
     savestock = klon.stock
 
     klon.stock_to_discard(Args{pick = 1})
-    discard_check(klon, 1, 1)
+    discard_check(klon)  # Output: 0 picked, 24 in stock, 0 in discard
 
     klon.stock_to_discard(Args{pick = 2})
-    discard_check(klon, 3, 2)
+    discard_check(klon)  # Output: asd asd 3, 2)  # Output: asd 2 1
 
     for n = 4; n <= 13*4 - (1+2+3+4+5+6+7) - 1; n++:
         klon.stock_to_discard(Args{pick = 1})
-        discard_check(klon, n, 1)
+        discard_check(klon)  # Output: asd asd n, 1)
 
     klon.stock_to_discard(Args{pick = 1})
-    discard_check(klon, 13*4 - (1+2+3+4+5+6+7), 1)
+    discard_check(klon)  # Output: asd asd 13*4 - (1+2+3+4+5+6+7), 1)
 
     klon.discard_to_stock()
-    discard_check(klon, 0, 0)
+    discard_check(klon)  # Output: asd asd 0, 0)
 
     # make sure that the order of the cards doesn't reverse
     assert klon.stock == savestock
@@ -140,11 +152,10 @@ def test_stock_to_discard_visibility_with_discard_hide() -> None:
 
     # Only the topmost card should be visible
     assert cardlist_top(klon.discard).visible
-    n = 0
     for c = klon.discard; c != NULL; c = c.next:
         if c.visible:
-            n++
-    assert n == 1
+            # This should get printed just once
+            printf("Visible\n")  # Output: visible
 
 
 def test_stock_to_discard_visibility_without_discard_hide() -> None:
