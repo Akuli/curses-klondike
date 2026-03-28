@@ -109,7 +109,12 @@ def test_move() -> None:
 
 
 def discard_check(klon: Klondike) -> None:
-    printf("%d picked, %d in stock, %d in discard\n", klon.num_picked, count_cards(klon.stock), count_cards(klon.discard))
+    printf(
+        "%d in stock, %d in discard (%d picked)\n",
+        count_cards(klon.stock),
+        count_cards(klon.discard),
+        klon.num_picked,
+    )
 
     assert count_cards(klon.stock) + count_cards(klon.discard) == 13*4 - (1+2+3+4+5+6+7)
     assert count_visible_cards(klon.stock) == 0
@@ -119,25 +124,43 @@ def discard_check(klon: Klondike) -> None:
 def test_stock_to_discard() -> None:
     klon = Klondike{}
     klon.deal_cards()
-    discard_check(klon)  # Output: 0 picked, 24 in stock, 0 in discard
+    discard_check(klon)  # Output: 24 in stock, 0 in discard (0 picked)
 
     savestock = klon.stock
 
     klon.stock_to_discard(Args{pick = 1})
-    discard_check(klon)  # Output: 0 picked, 24 in stock, 0 in discard
+    discard_check(klon)  # Output: 23 in stock, 1 in discard (1 picked)
 
     klon.stock_to_discard(Args{pick = 2})
-    discard_check(klon)  # Output: asd asd 3, 2)  # Output: asd 2 1
+    discard_check(klon)  # Output: 21 in stock, 3 in discard (2 picked)
 
-    for n = 4; n <= 13*4 - (1+2+3+4+5+6+7) - 1; n++:
+    # Output: 20 in stock, 4 in discard (1 picked)
+    # Output: 19 in stock, 5 in discard (1 picked)
+    # Output: 18 in stock, 6 in discard (1 picked)
+    # Output: 17 in stock, 7 in discard (1 picked)
+    # Output: 16 in stock, 8 in discard (1 picked)
+    # Output: 15 in stock, 9 in discard (1 picked)
+    # Output: 14 in stock, 10 in discard (1 picked)
+    # Output: 13 in stock, 11 in discard (1 picked)
+    # Output: 12 in stock, 12 in discard (1 picked)
+    # Output: 11 in stock, 13 in discard (1 picked)
+    # Output: 10 in stock, 14 in discard (1 picked)
+    # Output: 9 in stock, 15 in discard (1 picked)
+    # Output: 8 in stock, 16 in discard (1 picked)
+    # Output: 7 in stock, 17 in discard (1 picked)
+    # Output: 6 in stock, 18 in discard (1 picked)
+    # Output: 5 in stock, 19 in discard (1 picked)
+    # Output: 4 in stock, 20 in discard (1 picked)
+    # Output: 3 in stock, 21 in discard (1 picked)
+    # Output: 2 in stock, 22 in discard (1 picked)
+    # Output: 1 in stock, 23 in discard (1 picked)
+    # Output: 0 in stock, 24 in discard (1 picked)
+    for n = 4; n <= 13*4 - (1+2+3+4+5+6+7); n++:
         klon.stock_to_discard(Args{pick = 1})
-        discard_check(klon)  # Output: asd asd n, 1)
-
-    klon.stock_to_discard(Args{pick = 1})
-    discard_check(klon)  # Output: asd asd 13*4 - (1+2+3+4+5+6+7), 1)
+        discard_check(klon)
 
     klon.discard_to_stock()
-    discard_check(klon)  # Output: asd asd 0, 0)
+    discard_check(klon)  # Output: 24 in stock, 0 in discard (0 picked)
 
     # make sure that the order of the cards doesn't reverse
     assert klon.stock == savestock
@@ -155,7 +178,7 @@ def test_stock_to_discard_visibility_with_discard_hide() -> None:
     for c = klon.discard; c != NULL; c = c.next:
         if c.visible:
             # This should get printed just once
-            printf("Visible\n")  # Output: visible
+            printf("visible\n")  # Output: visible
 
 
 def test_stock_to_discard_visibility_without_discard_hide() -> None:
