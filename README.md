@@ -5,10 +5,6 @@ written in [my Jou programming language](https://github.com/Akuli/jou) using cur
 
 ![screenshot](screenshot.png)
 
-If you don't like colors, use the `--no-colors` option:
-
-![screenshot](screenshot-nocolors.png)
-
 
 ## Setup
 
