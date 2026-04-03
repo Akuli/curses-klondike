@@ -8,7 +8,7 @@ written in [my Jou programming language](https://github.com/Akuli/jou) using cur
 
 ## Setup
 
-1. Install Jou version 2026-03-27-0500 using [Jou's instructions](https://github.com/Akuli/jou/blob/2026-03-27-0500/README.md#setup).
+1. Install Jou version 2026-04-03-0500 using [Jou's instructions](https://github.com/Akuli/jou/blob/2026-04-03-0500/README.md#setup).
     Newer versions of Jou may also work.
 2. Install curses:
     ```
@@ -85,7 +85,7 @@ declare initscr() -> WINDOW*
 For details not mentioned in manual pages, such as values of constants,
 you can look at `/usr/include/ncurses.h` directly.
 
-Use [joutest](https://github.com/Akuli/jou/blob/2026-03-27-0500/doc/joutest.md)
+Use [joutest](https://github.com/Akuli/jou/blob/2026-04-03-0500/doc/joutest.md)
 to run the tests in the `tests` directory:
 
 ```
