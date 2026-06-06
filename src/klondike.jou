@@ -42,7 +42,7 @@ class Klondike:
     @public
     def foundation_number(self, place: Card**) -> int:
         assert self.is_foundation(place)
-        i = ((place as intnative) - (&self.foundations as intnative)) / sizeof(*place)
+        i = ((place as intnative) - (&self.foundations as intnative)) // sizeof(*place)
         assert 0 <= i and i < 4
         assert place == &self.foundations[i]
         return i as int
@@ -51,7 +51,7 @@ class Klondike:
     @public
     def tableau_number(self, place: Card**) -> int:
         assert self.is_tableau(place)
-        i = ((place as intnative) - (&self.tableau as intnative)) / sizeof(*place)
+        i = ((place as intnative) - (&self.tableau as intnative)) // sizeof(*place)
         assert 0 <= i and i < 7
         assert place == &self.tableau[i]
         return i as int
