@@ -80,14 +80,11 @@ def select_top_card(app_state: AppState*, place: Card**) -> None:
 def select_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
     assert app_state.move_dest == NULL  # selecting, not moving
 
-    xy = place_to_card_xy(&app_state.klon, app_state.sel_place)
-    xy[0] += dx
-    xy[1] += dy
+    xy = place_to_card_xy(&app_state.klon, app_state.sel_place) + [dx, dy]
 
     if card_xy_to_place(&app_state.klon, xy) == NULL:
         # If blank spot between discard and first foundation, move past it
-        xy[0] += dx
-        xy[1] += dy
+        xy += [dx, dy]
 
     new_place = card_xy_to_place(&app_state.klon, xy)
     if new_place != NULL:
@@ -98,9 +95,7 @@ def move_to_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
     assert app_state.move_dest != NULL
     assert app_state.sel_card != NULL
 
-    xy = place_to_card_xy(&app_state.klon, app_state.move_dest)
-    xy[0] += dx
-    xy[1] += dy
+    xy = place_to_card_xy(&app_state.klon, app_state.move_dest) + [dx, dy]
 
     new_place = card_xy_to_place(&app_state.klon, xy)
     if app_state.klon.is_tableau(new_place) or app_state.klon.is_foundation(new_place):
