@@ -12,7 +12,10 @@ def compile_parser_to_tests_temp_folder() -> None:
     fclose(f)
 
     # The main function of args.jou prints the parsed arguments. Let's compile that.
-    ret = system("mkdir -p tmp && jou ../src/args.jou -o tmp/args")
+    #
+    # $JOU_COMPILER_PATH is set by the Jou compiler and is needed if the Jou
+    # compiler is not in PATH.
+    ret = system("mkdir -p tmp && \"$JOU_COMPILER_PATH\" ../src/args.jou -o tmp/args")
     assert ret == 0
 
 

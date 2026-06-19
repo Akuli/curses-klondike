@@ -195,7 +195,7 @@ class Printer:
         self.y += 2
 
         text_width = utf8_char_count(title) as int
-        x = (self.terminal_width - text_width)/2
+        x = (self.terminal_width - text_width)//2
         left = x - 1
         right = x + text_width + 1
 

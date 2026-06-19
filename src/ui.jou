@@ -63,7 +63,7 @@ def ui_x(x_count: int) -> int:
     # result = center of column - CARD_WIDTH/2
     #
     # Simplifying it gives this.
-    return ((2*x_count + 1)*getmaxx(stdscr) - 7*CARD_WIDTH) / (2*7)
+    return ((2*x_count + 1)*getmaxx(stdscr) - 7*CARD_WIDTH) // (2*7)
 
 def ui_y(y_count: int) -> int:
     return y_count * CARD_HEIGHT
@@ -156,7 +156,7 @@ def draw_cards_with_compression(app_state: AppState*, cards: Card**, ncards: int
 
     # Cards are alloed to go slightly beyond the bottom of screen.
     # To implement that, let's pretend the bottom of screen is lower than it really is.
-    pretend_screen_height = getmaxy(stdscr) + CARD_HEIGHT/2
+    pretend_screen_height = getmaxy(stdscr) + CARD_HEIGHT//2
 
     bottom_with_no_compression = top + (ncards - 1)*Y_OFFSET_BIG + CARD_HEIGHT
     overflow = bottom_with_no_compression - pretend_screen_height
@@ -266,4 +266,4 @@ def draw_klondike(app_state: AppState*) -> None:
     if app_state.klon.win():
         msg = "you win :)"
         msg_width = strlen(msg) as int
-        mvaddstr(getmaxy(stdscr)/2, (getmaxx(stdscr) - msg_width)/2, msg)
+        mvaddstr(getmaxy(stdscr)//2, (getmaxx(stdscr) - msg_width)//2, msg)

@@ -25,18 +25,15 @@ jobs:
     - name: Download and compile Jou
       run: git clone --branch $(cat jou_version.txt) https://github.com/Akuli/jou && cd jou && make -j2
 
-    - name: Add Jou to PATH
-      run: echo "$(pwd)/jou" >> $GITHUB_PATH
-
     - name: Run tests
-      run: joutest --verbose
+      run: jou/joutest --verbose
 
     # TODO: enable this when implemented in joutest
     #- name: Run tests with valgrind
-    #  run: joutest --verbose --valgrind
+    #  run: jou/joutest --verbose --valgrind
 
     - name: Compile main executable
-      run: jou -o cursesklon src/main.jou
+      run: jou/jou -o cursesklon src/main.jou
 
     - name: Run with --help option
       run: ./cursesklon --help
