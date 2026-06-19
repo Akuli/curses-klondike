@@ -75,7 +75,7 @@ def confirm_yes_no(prompt: byte*) -> bool:
         height = getmaxy(stdscr)
 
         werase(stdscr)
-        mvwprintw(stdscr, height/2, (width - prompt_len)/2, "%s (y/n)", prompt)
+        mvwprintw(stdscr, height//2, (width - prompt_len)//2, "%s (y/n)", prompt)
         wrefresh(stdscr)
 
         match getch():
