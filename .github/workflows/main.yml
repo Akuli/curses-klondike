@@ -20,7 +20,7 @@ jobs:
         fi
 
     - name: Install dependencies (mostly Jou dependencies)
-      run: sudo apt install -y libncurses-dev llvm-19-dev clang-19 make valgrind
+      run: sudo apt update && sudo apt install -y libncurses-dev llvm-19-dev clang-19 make valgrind
 
     - name: Download and compile Jou
       run: git clone --branch $(cat jou_version.txt) https://github.com/Akuli/jou && cd jou && make -j2
