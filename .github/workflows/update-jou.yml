@@ -53,6 +53,6 @@ jobs:
             "title": "Update Jou: $old_version → $new_version",
             "head": "$branch",
             "base": "main",
-            "body": "This automatically generated pull request updates Jou from version $old_version to version $new_version.\n\nTo run the CI checks, please close and reopen this pull request. (This is needed because a GitHub Actions run cannot trigger more GitHub Actions runs.)"
+            "body": "This automatically generated pull request updates Jou from version $old_version to version $new_version."
           }
           EOF
