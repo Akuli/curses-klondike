@@ -197,14 +197,15 @@ def draw_discard(app_state: AppState*) -> None:
     num_compressible_gaps = 0
     num_comps = 0
     if not app_state.args.discardhide and num_picked > 0:
+        for i = ncards - num_picked; i < ncards - 1; i++:
+            number_len = strlen(card_number_to_string(cards[i].number)) as int
+            if number_len == 1:
+                num_compressible_gaps++
+
         last_card_x = x + (num_picked - 1)*X_OFFSET
         last_number_len = strlen(card_number_to_string(cards[ncards - 1].number)) as int
         overflow = last_card_x + 1 + last_number_len - ui_x(3)
         if overflow > 0:
-            for i = ncards - num_picked; i < ncards - 1; i++:
-                number_len = strlen(card_number_to_string(cards[i].number)) as int
-                if number_len == 1:
-                    num_compressible_gaps++
             num_comps = overflow
             if num_comps > num_compressible_gaps:
                 num_comps = num_compressible_gaps
