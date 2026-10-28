@@ -97,6 +97,9 @@ def move_to_neighbor(app_state: AppState*, dx: int, dy: int) -> None:
 
     xy = place_to_card_xy(&app_state.klon, app_state.move_dest) + [dx, dy]
 
+    if card_xy_to_place(&app_state.klon, xy) == NULL:
+        xy += [dx, dy]
+
     new_place = card_xy_to_place(&app_state.klon, xy)
     if app_state.klon.is_tableau(new_place) or app_state.klon.is_foundation(new_place):
         app_state.move_dest = new_place

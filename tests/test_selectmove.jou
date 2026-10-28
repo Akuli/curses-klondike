@@ -1,0 +1,27 @@
+import "stdlib/assert.jou"
+
+import "../src/card.jou"
+import "../src/klondike.jou"
+import "../src/state.jou"
+import "../src/selectmove.jou"
+
+
+def test_discard_to_foundation_with_right_arrow() -> None:
+    app_state = AppState{}
+    app_state.klon = Klondike{}
+    app_state.klon.card_array[0] = Card{number = 1, suit = Suit.Heart, visible = True}
+    app_state.klon.discard = &app_state.klon.card_array[0]
+
+    select_top_card(&app_state, &app_state.klon.discard)
+    begin_move(&app_state)
+    select_or_move_to_neighbor(&app_state, 1, 0)
+    assert app_state.move_dest == &app_state.klon.foundations[0]
+
+    end_move(&app_state)
+    assert app_state.klon.discard == NULL
+    assert app_state.klon.foundations[0] == &app_state.klon.card_array[0]
+
+
+def main() -> int:
+    test_discard_to_foundation_with_right_arrow()
+    return 0
