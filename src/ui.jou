@@ -194,23 +194,12 @@ def draw_discard(app_state: AppState*) -> None:
         num_picked--
 
     x = ui_x(1)
-    num_compressible_gaps = 0
-    num_comps = 0
+    compress_discard = False
     if not app_state.args.discardhide and num_picked > 0:
-        for i = ncards - num_picked; i < ncards - 1; i++:
-            number_len = strlen(card_number_to_string(cards[i].number)) as int
-            if number_len == 1:
-                num_compressible_gaps++
-
         last_card_x = x + (num_picked - 1)*X_OFFSET
         last_number_len = strlen(card_number_to_string(cards[ncards - 1].number)) as int
         overflow = last_card_x + 1 + last_number_len - ui_x(3)
-        if overflow > 0:
-            num_comps = overflow
-            if num_comps > num_compressible_gaps:
-                num_comps = num_compressible_gaps
-
-    num_uncompressed_single_gaps = num_compressible_gaps - num_comps
+        compress_discard = overflow > 0
 
     for i = 0; i < ncards; i++:
         draw_card(app_state, cards[i], x, ui_y(0))
@@ -220,12 +209,10 @@ def draw_discard(app_state: AppState*) -> None:
                 x++
             else:
                 number_len = strlen(card_number_to_string(cards[i].number)) as int
-                if number_len == 1 and num_uncompressed_single_gaps == 0:
+                if number_len == 1 and compress_discard:
                     x += X_OFFSET - 1
                 else:
                     x += X_OFFSET
-                    if number_len == 1:
-                        num_uncompressed_single_gaps--
 
 
 def draw_foundation(app_state: AppState*, number: int) -> None:
