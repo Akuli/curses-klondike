@@ -68,23 +68,6 @@ def ui_y(y_count: int) -> int:
     return y_count * CARD_HEIGHT
 
 
-def clamp(value: int, lower: int, upper: int) -> int:
-    if value < lower:
-        return lower
-    if value > upper:
-        return upper
-    return value
-
-# If cards don't fit, gaps between them are compressed. This means making some
-# gaps smaller by one.
-#
-# This function returns how many gaps NOT to compress, because compressing
-# happens at the end.
-def calculate_compress_skip_count(ngaps: int, naive_end: int, desired_end: int) -> int:
-    overflow = naive_end - desired_end
-    return ngaps - clamp(overflow, 0, ngaps)
-
-
 def get_selected_place(app_state: AppState*) -> Card**:
     if app_state.move_dest == NULL:
         # Selection mode
@@ -158,6 +141,22 @@ def get_cards_after_moves(app_state: AppState*, place: Card**, result: Card*[52]
     assert i < array_count(*result)
     return i
 
+
+def clamp(value: int, lower: int, upper: int) -> int:
+    if value < lower:
+        return lower
+    if value > upper:
+        return upper
+    return value
+
+# If cards don't fit, gaps between them are compressed. This means making some
+# gaps smaller by one.
+#
+# This function returns how many gaps NOT to compress, because compressing
+# happens at the end.
+def calculate_compress_skip_count(ngaps: int, naive_end: int, desired_end: int) -> int:
+    overflow = naive_end - desired_end
+    return ngaps - clamp(overflow, 0, ngaps)
 
 # Draws cards below each other.
 #
