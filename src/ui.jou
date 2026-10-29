@@ -12,8 +12,7 @@ const CARD_HEIGHT: int = 5
 
 # offsets for laying out cards so that they overlap
 const X_OFFSET: int = 3
-const Y_OFFSET_SMALL: int = 1
-const Y_OFFSET_BIG: int = 2
+const Y_OFFSET: int = 2
 
 
 def draw_card_border(left: int, top: int, thick: bool, fill: byte*) -> None:
@@ -69,23 +68,21 @@ def ui_y(y_count: int) -> int:
     return y_count * CARD_HEIGHT
 
 
-def clamp(value: int, lower_bound: int, upper_bound: int) -> int:
-    if value < lower_bound:
-        return lower_bound
-    if value > upper_bound:
-        return upper_bound
+def clamp(value: int, lower: int, upper: int) -> int:
+    if value < lower:
+        return lower
+    if value > upper:
+        return upper
     return value
 
-
-# Gaps are compressed from the end, saving one cell per gap. Return how many
-# gaps at the beginning can stay uncompressed without exceeding the desired end.
-def get_num_uncompressed_gaps(
-    num_compressible_gaps: int,
-    uncompressed_end: int,
-    desired_end: int,
-) -> int:
-    num_compressed_gaps = clamp(uncompressed_end - desired_end, 0, num_compressible_gaps)
-    return num_compressible_gaps - num_compressed_gaps
+# If cards don't fit, gaps between them are compressed. This means making some
+# gaps smaller by one.
+#
+# This function returns how many gaps NOT to compress, because compressing
+# happens at the end.
+def calculate_compress_skip_count(ngaps: int, naive_end: int, desired_end: int) -> int:
+    overflow = naive_end - desired_end
+    return ngaps - clamp(overflow, 0, ngaps)
 
 
 def get_selected_place(app_state: AppState*) -> Card**:
@@ -173,26 +170,21 @@ def draw_cards_with_compression(app_state: AppState*, cards: Card**, ncards: int
     if ncards == 0:
         return
 
-    # Cards are allowed to go slightly beyond the bottom of screen.
-    # To implement that, let's pretend the bottom of screen is lower than it really is.
-    screen_bottom = getmaxy(stdscr) + CARD_HEIGHT//2
-
-    bottom_without_compression = top + (ncards - 1)*Y_OFFSET_BIG + CARD_HEIGHT
-
-    assert Y_OFFSET_BIG - Y_OFFSET_SMALL == 1
-    num_uncompressed_gaps = get_num_uncompressed_gaps(
+    compress_skip_count = calculate_compress_skip_count(
         ncards - 1,
-        bottom_without_compression,
-        screen_bottom,
+        # Naive calculation without any compression, where would it go
+        top + (ncards - 1)*Y_OFFSET + CARD_HEIGHT,
+        # Cards are allowed to go slightly beyond the bottom of screen.
+        # To implement that, let's pretend the bottom of screen is lower than it really is.
+        getmaxy(stdscr) + CARD_HEIGHT//2,
     )
 
     for i = 0; i < ncards; i++:
         draw_card(app_state, cards[i], left, top)
-        if i < ncards - 1:
-            if i < num_uncompressed_gaps:
-                top += Y_OFFSET_BIG
-            else:
-                top += Y_OFFSET_SMALL
+        top += Y_OFFSET
+        if i >= compress_skip_count:
+            # Do the compression
+            top--
 
 
 def draw_stock(app_state: AppState*) -> None:
@@ -214,24 +206,23 @@ def draw_discard(app_state: AppState*) -> None:
         # A card is being moved away from discard.
         num_picked--
 
-    x = ui_x(1)
-    num_compressible_gaps = 0
-    num_uncompressed_single_gaps = 0
-    if not app_state.args.discardhide and num_picked > 0:
+    if num_picked > 0 and not app_state.args.discardhide:
+        num_compressible_gaps = 0
         for i = ncards - num_picked; i < ncards - 1; i++:
-            number_len = strlen(card_number_to_string(cards[i].number)) as int
-            if number_len == 1:
+            # 10 is the only 2-character number, anything else can be compressed
+            if cards[i].number != 10:
                 num_compressible_gaps++
 
-        last_card_x = x + (num_picked - 1)*X_OFFSET
-        last_number_len = strlen(card_number_to_string(cards[ncards - 1].number)) as int
-        uncompressed_end = last_card_x + 1 + last_number_len
-        num_uncompressed_single_gaps = get_num_uncompressed_gaps(
-            num_compressible_gaps,
-            uncompressed_end,
-            ui_x(3),
-        )
+        naive_end = ui_x(1) + num_picked*X_OFFSET
+        if cards[ncards - 1].number != 10:
+            # Wouldn't extend so far because the last shown number is shorter
+            naive_end--
 
+        compress_skip_count = calculate_compress_skip_count(num_compressible_gaps, naive_end, ui_x(3))
+    else:
+        compress_skip_count = 0
+
+    x = ui_x(1)
     for i = 0; i < ncards; i++:
         draw_card(app_state, cards[i], x, ui_y(0))
         if i >= ncards - num_picked:
@@ -239,13 +230,10 @@ def draw_discard(app_state: AppState*) -> None:
             if app_state.args.discardhide:
                 x++
             else:
-                number_len = strlen(card_number_to_string(cards[i].number)) as int
-                if number_len == 1 and num_uncompressed_single_gaps == 0:
-                    x += X_OFFSET - 1
-                else:
-                    x += X_OFFSET
-                    if number_len == 1:
-                        num_uncompressed_single_gaps--
+                x += X_OFFSET
+                if cards[i].number != 10 and compress_skip_count-- <= 0:
+                    # Do the compression
+                    x--
 
 
 def draw_foundation(app_state: AppState*, number: int) -> None:
@@ -273,7 +261,7 @@ def draw_tableau(app_state: AppState*, number: int) -> None:
             break
 
         draw_card(app_state, cards[i], ui_x(number), y)
-        y += Y_OFFSET_SMALL
+        y++
 
 
 def place_to_xy(klon: Klondike*, place: Card**) -> int[2]:
