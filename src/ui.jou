@@ -69,6 +69,25 @@ def ui_y(y_count: int) -> int:
     return y_count * CARD_HEIGHT
 
 
+def clamp(value: int, lower_bound: int, upper_bound: int) -> int:
+    if value < lower_bound:
+        return lower_bound
+    if value > upper_bound:
+        return upper_bound
+    return value
+
+
+# Gaps are compressed from the end, saving one cell per gap. Return how many
+# gaps at the beginning can stay uncompressed without exceeding the desired end.
+def get_num_uncompressed_gaps(
+    num_compressible_gaps: int,
+    uncompressed_end: int,
+    desired_end: int,
+) -> int:
+    num_compressed_gaps = clamp(uncompressed_end - desired_end, 0, num_compressible_gaps)
+    return num_compressible_gaps - num_compressed_gaps
+
+
 def get_selected_place(app_state: AppState*) -> Card**:
     if app_state.move_dest == NULL:
         # Selection mode
@@ -154,24 +173,26 @@ def draw_cards_with_compression(app_state: AppState*, cards: Card**, ncards: int
     if ncards == 0:
         return
 
-    # Cards are alloed to go slightly beyond the bottom of screen.
+    # Cards are allowed to go slightly beyond the bottom of screen.
     # To implement that, let's pretend the bottom of screen is lower than it really is.
-    pretend_screen_height = getmaxy(stdscr) + CARD_HEIGHT//2
+    screen_bottom = getmaxy(stdscr) + CARD_HEIGHT//2
 
-    bottom_with_no_compression = top + (ncards - 1)*Y_OFFSET_BIG + CARD_HEIGHT
-    overflow = bottom_with_no_compression - pretend_screen_height
+    bottom_without_compression = top + (ncards - 1)*Y_OFFSET_BIG + CARD_HEIGHT
 
-    # How many gaps between cards to compress? Zero or negative means compression is not needed.
-    space_saved_by_one_comp = Y_OFFSET_BIG - Y_OFFSET_SMALL
-    assert space_saved_by_one_comp == 1
-    num_comps = overflow
+    assert Y_OFFSET_BIG - Y_OFFSET_SMALL == 1
+    num_uncompressed_gaps = get_num_uncompressed_gaps(
+        ncards - 1,
+        bottom_without_compression,
+        screen_bottom,
+    )
 
     for i = 0; i < ncards; i++:
         draw_card(app_state, cards[i], left, top)
-        if i >= ncards - num_comps - 1:
-            top += Y_OFFSET_SMALL
-        else:
-            top += Y_OFFSET_BIG
+        if i < ncards - 1:
+            if i < num_uncompressed_gaps:
+                top += Y_OFFSET_BIG
+            else:
+                top += Y_OFFSET_SMALL
 
 
 def draw_stock(app_state: AppState*) -> None:
@@ -195,7 +216,7 @@ def draw_discard(app_state: AppState*) -> None:
 
     x = ui_x(1)
     num_compressible_gaps = 0
-    num_comps = 0
+    num_uncompressed_single_gaps = 0
     if not app_state.args.discardhide and num_picked > 0:
         for i = ncards - num_picked; i < ncards - 1; i++:
             number_len = strlen(card_number_to_string(cards[i].number)) as int
@@ -204,13 +225,12 @@ def draw_discard(app_state: AppState*) -> None:
 
         last_card_x = x + (num_picked - 1)*X_OFFSET
         last_number_len = strlen(card_number_to_string(cards[ncards - 1].number)) as int
-        overflow = last_card_x + 1 + last_number_len - ui_x(3)
-        if overflow > 0:
-            num_comps = overflow
-            if num_comps > num_compressible_gaps:
-                num_comps = num_compressible_gaps
-
-    num_uncompressed_single_gaps = num_compressible_gaps - num_comps
+        uncompressed_end = last_card_x + 1 + last_number_len
+        num_uncompressed_single_gaps = get_num_uncompressed_gaps(
+            num_compressible_gaps,
+            uncompressed_end,
+            ui_x(3),
+        )
 
     for i = 0; i < ncards; i++:
         draw_card(app_state, cards[i], x, ui_y(0))
