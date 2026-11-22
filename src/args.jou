@@ -1,100 +1,11 @@
 # This file parses command-line arguments.
 
+import "stdlib/argparse.jou"
 import "stdlib/ascii.jou"
-import "stdlib/assert.jou"
 import "stdlib/io.jou"
 import "stdlib/str.jou"
 import "stdlib/process.jou"
 import "./state.jou"
-
-
-enum Option:
-    Help
-    NoColors
-    Pick
-    DiscardHide
-
-
-def option_name(opt: Option) -> byte*:
-    match opt:
-        case Option.Help:
-            return "--help"
-        case Option.NoColors:
-            return "--no-colors"
-        case Option.Pick:
-            return "--pick"
-        case Option.DiscardHide:
-            return "--discard-hide"
-
-
-const HELP_TEXT: byte* = "\
-Usage: %s [--help] [--no-colors] [--pick n] [--discard-hide]\n\
-\n\
-Options:\n\
-  --help          show this help message and exit\n\
-  --no-colors     don't use colors, even if the terminal supports colors\n\
-  --pick n        pick n cards from stock at a time, default is 3\n\
-  --discard-hide  only show topmost discarded card (not useful with --pick=1)\n\
-"
-
-
-class ParseState:
-    program_name: byte*
-    remaining_args: byte**  # never includes program name
-    seen: bool[enum_count(Option)]
-    result: Args
-
-
-def fail(state: ParseState*) -> noreturn:
-    fprintf(get_stderr(), "Run '%s --help' for help.\n", state.program_name)
-    exit(2)
-
-
-def get_option_from_name(state: ParseState*, arg: byte*) -> Option:
-    if strlen(arg) < 3 or not starts_with(arg, "--"):
-        fprintf(get_stderr(), "%s: unexpected argument: '%s'\n", state.program_name, arg)
-        fail(state)
-
-    # Allow abbreviations, e.g. "--no-col" for --no-colors
-    for i = 0; i < enum_count(Option); i++:
-        if starts_with(option_name(i as Option), arg):
-            return i as Option
-
-    fprintf(get_stderr(), "%s: unknown option '%s'\n", state.program_name, arg)
-    fail(state)
-
-
-# Grab one option from args. If the option has an associated value (--pick 3), take that too.
-# One option can come from 2 argv items (--pick 3) or just one (--pick=3, --no-colors).
-def get_option_and_value(state: ParseState*, opt: Option*, value: byte**) -> None:
-    arg = *state.remaining_args++
-    assert arg != NULL
-
-    if strlen(arg) < 3 or not starts_with(arg, "--"):
-        fprintf(get_stderr(), "%s: unexpected argument: '%s'\n", state.program_name, arg)
-        fail(state)
-
-    eq = strstr(arg, "=")
-    if eq != NULL:
-        *value = &eq[1]
-    elif *state.remaining_args == NULL or starts_with(*state.remaining_args, "-"):
-        *value = NULL
-    else:
-        *value = *state.remaining_args++
-
-    # Get rid of value if any, e.g. "--pick=1" --> "--pick"
-    name: byte[100]
-    snprintf(name, sizeof(name), "%.*s", strcspn(arg, "=") as int, arg)
-    *opt = get_option_from_name(state, name)
-
-
-def check_no_value(state: ParseState*, opt: Option, value: byte*) -> None:
-    if value != NULL:
-        fprintf(
-            get_stderr(), "%s: use just '%s', not '%s something' or '%s=something'\n",
-            state.program_name, option_name(opt), option_name(opt), option_name(opt)
-        )
-        fail(state)
 
 
 def is_valid_integer(s: byte*, min: int, max: int) -> bool:
@@ -110,57 +21,47 @@ def is_valid_integer(s: byte*, min: int, max: int) -> bool:
     return min <= n and n <= max
 
 
-def check_int_value(state: ParseState*, opt: Option, value: byte*, min: int, max: int) -> None:
-    if value == NULL:
-        fprintf(
-            get_stderr(), "%s: use '%s something' or '%s=something', not just '%s'\n",
-            state.program_name, option_name(opt), option_name(opt), option_name(opt)
-        )
-        fail(state)
-
-    if not is_valid_integer(value, min, max):
-        fprintf(
-            get_stderr(), "%s: '%s' wants an integer between %d and %d, not '%s'\n",
-            state.program_name, option_name(opt), min, max, value,
-        )
-        fail(state)
-
-
-def parse_arg(state: ParseState*) -> None:
-    opt: Option
-    value: byte*
-    get_option_and_value(state, &opt, &value)
-
-    if state.seen[opt as int]:
-        fprintf(get_stderr(), "%s: repeated option '%s'\n", state.program_name, option_name(opt))
-        fail(state)
-    state.seen[opt as int] = True
-
-    match opt:
-        case Option.Help:
-            printf(HELP_TEXT, state.program_name)
-            exit(0)
-        case Option.NoColors:
-            check_no_value(state, opt, value)
-            state.result.color = False
-        case Option.Pick:
-            check_int_value(state, opt, value, 1, 13*4 - (1+2+3+4+5+6+7))
-            state.result.pick = atoi(value)
-        case Option.DiscardHide:
-            check_no_value(state, opt, value)
-            state.result.discardhide = True
-
-
 @public
 def parse_args(argv: byte**) -> Args:
-    state = ParseState{
-        program_name = argv[0],
-        remaining_args = &argv[1],
-        result = Args{color=True, pick=3, discardhide=False},
-    }
-    while *state.remaining_args != NULL:
-        parse_arg(&state)
-    return state.result
+    args = Args{color = True, pick = 3, discardhide = False}
+    parser = ArgumentParser{argv = argv}
+    while parser.next():
+        match parser.flag with strcmp:
+            case "--help":
+                printf("Usage: %s [--help] [--no-colors] [--pick n] [--discard-hide]\n", argv[0])
+                printf("\n")
+                printf("Options:\n")
+                printf("  --help          show this help message and exit\n")
+                printf("  --no-colors     don't use colors, even if the terminal supports colors\n")
+                printf("  --pick n        pick n cards from stock at a time, default is 3\n")
+                printf("  --discard-hide  only show topmost discarded card (not useful with --pick=1)\n")
+                exit(0)
+            case "--no-color" | "--no-colors":
+                args.color = False
+            case "--pick":
+                s = parser.take_value()
+                if s == NULL:
+                    fprintf(get_stderr(), "%s: use '--pick something' or '--pick=something', not just '--pick' (try --help)\n", argv[0])
+                    exit(2)
+                pick_max = 13*4 - (1+2+3+4+5+6+7)
+                if not is_valid_integer(s, 1, pick_max):
+                    fprintf(get_stderr(), "%s: '--pick' wants an integer between 1 and %d, not '%s' (try --help)\n", argv[0], pick_max, s)
+                    exit(2)
+                args.pick = atoi(s)
+            case "--discard-hide":
+                args.discardhide = True
+            case "":
+                fprintf(get_stderr(), "%s: unexpected argument: '%s' (try --help)\n", argv[0], parser.take_value())
+                exit(2)
+            case _:
+                fprintf(get_stderr(), "%s: unknown option '%s' (try --help)\n", argv[0], parser.flag)
+                exit(2)
+
+        if parser.pending_value != NULL:
+            fprintf(get_stderr(), "%s: use just '%s', not '%s something' or '%s=something' (try --help)\n", argv[0], parser.flag, parser.flag, parser.flag)
+            exit(2)
+
+    return args
 
 
 # Main function for tests: `jou -o foo src/args.jou` compiles an executable that runs this.

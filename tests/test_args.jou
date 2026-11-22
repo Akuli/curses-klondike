@@ -45,50 +45,31 @@ def test_no_defaults() -> None:
 
 
 def test_errors() -> None:
-    # Output: tmp/args: unknown option '--wut'
-    # Output: Run 'tmp/args --help' for help.
+    # Output: tmp/args: unknown option '--wut' (try --help)
     assert system("tmp/args --wut") != 0
 
-    # TODO: test ambiguous option if there will ever be an ambiguous option
-
-    # Output: tmp/args: unexpected argument: 'wut'
-    # Output: Run 'tmp/args --help' for help.
+    # Output: tmp/args: unexpected argument: 'wut' (try --help)
     assert system("tmp/args wut") != 0
 
-    # Output: tmp/args: use just '--no-colors', not '--no-colors something' or '--no-colors=something'
-    # Output: Run 'tmp/args --help' for help.
+    # Output: tmp/args: unexpected argument: 'lel' (try --help)
     assert system("tmp/args --no-colors lel") != 0
 
-    # Output: tmp/args: use just '--no-colors', not '--no-colors something' or '--no-colors=something'
-    # Output: Run 'tmp/args --help' for help.
+    # Output: tmp/args: use just '--no-colors', not '--no-colors something' or '--no-colors=something' (try --help)
     assert system("tmp/args --no-colors=lel") != 0
 
-    # Output: tmp/args: repeated option '--no-colors'
-    # Output: Run 'tmp/args --help' for help.
-    assert system("tmp/args --no-colors --no-colors") != 0
-
-    # Output: tmp/args: repeated option '--no-colors'
-    # Output: Run 'tmp/args --help' for help.
-    assert system("tmp/args --no-colors --no-colors --no-colors --no-colors") != 0
-
-    # Output: tmp/args: use '--pick something' or '--pick=something', not just '--pick'
-    # Output: Run 'tmp/args --help' for help.
+    # Output: tmp/args: use '--pick something' or '--pick=something', not just '--pick' (try --help)
     assert system("tmp/args --no-colors --pick") != 0
 
-    # Output: tmp/args: '--pick' wants an integer between 1 and 24, not 'a'
-    # Output: Run 'tmp/args --help' for help.
+    # Output: tmp/args: '--pick' wants an integer between 1 and 24, not 'a' (try --help)
     assert system("tmp/args --pick a") != 0
 
-    # Output: tmp/args: unexpected argument: '2'
-    # Output: Run 'tmp/args --help' for help.
+    # Output: tmp/args: unexpected argument: '2' (try --help)
     assert system("tmp/args --pick 1 2") != 0
 
-    # Output: tmp/args: '--pick' wants an integer between 1 and 24, not '0'
-    # Output: Run 'tmp/args --help' for help.
+    # Output: tmp/args: '--pick' wants an integer between 1 and 24, not '0' (try --help)
     assert system("tmp/args --pick 0") != 0
 
-    # Output: tmp/args: '--pick' wants an integer between 1 and 24, not '0'
-    # Output: Run 'tmp/args --help' for help.
+    # Output: tmp/args: '--pick' wants an integer between 1 and 24, not '0' (try --help)
     assert system("tmp/args --pick=0") != 0
 
     # Output: Color: yes
