@@ -25,6 +25,7 @@ def is_valid_integer(s: byte*, min: int, max: int) -> bool:
 def parse_args(argv: byte**) -> Args:
     args = Args{color = True, pick = 3, discardhide = False}
     parser = ArgumentParser{argv = argv}
+
     while parser.next():
         match parser.flag with strcmp:
             case "--help":
